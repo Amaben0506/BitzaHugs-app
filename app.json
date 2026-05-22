@@ -1,0 +1,42 @@
+{
+  "expo": {
+    "name": "BitzaHugs",
+    "slug": "bitzahugs",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/Bitzhugs App Icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FFF9F2"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.bitzahugs.app",
+      "buildNumber": "1"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/Bitzhugs App Icon.png",
+        "backgroundColor": "#FFF9F2"
+      },
+      "package": "com.bitzahugs.app",
+      "versionCode": 1
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/Bitzhugs App Icon.png",
+          "color": "#7548D8"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "f664b36b-a99d-47f0-bd7f-30e05f775a16"
+      }
+    }
+  }
+}
