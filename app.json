@@ -7,7 +7,7 @@
     "icon": "./assets/icons/Bitzahugs-App-Icon.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/splash.png",
+      "image": "./assets/icons/splash-background.png",
       "resizeMode": "contain",
       "backgroundColor": "#FFF9F2"
     },
@@ -28,6 +28,9 @@
       "eas": {
         "projectId": "f664b36b-a99d-47f0-bd7f-30e05f775a16"
       }
-    }
+    },
+    "plugins": [
+      "expo-asset"
+    ]
   }
 }
