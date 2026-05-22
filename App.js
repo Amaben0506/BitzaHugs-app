@@ -12,7 +12,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import SplashScreen from "./Screens/SplashScreen";
 import WelcomeScreen from "./Screens/WelcomeScreen";
 import ChildProfileSetupScreen from "./Screens/ChildProfileSetupScreen";
-import SensorySupportsScreen from "./Screens/SensorySupportScreen";
+import SensorySupportScreen from "./Screens/SensorySupportScreen";
 import CaregiverSupportScreen from "./Screens/CaregiverSupportScreen";
 import CalmSpaceReadyScreen from "./Screens/CalmSpaceReadyScreen";
 
@@ -338,7 +338,7 @@ export default function App() {
           <Stack.Screen name="Splash" component={SplashScreen} />
           <Stack.Screen name="Welcome" component={WelcomeScreen} />
           <Stack.Screen name="ChildProfileSetup" component={ChildProfileSetupScreen} />
-          <Stack.Screen name="SensorySupport" component={SensorySupportsScreen} />
+          <Stack.Screen name="SensorySupport" component={SensorySupportScreen} />
           <Stack.Screen name="CaregiverSupport" component={CaregiverSupportScreen} />
           <Stack.Screen name="CalmSpaceReady" component={CalmSpaceReadyScreen} />
 
