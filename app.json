@@ -4,7 +4,7 @@
     "slug": "bitzahugs-app",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/Bitzhugs App Icon.png",
+    "icon": "./assets/Bitzahugs-App-Icon.png",
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/splash.png",
