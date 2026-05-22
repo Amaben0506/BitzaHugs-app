@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "BitzaHugs",
-    "slug": "bitzahugs",
+    "slug": "bitzahugs-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/Bitzhugs App Icon.png",
@@ -24,15 +24,6 @@
       "package": "com.bitzahugs.app",
       "versionCode": 1
     },
-    "plugins": [
-      [
-        "expo-notifications",
-        {
-          "icon": "./assets/Bitzhugs App Icon.png",
-          "color": "#7548D8"
-        }
-      ]
-    ],
     "extra": {
       "eas": {
         "projectId": "f664b36b-a99d-47f0-bd7f-30e05f775a16"
