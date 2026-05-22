@@ -72,7 +72,7 @@ export default function JournalHistoryScreen({ navigation }) {
 
         {/* Hero */}
         <View style={styles.heroCard}>
-          <Image source={require("../assets/icons/Hugi-writing-journal.png")} style={styles.hugiImage} resizeMode="contain" />
+          <Image source={require("../assets/icons/hugi-writing-journal.png")} style={styles.hugiImage} resizeMode="contain" />
           <View style={styles.heroTextWrap}>
             <Text style={styles.heroTitle}>Your calm notes live here.</Text>
             <Text style={styles.heroText}>Look back at what you felt, what helped, and how far you've come.</Text>
