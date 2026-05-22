@@ -4,7 +4,7 @@
     "slug": "bitzahugs-app",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/Bitzahugs-App-Icon.png",
+    "icon": "./assets/icons/Bitzahugs-App-Icon.png",
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/splash.png",
@@ -18,7 +18,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/Bitzahugs-App-Icon.png",
+        "foregroundImage": "./assets/icons/Bitzahugs-App-Icon.png",
         "backgroundColor": "#FFF9F2"
       },
       "package": "com.bitzahugs.app",
