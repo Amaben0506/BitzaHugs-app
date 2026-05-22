@@ -171,7 +171,7 @@ export default function RoutineScreen({ navigation }) {
   const avatarSource = childAvatar && avatarSources[childAvatar] ? avatarSources[childAvatar] : null;
 
   return (
-    <ImageBackground source={require("../assets/icons/routine-background.png")} style={styles.background} imageStyle={styles.backgroundImage} resizeMode="cover">
+    <ImageBackground source={require("../assets/icons/sunrise-background.png")} style={styles.background} imageStyle={styles.backgroundImage} resizeMode="cover">
       <SafeAreaView style={styles.safeArea}>
         <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
