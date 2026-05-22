@@ -12,25 +12,42 @@
       "backgroundColor": "#FFF9F2"
     },
     "ios": {
-      "supportsTablet": false,
-      "bundleIdentifier": "com.bitzahugs.app",
-      "buildNumber": "1"
+      "supportsTablet": true,
+      "bundleIdentifier": "com.amandabenavidez.bitzahugs"
     },
     "android": {
+      "package": "com.amandabenavidez.bitzahugs",
+      "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/icons/Bitzahugs-App-Icon.png",
         "backgroundColor": "#FFF9F2"
-      },
-      "package": "com.bitzahugs.app",
-      "versionCode": 1
-    },
-    "extra": {
-      "eas": {
-        "projectId": "f664b36b-a99d-47f0-bd7f-30e05f775a16"
       }
     },
+    "web": {
+      "favicon": "./assets/icons/Bitzahugs-App-Icon.png"
+    },
     "plugins": [
-      "expo-asset"
-    ]
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/icons/splash-background.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#FFF9F2"
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "kotlinVersion": "1.9.25"
+          }
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "d9b1c8c7-5a0b-4f1e-9c3a-2f8b6e5a7c3d"
+      }
+    }
   }
 }
