@@ -18,7 +18,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/Bitzhugs App Icon.png",
+        "foregroundImage": "./assets/Bitzahugs-App-Icon.png",
         "backgroundColor": "#FFF9F2"
       },
       "package": "com.bitzahugs.app",
