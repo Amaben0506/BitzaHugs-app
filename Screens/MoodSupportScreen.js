@@ -170,7 +170,12 @@ export default function MoodSupportScreen({ route, navigation }) {
     else if (label === "Move My Body" || label === "Movement Reset") nav("MovementPrompt");
     else if (label === "My Meltdown Plan" || label === "My Support Plan") nav("MeltdownPlan");
     else if (label === "Gratitude Journal" || label === "What Helped Today?" || label === "Write This Out") nav("CalmJournal");
-    else if (label === "Continue My Routine") nav("MainTabs", { screen: "RoutineTab" });
+    else if (label === "Continue My Routine") {
+      navigation.navigate("MainTabs", {
+        screen: "DrawerHome",
+        params: { screen: "RoutineTab" },
+      });
+    }
   };
 
   return (

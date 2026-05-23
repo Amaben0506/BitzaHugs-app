@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   ScrollView,
   View,
@@ -10,6 +10,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect } from "@react-navigation/native";
 
 const PURPLE = "#2D246B";
 const ACCENT = "#7548D8";
@@ -17,9 +19,6 @@ const SOFT_TEXT = "#8E87A0";
 const BORDER = "#EFE5DD";
 const BACKGROUND = "#FFF9F2";
 const CARD = "#FFFFFF";
-
-// Set to true when user has premium
-const IS_PREMIUM = false;
 
 const CATEGORIES = [
   {
@@ -94,7 +93,21 @@ const CATEGORIES = [
 
 export default function ResourcesScreen({ navigation }) {
   const [expandedCategory, setExpandedCategory] = useState(null);
-  const isPremium = IS_PREMIUM;
+  const [isPremium, setIsPremium] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      const loadPremium = async () => {
+        try {
+          const premium = await AsyncStorage.getItem("bitzaIsPremium");
+          setIsPremium(premium === "true");
+        } catch (e) {
+          setIsPremium(false);
+        }
+      };
+      loadPremium();
+    }, [])
+  );
 
   const handleDownload = (resource) => {
     if (!resource.free && !isPremium) {

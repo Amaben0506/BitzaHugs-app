@@ -17,6 +17,7 @@ import { Feather, Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 
 const STORAGE_KEY = "bitzaChildProfile";
+const EXTRA_STORAGE_KEY = "bitzaChildProfiles";
 
 const AVATARS = [
   { id: "01", source: require("../assets/icons/child-profile-01.png") },
@@ -70,7 +71,8 @@ function InfoRow({ label, value, last }) {
   );
 }
 
-export default function ChildProfileScreen({ navigation }) {
+export default function ChildProfileScreen({ navigation, route }) {
+  const childIndex = route?.params?.childIndex || 0;
   const [profile, setProfile] = useState(BLANK);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(BLANK);
@@ -80,9 +82,18 @@ export default function ChildProfileScreen({ navigation }) {
     useCallback(() => {
       const load = async () => {
         try {
-          const saved = await AsyncStorage.getItem(STORAGE_KEY);
+          const saved =
+            childIndex === 0
+              ? await AsyncStorage.getItem(STORAGE_KEY)
+              : await AsyncStorage.getItem(EXTRA_STORAGE_KEY);
           if (saved) {
-            const p = JSON.parse(saved);
+            const parsed = JSON.parse(saved);
+            const p = childIndex === 0 ? parsed : parsed[childIndex - 1];
+            if (!p) {
+              setProfile(BLANK);
+              setDraft(BLANK);
+              return;
+            }
             const loaded = {
               childName: p.childName || p.name || "",
               age: p.age === "Not added yet" ? "" : p.age || "",
@@ -94,16 +105,20 @@ export default function ChildProfileScreen({ navigation }) {
             };
             setProfile(loaded);
             setDraft(loaded);
+          } else {
+            setProfile(BLANK);
+            setDraft(BLANK);
           }
         } catch (e) {
           console.log("Error loading child profile:", e);
         }
       };
       load();
-    }, [])
+    }, [childIndex])
   );
 
-  const avatarSource = editing ? draft.avatar : profile.avatar;
+  const avatarId = editing ? draft.avatar : profile.avatar;
+  const avatarSource = AVATARS.find((avatar) => avatar.id === avatarId)?.source || AVATARS[0].source;
   const showStatus = (msg) => {
     setSavedMessage(msg);
     setTimeout(() => setSavedMessage(""), 2200);
@@ -119,7 +134,14 @@ export default function ChildProfileScreen({ navigation }) {
       updatedAt: new Date().toISOString(),
     };
     try {
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      if (childIndex === 0) {
+        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      } else {
+        const savedExtras = await AsyncStorage.getItem(EXTRA_STORAGE_KEY);
+        const extras = savedExtras ? JSON.parse(savedExtras) : [];
+        extras[childIndex - 1] = updated;
+        await AsyncStorage.setItem(EXTRA_STORAGE_KEY, JSON.stringify(extras.filter(Boolean)));
+      }
       setProfile(updated);
       setEditing(false);
       showStatus("Child profile saved 💜");
@@ -135,7 +157,14 @@ export default function ChildProfileScreen({ navigation }) {
 
   const handleClear = async () => {
     try {
-      await AsyncStorage.removeItem(STORAGE_KEY);
+      if (childIndex === 0) {
+        await AsyncStorage.removeItem(STORAGE_KEY);
+      } else {
+        const savedExtras = await AsyncStorage.getItem(EXTRA_STORAGE_KEY);
+        const extras = savedExtras ? JSON.parse(savedExtras) : [];
+        const updated = extras.filter((_, i) => i !== childIndex - 1);
+        await AsyncStorage.setItem(EXTRA_STORAGE_KEY, JSON.stringify(updated));
+      }
       setProfile(BLANK);
       setDraft(BLANK);
       setEditing(false);

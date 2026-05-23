@@ -107,11 +107,11 @@ function CustomDrawerContent({ navigation }) {
   }, []);
 
   const mainItems = [
-    { label: "Home", icon: "home-outline", screen: "MainTabs" },
-    { label: "Routines", icon: "calendar-outline", screen: "MainTabs" },
+    { label: "Home", icon: "home-outline", screen: "DrawerHome", params: { screen: "HomeTab" } },
+    { label: "Routines", icon: "calendar-outline", screen: "DrawerHome", params: { screen: "RoutineTab" } },
     { label: "Emotional Check-In", icon: "heart-outline", screen: "MoodSupport" },
     { label: "Emergency / Support Mode", icon: "alert-circle-outline", screen: "SupportMode" },
-    { label: "Progress", icon: "bar-chart-outline", screen: "MainTabs" },
+    { label: "Progress", icon: "bar-chart-outline", screen: "DrawerHome", params: { screen: "ProgressTab" } },
     { label: "Community", icon: "chatbubble-outline", screen: "Community" },
   ];
 
@@ -220,7 +220,7 @@ function CustomDrawerContent({ navigation }) {
       {/* Main */}
       <Text style={styles.drawerSectionLabel}>MAIN</Text>
       {mainItems.map((item) => (
-        <DrawerRow key={item.label} label={item.label} icon={item.icon} onPress={() => navigate(item.screen)} />
+        <DrawerRow key={item.label} label={item.label} icon={item.icon} onPress={() => navigate(item.screen, item.params)} />
       ))}
 
       <View style={styles.drawerDivider} />

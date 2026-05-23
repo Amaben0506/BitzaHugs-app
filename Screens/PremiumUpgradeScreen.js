@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather, Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const FREE_FEATURES = [
   { label: "Basic child profile", icon: "user" },
@@ -34,6 +35,11 @@ const PREMIUM_FEATURES = [
 ];
 
 export default function PremiumUpgradeScreen({ navigation }) {
+  const activatePremium = async () => {
+    await AsyncStorage.setItem("bitzaIsPremium", "true");
+    navigation.goBack();
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
@@ -82,7 +88,7 @@ export default function PremiumUpgradeScreen({ navigation }) {
         </View>
 
         {/* CTA */}
-        <TouchableOpacity style={styles.ctaButton} activeOpacity={0.9}>
+        <TouchableOpacity style={styles.ctaButton} onPress={activatePremium} activeOpacity={0.9}>
           <Ionicons name="sparkles" size={18} color="#FFFFFF" />
           <Text style={styles.ctaText}>Start Free 7-Day Trial</Text>
         </TouchableOpacity>
@@ -128,12 +134,12 @@ export default function PremiumUpgradeScreen({ navigation }) {
         </View>
 
         {/* Secondary CTA */}
-        <TouchableOpacity style={styles.ctaButton} activeOpacity={0.9}>
+        <TouchableOpacity style={styles.ctaButton} onPress={activatePremium} activeOpacity={0.9}>
           <Ionicons name="sparkles" size={18} color="#FFFFFF" />
           <Text style={styles.ctaText}>Start Free 7-Day Trial</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.restoreButton} activeOpacity={0.85}>
+        <TouchableOpacity style={styles.restoreButton} onPress={activatePremium} activeOpacity={0.85}>
           <Text style={styles.restoreText}>Restore Purchase</Text>
         </TouchableOpacity>
 

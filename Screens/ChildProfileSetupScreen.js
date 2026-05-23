@@ -17,6 +17,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 
 const CHILD_PROFILE_KEY = "bitzaChildProfile";
+const EXTRA_CHILD_PROFILES_KEY = "bitzaChildProfiles";
 const childHeader = require("../assets/icons/child-profile-header-illustration.png");
 
 const months = [
@@ -64,7 +65,9 @@ function calculateAgeFromDob(dob) {
   return age >= 0 ? String(age) : "";
 }
 
-export default function ChildProfileSetupScreen({ navigation }) {
+export default function ChildProfileSetupScreen({ navigation, route }) {
+  const childIndex = route?.params?.childIndex || 0;
+  const isAddingExtraChild = childIndex > 0;
   const [childName, setChildName] = useState("");
   const [dob, setDob] = useState("");
   const [communicationStyle, setCommunicationStyle] = useState("");
@@ -169,10 +172,22 @@ export default function ChildProfileSetupScreen({ navigation }) {
       age: calculatedAge || "",
       dob: dob || "",
       communicationStyle: finalCommunication,
+      avatar: "01",
+      supportNeeds: [],
+      notes: "",
       updatedAt: new Date().toISOString(),
     };
 
     try {
+      if (isAddingExtraChild) {
+        const savedExtras = await AsyncStorage.getItem(EXTRA_CHILD_PROFILES_KEY);
+        const extras = savedExtras ? JSON.parse(savedExtras) : [];
+        extras[childIndex - 1] = childProfile;
+        await AsyncStorage.setItem(EXTRA_CHILD_PROFILES_KEY, JSON.stringify(extras.filter(Boolean)));
+        navigation.navigate("ChildrenList");
+        return;
+      }
+
       await AsyncStorage.setItem(CHILD_PROFILE_KEY, JSON.stringify(childProfile));
       // Works whether accessed from onboarding stack or drawer
       if (navigation.canNavigate && navigation.canNavigate("SensorySupport")) {
@@ -313,7 +328,7 @@ export default function ChildProfileSetupScreen({ navigation }) {
         <TouchableOpacity
           style={styles.skipButton}
           activeOpacity={0.75}
-          onPress={() => navigation.navigate("SensorySupport")}
+          onPress={() => navigation.navigate(isAddingExtraChild ? "ChildrenList" : "SensorySupport")}
         >
           <Text style={styles.skipText}>Skip for now</Text>
         </TouchableOpacity>

@@ -20,7 +20,6 @@ const CARD = "#FFFFFF";
 const BORDER = "#EFE5DD";
 const SOFT_TEXT = "#8E87A0";
 const BACKGROUND = "#FFF9F2";
-const IS_PREMIUM = false; 
 
 // ─── Personalization Logic ────────────────────────────────────────────────────
 const getPersonalizedSuggestions = (profile) => {
@@ -138,6 +137,7 @@ export default function HomeScreen({ navigation }) {
   const [childProfile, setChildProfile] = useState(null);
   const [parentProfile, setParentProfile] = useState(null);
   const [suggestions, setSuggestions] = useState(null);
+  const [isPremium, setIsPremium] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -145,6 +145,7 @@ export default function HomeScreen({ navigation }) {
         try {
           const savedChild = await AsyncStorage.getItem("bitzaChildProfile");
           const savedParent = await AsyncStorage.getItem("bitzaParentProfile");
+          const premium = await AsyncStorage.getItem("bitzaIsPremium");
 
           if (savedChild) {
             const profile = JSON.parse(savedChild);
@@ -158,6 +159,8 @@ export default function HomeScreen({ navigation }) {
           if (savedParent) {
             setParentProfile(JSON.parse(savedParent));
           }
+
+          setIsPremium(premium === "true");
         } catch (error) {
           console.log("Error loading profiles:", error);
         }
@@ -519,7 +522,7 @@ export default function HomeScreen({ navigation }) {
     activeOpacity={0.75}
     style={[styles.toolCard, { backgroundColor: tool.color }]}
     onPress={() => {
-      if (tool.premium && !IS_PREMIUM) {
+      if (tool.premium && !isPremium) {
         goToScreen("PremiumUpgrade");
       } else {
         goToScreen(tool.screen);
@@ -529,7 +532,7 @@ export default function HomeScreen({ navigation }) {
     <Image source={tool.icon} style={styles.toolIcon} />
     <Text style={styles.toolTitle}>{tool.title}</Text>
     <Text style={styles.toolText}>{tool.text}</Text>
-    {tool.premium && (
+    {tool.premium && !isPremium && (
       <View style={styles.toolPremiumBadge}>
         <Text style={styles.toolPremiumText}>✦ Premium</Text>
       </View>

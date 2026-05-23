@@ -5,13 +5,22 @@ import {
   ImageBackground,
   TouchableOpacity,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const splashScreen = require("../assets/icons/splash-background.png");
 
 export default function SplashScreen({ navigation }) {
   useEffect(() => {
     const timer = setTimeout(() => {
-      navigation.replace("Welcome");
+      const routeNext = async () => {
+        try {
+          const complete = await AsyncStorage.getItem("bitzaOnboardingComplete");
+          navigation.replace(complete === "true" ? "MainTabs" : "Welcome");
+        } catch (e) {
+          navigation.replace("Welcome");
+        }
+      };
+      routeNext();
     }, 2200);
 
     return () => clearTimeout(timer);

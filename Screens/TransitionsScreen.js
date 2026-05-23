@@ -32,8 +32,6 @@ const defaultSteps = [
   { id: 4, icon: "exit-outline", title: "Head Out the Door", done: false },
 ];
 
-const IS_PREMIUM = false;
-
 export default function TransitionsScreen({ navigation }) {
   const [selectedTime, setSelectedTime] = useState(DEFAULT_TIME);
   const [secondsLeft, setSecondsLeft] = useState(DEFAULT_TIME);
@@ -45,6 +43,7 @@ export default function TransitionsScreen({ navigation }) {
   const [showActivityPicker, setShowActivityPicker] = useState(false);
   const [customActivity, setCustomActivity] = useState("");
   const [showCustomInput, setShowCustomInput] = useState(false);
+  const [isPremium, setIsPremium] = useState(false);
 
   const nav = (screen, params) =>
     navigation.getParent()?.getParent()?.navigate(screen, params) ??
@@ -58,6 +57,8 @@ export default function TransitionsScreen({ navigation }) {
           if (saved) {
             setRoutineActivities(JSON.parse(saved));
           }
+          const premium = await AsyncStorage.getItem("bitzaIsPremium");
+          setIsPremium(premium === "true");
         } catch (e) {
           console.log("Error loading routine:", e);
         }
@@ -265,7 +266,7 @@ export default function TransitionsScreen({ navigation }) {
             <TouchableOpacity
               style={styles.toolChip}
               onPress={() => {
-                if (!IS_PREMIUM) {
+                if (!isPremium) {
                   nav("PremiumUpgrade");
                 } else {
                   nav("HugiChat");
@@ -275,10 +276,12 @@ export default function TransitionsScreen({ navigation }) {
             >
               <Ionicons name="chatbubble-ellipses-outline" size={20} color="#6F42D8" />
               <Text style={styles.toolLabel}>Talk to Hugi</Text>
-              <View style={styles.premiumBadge}>
-                <Ionicons name="sparkles" size={8} color="#7548D8" />
-                <Text style={styles.premiumText}>Premium</Text>
-              </View>
+              {!isPremium && (
+                <View style={styles.premiumBadge}>
+                  <Ionicons name="sparkles" size={8} color="#7548D8" />
+                  <Text style={styles.premiumText}>Premium</Text>
+                </View>
+              )}
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.toolChip} onPress={() => nav("GroundingSteps")} activeOpacity={0.8}>

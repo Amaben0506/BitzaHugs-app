@@ -295,7 +295,7 @@ export default function ProgressScreen({ navigation }) {
               <Ionicons name="calendar-outline" size={16} color="#6F42D8" />
             </View>
             <Text style={styles.cardTitle}>Today's Routine</Text>
-            <TouchableOpacity onPress={() => navigation?.navigate("MainTabs", { screen: "RoutineTab" })}>
+            <TouchableOpacity onPress={() => navigation.getParent()?.navigate("RoutineTab") ?? navigation?.navigate("RoutineTab")}>
               <Text style={styles.linkText}>View ›</Text>
             </TouchableOpacity>
           </View>
@@ -467,4 +467,3 @@ const styles = StyleSheet.create({
   footerIcon: { width: 36, height: 36, marginRight: 11 },
   footerText: { flex: 1, color: "#2B2463", fontSize: 12, lineHeight: 17, fontWeight: "700" },
 });
-
