@@ -46,8 +46,9 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "d9b1c8c7-5a0b-4f1e-9c3a-2f8b6e5a7c3d"
+        "projectId": "f664b36b-a99d-47f0-bd7f-30e05f775a16"
       }
-    }
+    },
+    "owner": "amandanb05"
   }
 }
