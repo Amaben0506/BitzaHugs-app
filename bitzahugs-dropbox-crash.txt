@@ -1,0 +1,462 @@
+Drop box contents: 7 entries
+Max entries: 1000
+Low priority rate limit period: 2000 ms
+Low priority tags: {data_app_wtf, keymaster, system_server_wtf, system_app_strictmode, system_app_wtf, system_server_strictmode, data_app_strictmode, netstats}
+Searching for: data_app_crash
+
+========================================
+2026-05-22 19:39:46 data_app_crash (text, 4969 bytes)
+SystemUptimeMs: 178358
+Process: com.amandabenavidez.bitzahugs
+PID: 5789
+UID: 10205
+Frozen: false
+Flags: 0x20e8be44
+Package: com.amandabenavidez.bitzahugs v1 (1.0.0)
+Foreground: Yes
+Process-Runtime: 1445
+Timestamp: 2026-05-22 19:39:46.147-0500
+Build: google/sdk_gphone16k_arm64/emu64a16k:15/AE3A.240806.041/12890756:user/dev-keys
+PageSize: 16384
+Crash-Handler: com.android.internal.os.RuntimeInit$KillApplicationHandler
+Loading-Progress: 1.0
+Dropped-Count: 0
+
+java.lang.RuntimeException: Unable to start activity ComponentInfo{com.amandabenavidez.bitzahugs/com.amandabenavidez.bitzahugs.MainActivity}: java.lang.reflect.InvocationTargetException
+	at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:4048)
+	at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:4235)
+	at android.app.servertransaction.LaunchActivityItem.execute(LaunchActivityItem.java:112)
+	at android.app.servertransaction.TransactionExecutor.executeNonLifecycleItem(TransactionExecutor.java:174)
+	at android.app.servertransaction.TransactionExecutor.executeTransactionItems(TransactionExecutor.java:109)
+	at android.app.servertransaction.TransactionExecutor.execute(TransactionExecutor.java:81)
+	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2636)
+	at android.os.Handler.dispatchMessage(Handler.java:107)
+	at android.os.Looper.loopOnce(Looper.java:232)
+	at android.os.Looper.loop(Looper.java:317)
+	at android.app.ActivityThread.main(ActivityThread.java:8705)
+	at java.lang.reflect.Method.invoke(Native Method)
+	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:580)
+	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:886)
+Caused by: java.lang.reflect.InvocationTargetException
+	at java.lang.reflect.Method.invoke(Native Method)
+	at expo.modules.ReactActivityDelegateWrapper.invokeDelegateMethod(ReactActivityDelegateWrapper.kt:356)
+	at expo.modules.ReactActivityDelegateWrapper.loadApp(ReactActivityDelegateWrapper.kt:126)
+	at expo.modules.ReactActivityDelegateWrapper.onCreate(ReactActivityDelegateWrapper.kt:178)
+	at com.facebook.react.ReactActivity.onCreate(ReactActivity.java:47)
+	at com.amandabenavidez.bitzahugs.MainActivity.onCreate(MainActivity.kt:23)
+	at android.app.Activity.performCreate(Activity.java:9002)
+	at android.app.Activity.performCreate(Activity.java:8980)
+	at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1526)
+	at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:4030)
+	... 13 more
+Caused by: com.facebook.soloader.SoLoaderDSONotFoundError: couldn't find DSO to load: libc++_shared.so
+	existing SO sources: 
+		SoSource 0: ApplicationSoSource[DirectorySoSource[root = /data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/lib/arm64 flags = 0]]
+		SoSource 1: DirectApkSoSource[root = [/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a]]
+		SoSource 2: DirectorySoSource[root = /system/lib64 flags = 3]
+		SoSource 3: DirectorySoSource[root = /vendor/lib64 flags = 3]
+	Native lib dir: /data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/lib/arm64
+
+	at com.facebook.soloader.SoLoader.doLoadLibraryBySoName(SoLoader.java:1216)
+	at com.facebook.soloader.SoLoader.loadLibraryBySoNameImpl(SoLoader.java:1078)
+	at com.facebook.soloader.SoLoader.loadDependency(SoLoader.java:920)
+	at com.facebook.soloader.DirectApkSoSource.loadDependencies(DirectApkSoSource.java:166)
+	at com.facebook.soloader.DirectApkSoSource.loadLibrary(DirectApkSoSource.java:76)
+	at com.facebook.soloader.SoLoader.loadLibraryFromSoSource(SoLoader.java:1246)
+	at com.facebook.soloader.SoLoader.doLoadLibraryBySoName(SoLoader.java:1210)
+	at com.facebook.soloader.SoLoader.loadLibraryBySoNameImpl(SoLoader.java:1078)
+	at com.facebook.soloader.SoLoader.loadLibraryBySoName(SoLoader.java:943)
+	at com.facebook.soloader.SoLoader.loadLibraryOnAndroid(SoLoader.java:859)
+	at com.facebook.soloader.SoLoader.loadLibrary(SoLoader.java:842)
+	at com.facebook.soloader.SoLoader.loadLibrary(SoLoader.java:812)
+	at com.facebook.hermes.reactexecutor.HermesExecutor.loadLibrary(HermesExecutor.java:26)
+	at com.facebook.hermes.reactexecutor.HermesExecutor.<clinit>(HermesExecutor.java:20)
+	at com.facebook.react.ReactInstanceManagerBuilder.getDefaultJSExecutorFactory(ReactInstanceManagerBuilder.java:407)
+	at com.facebook.react.ReactInstanceManagerBuilder.build(ReactInstanceManagerBuilder.java:349)
+	at com.facebook.react.ReactNativeHost.createReactInstanceManager(ReactNativeHost.java:87)
+	at expo.modules.ReactNativeHostWrapperBase.createReactInstanceManager(ReactNativeHostWrapperBase.kt:29)
+	at com.facebook.react.ReactNativeHost.getReactInstanceManager(ReactNativeHost.java:57)
+	at com.facebook.react.ReactDelegate.loadApp(ReactDelegate.java:301)
+	at com.facebook.react.ReactActivityDelegate.loadApp(ReactActivityDelegate.java:137)
+	... 23 more
+
+========================================
+2026-05-22 19:40:13 data_app_crash (text, 4969 bytes)
+SystemUptimeMs: 205749
+Process: com.amandabenavidez.bitzahugs
+PID: 6570
+UID: 10205
+Frozen: false
+Flags: 0x20c8be44
+Package: com.amandabenavidez.bitzahugs v1 (1.0.0)
+Foreground: Yes
+Process-Runtime: 1435
+Timestamp: 2026-05-22 19:40:13.525-0500
+Build: google/sdk_gphone16k_arm64/emu64a16k:15/AE3A.240806.041/12890756:user/dev-keys
+PageSize: 16384
+Crash-Handler: com.android.internal.os.RuntimeInit$KillApplicationHandler
+Loading-Progress: 1.0
+Dropped-Count: 0
+
+java.lang.RuntimeException: Unable to start activity ComponentInfo{com.amandabenavidez.bitzahugs/com.amandabenavidez.bitzahugs.MainActivity}: java.lang.reflect.InvocationTargetException
+	at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:4048)
+	at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:4235)
+	at android.app.servertransaction.LaunchActivityItem.execute(LaunchActivityItem.java:112)
+	at android.app.servertransaction.TransactionExecutor.executeNonLifecycleItem(TransactionExecutor.java:174)
+	at android.app.servertransaction.TransactionExecutor.executeTransactionItems(TransactionExecutor.java:109)
+	at android.app.servertransaction.TransactionExecutor.execute(TransactionExecutor.java:81)
+	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2636)
+	at android.os.Handler.dispatchMessage(Handler.java:107)
+	at android.os.Looper.loopOnce(Looper.java:232)
+	at android.os.Looper.loop(Looper.java:317)
+	at android.app.ActivityThread.main(ActivityThread.java:8705)
+	at java.lang.reflect.Method.invoke(Native Method)
+	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:580)
+	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:886)
+Caused by: java.lang.reflect.InvocationTargetException
+	at java.lang.reflect.Method.invoke(Native Method)
+	at expo.modules.ReactActivityDelegateWrapper.invokeDelegateMethod(ReactActivityDelegateWrapper.kt:356)
+	at expo.modules.ReactActivityDelegateWrapper.loadApp(ReactActivityDelegateWrapper.kt:126)
+	at expo.modules.ReactActivityDelegateWrapper.onCreate(ReactActivityDelegateWrapper.kt:178)
+	at com.facebook.react.ReactActivity.onCreate(ReactActivity.java:47)
+	at com.amandabenavidez.bitzahugs.MainActivity.onCreate(MainActivity.kt:23)
+	at android.app.Activity.performCreate(Activity.java:9002)
+	at android.app.Activity.performCreate(Activity.java:8980)
+	at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1526)
+	at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:4030)
+	... 13 more
+Caused by: com.facebook.soloader.SoLoaderDSONotFoundError: couldn't find DSO to load: libc++_shared.so
+	existing SO sources: 
+		SoSource 0: ApplicationSoSource[DirectorySoSource[root = /data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/lib/arm64 flags = 0]]
+		SoSource 1: DirectApkSoSource[root = [/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a]]
+		SoSource 2: DirectorySoSource[root = /system/lib64 flags = 3]
+		SoSource 3: DirectorySoSource[root = /vendor/lib64 flags = 3]
+	Native lib dir: /data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/lib/arm64
+
+	at com.facebook.soloader.SoLoader.doLoadLibraryBySoName(SoLoader.java:1216)
+	at com.facebook.soloader.SoLoader.loadLibraryBySoNameImpl(SoLoader.java:1078)
+	at com.facebook.soloader.SoLoader.loadDependency(SoLoader.java:920)
+	at com.facebook.soloader.DirectApkSoSource.loadDependencies(DirectApkSoSource.java:166)
+	at com.facebook.soloader.DirectApkSoSource.loadLibrary(DirectApkSoSource.java:76)
+	at com.facebook.soloader.SoLoader.loadLibraryFromSoSource(SoLoader.java:1246)
+	at com.facebook.soloader.SoLoader.doLoadLibraryBySoName(SoLoader.java:1210)
+	at com.facebook.soloader.SoLoader.loadLibraryBySoNameImpl(SoLoader.java:1078)
+	at com.facebook.soloader.SoLoader.loadLibraryBySoName(SoLoader.java:943)
+	at com.facebook.soloader.SoLoader.loadLibraryOnAndroid(SoLoader.java:859)
+	at com.facebook.soloader.SoLoader.loadLibrary(SoLoader.java:842)
+	at com.facebook.soloader.SoLoader.loadLibrary(SoLoader.java:812)
+	at com.facebook.hermes.reactexecutor.HermesExecutor.loadLibrary(HermesExecutor.java:26)
+	at com.facebook.hermes.reactexecutor.HermesExecutor.<clinit>(HermesExecutor.java:20)
+	at com.facebook.react.ReactInstanceManagerBuilder.getDefaultJSExecutorFactory(ReactInstanceManagerBuilder.java:407)
+	at com.facebook.react.ReactInstanceManagerBuilder.build(ReactInstanceManagerBuilder.java:349)
+	at com.facebook.react.ReactNativeHost.createReactInstanceManager(ReactNativeHost.java:87)
+	at expo.modules.ReactNativeHostWrapperBase.createReactInstanceManager(ReactNativeHostWrapperBase.kt:29)
+	at com.facebook.react.ReactNativeHost.getReactInstanceManager(ReactNativeHost.java:57)
+	at com.facebook.react.ReactDelegate.loadApp(ReactDelegate.java:301)
+	at com.facebook.react.ReactActivityDelegate.loadApp(ReactActivityDelegate.java:137)
+	... 23 more
+
+========================================
+2026-05-22 19:50:35 data_app_crash (text, 4969 bytes)
+SystemUptimeMs: 827425
+Process: com.amandabenavidez.bitzahugs
+PID: 7270
+UID: 10205
+Frozen: false
+Flags: 0x20c8be44
+Package: com.amandabenavidez.bitzahugs v1 (1.0.0)
+Foreground: Yes
+Process-Runtime: 1591
+Timestamp: 2026-05-22 19:50:35.221-0500
+Build: google/sdk_gphone16k_arm64/emu64a16k:15/AE3A.240806.041/12890756:user/dev-keys
+PageSize: 16384
+Crash-Handler: com.android.internal.os.RuntimeInit$KillApplicationHandler
+Loading-Progress: 1.0
+Dropped-Count: 0
+
+java.lang.RuntimeException: Unable to start activity ComponentInfo{com.amandabenavidez.bitzahugs/com.amandabenavidez.bitzahugs.MainActivity}: java.lang.reflect.InvocationTargetException
+	at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:4048)
+	at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:4235)
+	at android.app.servertransaction.LaunchActivityItem.execute(LaunchActivityItem.java:112)
+	at android.app.servertransaction.TransactionExecutor.executeNonLifecycleItem(TransactionExecutor.java:174)
+	at android.app.servertransaction.TransactionExecutor.executeTransactionItems(TransactionExecutor.java:109)
+	at android.app.servertransaction.TransactionExecutor.execute(TransactionExecutor.java:81)
+	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2636)
+	at android.os.Handler.dispatchMessage(Handler.java:107)
+	at android.os.Looper.loopOnce(Looper.java:232)
+	at android.os.Looper.loop(Looper.java:317)
+	at android.app.ActivityThread.main(ActivityThread.java:8705)
+	at java.lang.reflect.Method.invoke(Native Method)
+	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:580)
+	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:886)
+Caused by: java.lang.reflect.InvocationTargetException
+	at java.lang.reflect.Method.invoke(Native Method)
+	at expo.modules.ReactActivityDelegateWrapper.invokeDelegateMethod(ReactActivityDelegateWrapper.kt:356)
+	at expo.modules.ReactActivityDelegateWrapper.loadApp(ReactActivityDelegateWrapper.kt:126)
+	at expo.modules.ReactActivityDelegateWrapper.onCreate(ReactActivityDelegateWrapper.kt:178)
+	at com.facebook.react.ReactActivity.onCreate(ReactActivity.java:47)
+	at com.amandabenavidez.bitzahugs.MainActivity.onCreate(MainActivity.kt:23)
+	at android.app.Activity.performCreate(Activity.java:9002)
+	at android.app.Activity.performCreate(Activity.java:8980)
+	at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1526)
+	at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:4030)
+	... 13 more
+Caused by: com.facebook.soloader.SoLoaderDSONotFoundError: couldn't find DSO to load: libc++_shared.so
+	existing SO sources: 
+		SoSource 0: ApplicationSoSource[DirectorySoSource[root = /data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/lib/arm64 flags = 0]]
+		SoSource 1: DirectApkSoSource[root = [/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a]]
+		SoSource 2: DirectorySoSource[root = /system/lib64 flags = 3]
+		SoSource 3: DirectorySoSource[root = /vendor/lib64 flags = 3]
+	Native lib dir: /data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/lib/arm64
+
+	at com.facebook.soloader.SoLoader.doLoadLibraryBySoName(SoLoader.java:1216)
+	at com.facebook.soloader.SoLoader.loadLibraryBySoNameImpl(SoLoader.java:1078)
+	at com.facebook.soloader.SoLoader.loadDependency(SoLoader.java:920)
+	at com.facebook.soloader.DirectApkSoSource.loadDependencies(DirectApkSoSource.java:166)
+	at com.facebook.soloader.DirectApkSoSource.loadLibrary(DirectApkSoSource.java:76)
+	at com.facebook.soloader.SoLoader.loadLibraryFromSoSource(SoLoader.java:1246)
+	at com.facebook.soloader.SoLoader.doLoadLibraryBySoName(SoLoader.java:1210)
+	at com.facebook.soloader.SoLoader.loadLibraryBySoNameImpl(SoLoader.java:1078)
+	at com.facebook.soloader.SoLoader.loadLibraryBySoName(SoLoader.java:943)
+	at com.facebook.soloader.SoLoader.loadLibraryOnAndroid(SoLoader.java:859)
+	at com.facebook.soloader.SoLoader.loadLibrary(SoLoader.java:842)
+	at com.facebook.soloader.SoLoader.loadLibrary(SoLoader.java:812)
+	at com.facebook.hermes.reactexecutor.HermesExecutor.loadLibrary(HermesExecutor.java:26)
+	at com.facebook.hermes.reactexecutor.HermesExecutor.<clinit>(HermesExecutor.java:20)
+	at com.facebook.react.ReactInstanceManagerBuilder.getDefaultJSExecutorFactory(ReactInstanceManagerBuilder.java:407)
+	at com.facebook.react.ReactInstanceManagerBuilder.build(ReactInstanceManagerBuilder.java:349)
+	at com.facebook.react.ReactNativeHost.createReactInstanceManager(ReactNativeHost.java:87)
+	at expo.modules.ReactNativeHostWrapperBase.createReactInstanceManager(ReactNativeHostWrapperBase.kt:29)
+	at com.facebook.react.ReactNativeHost.getReactInstanceManager(ReactNativeHost.java:57)
+	at com.facebook.react.ReactDelegate.loadApp(ReactDelegate.java:301)
+	at com.facebook.react.ReactActivityDelegate.loadApp(ReactActivityDelegate.java:137)
+	... 23 more
+
+========================================
+2026-05-22 19:52:46 data_app_crash (text, 4969 bytes)
+SystemUptimeMs: 958426
+Process: com.amandabenavidez.bitzahugs
+PID: 7472
+UID: 10205
+Frozen: false
+Flags: 0x20c8be44
+Package: com.amandabenavidez.bitzahugs v1 (1.0.0)
+Foreground: Yes
+Process-Runtime: 1171
+Timestamp: 2026-05-22 19:52:46.220-0500
+Build: google/sdk_gphone16k_arm64/emu64a16k:15/AE3A.240806.041/12890756:user/dev-keys
+PageSize: 16384
+Crash-Handler: com.android.internal.os.RuntimeInit$KillApplicationHandler
+Loading-Progress: 1.0
+Dropped-Count: 0
+
+java.lang.RuntimeException: Unable to start activity ComponentInfo{com.amandabenavidez.bitzahugs/com.amandabenavidez.bitzahugs.MainActivity}: java.lang.reflect.InvocationTargetException
+	at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:4048)
+	at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:4235)
+	at android.app.servertransaction.LaunchActivityItem.execute(LaunchActivityItem.java:112)
+	at android.app.servertransaction.TransactionExecutor.executeNonLifecycleItem(TransactionExecutor.java:174)
+	at android.app.servertransaction.TransactionExecutor.executeTransactionItems(TransactionExecutor.java:109)
+	at android.app.servertransaction.TransactionExecutor.execute(TransactionExecutor.java:81)
+	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2636)
+	at android.os.Handler.dispatchMessage(Handler.java:107)
+	at android.os.Looper.loopOnce(Looper.java:232)
+	at android.os.Looper.loop(Looper.java:317)
+	at android.app.ActivityThread.main(ActivityThread.java:8705)
+	at java.lang.reflect.Method.invoke(Native Method)
+	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:580)
+	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:886)
+Caused by: java.lang.reflect.InvocationTargetException
+	at java.lang.reflect.Method.invoke(Native Method)
+	at expo.modules.ReactActivityDelegateWrapper.invokeDelegateMethod(ReactActivityDelegateWrapper.kt:356)
+	at expo.modules.ReactActivityDelegateWrapper.loadApp(ReactActivityDelegateWrapper.kt:126)
+	at expo.modules.ReactActivityDelegateWrapper.onCreate(ReactActivityDelegateWrapper.kt:178)
+	at com.facebook.react.ReactActivity.onCreate(ReactActivity.java:47)
+	at com.amandabenavidez.bitzahugs.MainActivity.onCreate(MainActivity.kt:23)
+	at android.app.Activity.performCreate(Activity.java:9002)
+	at android.app.Activity.performCreate(Activity.java:8980)
+	at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1526)
+	at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:4030)
+	... 13 more
+Caused by: com.facebook.soloader.SoLoaderDSONotFoundError: couldn't find DSO to load: libc++_shared.so
+	existing SO sources: 
+		SoSource 0: ApplicationSoSource[DirectorySoSource[root = /data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/lib/arm64 flags = 0]]
+		SoSource 1: DirectApkSoSource[root = [/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a]]
+		SoSource 2: DirectorySoSource[root = /system/lib64 flags = 3]
+		SoSource 3: DirectorySoSource[root = /vendor/lib64 flags = 3]
+	Native lib dir: /data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/lib/arm64
+
+	at com.facebook.soloader.SoLoader.doLoadLibraryBySoName(SoLoader.java:1216)
+	at com.facebook.soloader.SoLoader.loadLibraryBySoNameImpl(SoLoader.java:1078)
+	at com.facebook.soloader.SoLoader.loadDependency(SoLoader.java:920)
+	at com.facebook.soloader.DirectApkSoSource.loadDependencies(DirectApkSoSource.java:166)
+	at com.facebook.soloader.DirectApkSoSource.loadLibrary(DirectApkSoSource.java:76)
+	at com.facebook.soloader.SoLoader.loadLibraryFromSoSource(SoLoader.java:1246)
+	at com.facebook.soloader.SoLoader.doLoadLibraryBySoName(SoLoader.java:1210)
+	at com.facebook.soloader.SoLoader.loadLibraryBySoNameImpl(SoLoader.java:1078)
+	at com.facebook.soloader.SoLoader.loadLibraryBySoName(SoLoader.java:943)
+	at com.facebook.soloader.SoLoader.loadLibraryOnAndroid(SoLoader.java:859)
+	at com.facebook.soloader.SoLoader.loadLibrary(SoLoader.java:842)
+	at com.facebook.soloader.SoLoader.loadLibrary(SoLoader.java:812)
+	at com.facebook.hermes.reactexecutor.HermesExecutor.loadLibrary(HermesExecutor.java:26)
+	at com.facebook.hermes.reactexecutor.HermesExecutor.<clinit>(HermesExecutor.java:20)
+	at com.facebook.react.ReactInstanceManagerBuilder.getDefaultJSExecutorFactory(ReactInstanceManagerBuilder.java:407)
+	at com.facebook.react.ReactInstanceManagerBuilder.build(ReactInstanceManagerBuilder.java:349)
+	at com.facebook.react.ReactNativeHost.createReactInstanceManager(ReactNativeHost.java:87)
+	at expo.modules.ReactNativeHostWrapperBase.createReactInstanceManager(ReactNativeHostWrapperBase.kt:29)
+	at com.facebook.react.ReactNativeHost.getReactInstanceManager(ReactNativeHost.java:57)
+	at com.facebook.react.ReactDelegate.loadApp(ReactDelegate.java:301)
+	at com.facebook.react.ReactActivityDelegate.loadApp(ReactActivityDelegate.java:137)
+	... 23 more
+
+========================================
+2026-05-22 19:56:02 data_app_crash (text, 4970 bytes)
+SystemUptimeMs: 1154250
+Process: com.amandabenavidez.bitzahugs
+PID: 7692
+UID: 10205
+Frozen: false
+Flags: 0x20c8be44
+Package: com.amandabenavidez.bitzahugs v1 (1.0.0)
+Foreground: Yes
+Process-Runtime: 5453
+Timestamp: 2026-05-22 19:56:02.024-0500
+Build: google/sdk_gphone16k_arm64/emu64a16k:15/AE3A.240806.041/12890756:user/dev-keys
+PageSize: 16384
+Crash-Handler: com.android.internal.os.RuntimeInit$KillApplicationHandler
+Loading-Progress: 1.0
+Dropped-Count: 0
+
+java.lang.RuntimeException: Unable to start activity ComponentInfo{com.amandabenavidez.bitzahugs/com.amandabenavidez.bitzahugs.MainActivity}: java.lang.reflect.InvocationTargetException
+	at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:4048)
+	at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:4235)
+	at android.app.servertransaction.LaunchActivityItem.execute(LaunchActivityItem.java:112)
+	at android.app.servertransaction.TransactionExecutor.executeNonLifecycleItem(TransactionExecutor.java:174)
+	at android.app.servertransaction.TransactionExecutor.executeTransactionItems(TransactionExecutor.java:109)
+	at android.app.servertransaction.TransactionExecutor.execute(TransactionExecutor.java:81)
+	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2636)
+	at android.os.Handler.dispatchMessage(Handler.java:107)
+	at android.os.Looper.loopOnce(Looper.java:232)
+	at android.os.Looper.loop(Looper.java:317)
+	at android.app.ActivityThread.main(ActivityThread.java:8705)
+	at java.lang.reflect.Method.invoke(Native Method)
+	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:580)
+	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:886)
+Caused by: java.lang.reflect.InvocationTargetException
+	at java.lang.reflect.Method.invoke(Native Method)
+	at expo.modules.ReactActivityDelegateWrapper.invokeDelegateMethod(ReactActivityDelegateWrapper.kt:356)
+	at expo.modules.ReactActivityDelegateWrapper.loadApp(ReactActivityDelegateWrapper.kt:126)
+	at expo.modules.ReactActivityDelegateWrapper.onCreate(ReactActivityDelegateWrapper.kt:178)
+	at com.facebook.react.ReactActivity.onCreate(ReactActivity.java:47)
+	at com.amandabenavidez.bitzahugs.MainActivity.onCreate(MainActivity.kt:23)
+	at android.app.Activity.performCreate(Activity.java:9002)
+	at android.app.Activity.performCreate(Activity.java:8980)
+	at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1526)
+	at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:4030)
+	... 13 more
+Caused by: com.facebook.soloader.SoLoaderDSONotFoundError: couldn't find DSO to load: libc++_shared.so
+	existing SO sources: 
+		SoSource 0: ApplicationSoSource[DirectorySoSource[root = /data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/lib/arm64 flags = 0]]
+		SoSource 1: DirectApkSoSource[root = [/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a]]
+		SoSource 2: DirectorySoSource[root = /system/lib64 flags = 3]
+		SoSource 3: DirectorySoSource[root = /vendor/lib64 flags = 3]
+	Native lib dir: /data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/lib/arm64
+
+	at com.facebook.soloader.SoLoader.doLoadLibraryBySoName(SoLoader.java:1216)
+	at com.facebook.soloader.SoLoader.loadLibraryBySoNameImpl(SoLoader.java:1078)
+	at com.facebook.soloader.SoLoader.loadDependency(SoLoader.java:920)
+	at com.facebook.soloader.DirectApkSoSource.loadDependencies(DirectApkSoSource.java:166)
+	at com.facebook.soloader.DirectApkSoSource.loadLibrary(DirectApkSoSource.java:76)
+	at com.facebook.soloader.SoLoader.loadLibraryFromSoSource(SoLoader.java:1246)
+	at com.facebook.soloader.SoLoader.doLoadLibraryBySoName(SoLoader.java:1210)
+	at com.facebook.soloader.SoLoader.loadLibraryBySoNameImpl(SoLoader.java:1078)
+	at com.facebook.soloader.SoLoader.loadLibraryBySoName(SoLoader.java:943)
+	at com.facebook.soloader.SoLoader.loadLibraryOnAndroid(SoLoader.java:859)
+	at com.facebook.soloader.SoLoader.loadLibrary(SoLoader.java:842)
+	at com.facebook.soloader.SoLoader.loadLibrary(SoLoader.java:812)
+	at com.facebook.hermes.reactexecutor.HermesExecutor.loadLibrary(HermesExecutor.java:26)
+	at com.facebook.hermes.reactexecutor.HermesExecutor.<clinit>(HermesExecutor.java:20)
+	at com.facebook.react.ReactInstanceManagerBuilder.getDefaultJSExecutorFactory(ReactInstanceManagerBuilder.java:407)
+	at com.facebook.react.ReactInstanceManagerBuilder.build(ReactInstanceManagerBuilder.java:349)
+	at com.facebook.react.ReactNativeHost.createReactInstanceManager(ReactNativeHost.java:87)
+	at expo.modules.ReactNativeHostWrapperBase.createReactInstanceManager(ReactNativeHostWrapperBase.kt:29)
+	at com.facebook.react.ReactNativeHost.getReactInstanceManager(ReactNativeHost.java:57)
+	at com.facebook.react.ReactDelegate.loadApp(ReactDelegate.java:301)
+	at com.facebook.react.ReactActivityDelegate.loadApp(ReactActivityDelegate.java:137)
+	... 23 more
+
+========================================
+2026-05-22 19:58:24 data_app_crash (text, 4970 bytes)
+SystemUptimeMs: 1296561
+Process: com.amandabenavidez.bitzahugs
+PID: 7778
+UID: 10205
+Frozen: false
+Flags: 0x20c8be44
+Package: com.amandabenavidez.bitzahugs v1 (1.0.0)
+Foreground: Yes
+Process-Runtime: 2031
+Timestamp: 2026-05-22 19:58:24.334-0500
+Build: google/sdk_gphone16k_arm64/emu64a16k:15/AE3A.240806.041/12890756:user/dev-keys
+PageSize: 16384
+Crash-Handler: com.android.internal.os.RuntimeInit$KillApplicationHandler
+Loading-Progress: 1.0
+Dropped-Count: 0
+
+java.lang.RuntimeException: Unable to start activity ComponentInfo{com.amandabenavidez.bitzahugs/com.amandabenavidez.bitzahugs.MainActivity}: java.lang.reflect.InvocationTargetException
+	at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:4048)
+	at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:4235)
+	at android.app.servertransaction.LaunchActivityItem.execute(LaunchActivityItem.java:112)
+	at android.app.servertransaction.TransactionExecutor.executeNonLifecycleItem(TransactionExecutor.java:174)
+	at android.app.servertransaction.TransactionExecutor.executeTransactionItems(TransactionExecutor.java:109)
+	at android.app.servertransaction.TransactionExecutor.execute(TransactionExecutor.java:81)
+	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2636)
+	at android.os.Handler.dispatchMessage(Handler.java:107)
+	at android.os.Looper.loopOnce(Looper.java:232)
+	at android.os.Looper.loop(Looper.java:317)
+	at android.app.ActivityThread.main(ActivityThread.java:8705)
+	at java.lang.reflect.Method.invoke(Native Method)
+	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:580)
+	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:886)
+Caused by: java.lang.reflect.InvocationTargetException
+	at java.lang.reflect.Method.invoke(Native Method)
+	at expo.modules.ReactActivityDelegateWrapper.invokeDelegateMethod(ReactActivityDelegateWrapper.kt:356)
+	at expo.modules.ReactActivityDelegateWrapper.loadApp(ReactActivityDelegateWrapper.kt:126)
+	at expo.modules.ReactActivityDelegateWrapper.onCreate(ReactActivityDelegateWrapper.kt:178)
+	at com.facebook.react.ReactActivity.onCreate(ReactActivity.java:47)
+	at com.amandabenavidez.bitzahugs.MainActivity.onCreate(MainActivity.kt:23)
+	at android.app.Activity.performCreate(Activity.java:9002)
+	at android.app.Activity.performCreate(Activity.java:8980)
+	at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1526)
+	at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:4030)
+	... 13 more
+Caused by: com.facebook.soloader.SoLoaderDSONotFoundError: couldn't find DSO to load: libc++_shared.so
+	existing SO sources: 
+		SoSource 0: ApplicationSoSource[DirectorySoSource[root = /data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/lib/arm64 flags = 0]]
+		SoSource 1: DirectApkSoSource[root = [/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a]]
+		SoSource 2: DirectorySoSource[root = /system/lib64 flags = 3]
+		SoSource 3: DirectorySoSource[root = /vendor/lib64 flags = 3]
+	Native lib dir: /data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/lib/arm64
+
+	at com.facebook.soloader.SoLoader.doLoadLibraryBySoName(SoLoader.java:1216)
+	at com.facebook.soloader.SoLoader.loadLibraryBySoNameImpl(SoLoader.java:1078)
+	at com.facebook.soloader.SoLoader.loadDependency(SoLoader.java:920)
+	at com.facebook.soloader.DirectApkSoSource.loadDependencies(DirectApkSoSource.java:166)
+	at com.facebook.soloader.DirectApkSoSource.loadLibrary(DirectApkSoSource.java:76)
+	at com.facebook.soloader.SoLoader.loadLibraryFromSoSource(SoLoader.java:1246)
+	at com.facebook.soloader.SoLoader.doLoadLibraryBySoName(SoLoader.java:1210)
+	at com.facebook.soloader.SoLoader.loadLibraryBySoNameImpl(SoLoader.java:1078)
+	at com.facebook.soloader.SoLoader.loadLibraryBySoName(SoLoader.java:943)
+	at com.facebook.soloader.SoLoader.loadLibraryOnAndroid(SoLoader.java:859)
+	at com.facebook.soloader.SoLoader.loadLibrary(SoLoader.java:842)
+	at com.facebook.soloader.SoLoader.loadLibrary(SoLoader.java:812)
+	at com.facebook.hermes.reactexecutor.HermesExecutor.loadLibrary(HermesExecutor.java:26)
+	at com.facebook.hermes.reactexecutor.HermesExecutor.<clinit>(HermesExecutor.java:20)
+	at com.facebook.react.ReactInstanceManagerBuilder.getDefaultJSExecutorFactory(ReactInstanceManagerBuilder.java:407)
+	at com.facebook.react.ReactInstanceManagerBuilder.build(ReactInstanceManagerBuilder.java:349)
+	at com.facebook.react.ReactNativeHost.createReactInstanceManager(ReactNativeHost.java:87)
+	at expo.modules.ReactNativeHostWrapperBase.createReactInstanceManager(ReactNativeHostWrapperBase.kt:29)
+	at com.facebook.react.ReactNativeHost.getReactInstanceManager(ReactNativeHost.java:57)
+	at com.facebook.react.ReactDelegate.loadApp(ReactDelegate.java:301)
+	at com.facebook.react.ReactActivityDelegate.loadApp(ReactActivityDelegate.java:137)
+	... 23 more
+

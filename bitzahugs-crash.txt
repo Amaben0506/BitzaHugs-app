@@ -1,0 +1,624 @@
+--------- beginning of system
+05-22 19:58:21.907   570  1205 W ActivityTaskManager: callingPackage for (uid=2000, pid=7774) has no WPC
+05-22 19:58:21.916   570  1205 W OptProp : Cannot read opt property android.window.PROPERTY_COMPAT_ALLOW_USER_ASPECT_RATIO_OVERRIDE
+05-22 19:58:21.916   570  1205 W OptProp : Cannot read opt property android.window.PROPERTY_COMPAT_ALLOW_USER_ASPECT_RATIO_FULLSCREEN_OVERRIDE
+05-22 19:58:21.916   570  1205 W OptProp : Cannot read opt property android.window.PROPERTY_COMPAT_ALLOW_ORIENTATION_OVERRIDE
+--------- beginning of main
+05-22 19:58:21.917   570  1205 V GrammaticalInflectionUtils: AttributionSource: android.content.AttributionSource@7717e640 does not have READ_SYSTEM_GRAMMATICAL_GENDER permission.
+05-22 19:58:21.917   570  1205 W OptProp : Cannot read opt property android.window.PROPERTY_COMPAT_ALLOW_RESIZEABLE_ACTIVITY_OVERRIDES
+05-22 19:58:21.918   570  1205 W OptProp : Cannot read opt property android.window.PROPERTY_COMPAT_ALLOW_MIN_ASPECT_RATIO_OVERRIDE
+05-22 19:58:22.124  1114  1175 V WindowManagerShell: Transition requested (#42): android.os.BinderProxy@5fd3ef6 TransitionRequestInfo { type = OPEN, triggerTask = TaskInfo{userId=0 taskId=14 displayId=0 isRunning=true baseIntent=Intent { flg=0x10000000 cmp=com.amandabenavidez.bitzahugs/.MainActivity } baseActivity=ComponentInfo{com.amandabenavidez.bitzahugs/com.amandabenavidez.bitzahugs.MainActivity} topActivity=ComponentInfo{com.amandabenavidez.bitzahugs/com.amandabenavidez.bitzahugs.MainActivity} origActivity=null realActivity=ComponentInfo{com.amandabenavidez.bitzahugs/com.amandabenavidez.bitzahugs.MainActivity} numActivities=1 lastActiveTime=1294282 supportsMultiWindow=true resizeMode=1 isResizeable=true minWidth=-1 minHeight=-1 defaultMinSize=220 token=WCT{android.window.IWindowContainerToken$Stub$Proxy@e46f2f7} topActivityType=1 pictureInPictureParams=null shouldDockBigOverlays=false launchIntoPipHostTaskId=-1 lastParentTaskIdBeforePip=-1 displayCutoutSafeInsets=Rect(0, 136 - 0, 0) topActivityInfo=ActivityInfo{446e564 com.amandabenavidez.bitzahugs.MainActivity} launchCookies=[] positionInParent=Point(0, 0) parentTaskId=-1 isFocused=false isVisible=false isVisibleRequested=false isSleeping=false locusId=null displayAreaFeatureId=1 isTopActivityTransparent=false appCompatTaskInfo=AppCompatTaskInfo { topActivityInSizeCompat=false topActivityEligibleForLetterboxEducation= falseisLetterboxEducationEnabled= true isLetterboxDoubleTapEnabled= false topActivityEligibleForUserAspectRatioButton= false topActivityBoundsLetterboxed= false isFromLetterboxDoubleTap= false topActivityLetterboxVerticalPosition= -1 topActivityLetterboxHorizontalPosition= -1 topActivityLetterboxWidth=1080 topActivityLetterboxHeight=2400 isUserFullscreenOverrideEnabled=false isSystemFullscreenOverrideEnabled=false cameraCompatTaskInfo=CameraCompatTaskInfo { cameraCompatControlState=hidden freeformCameraCompatMode=inactive}}}, pipTask = null, remoteTransition = null, displayChange = null, flags = 0, debugId = 42 }
+05-22 19:58:22.127   570  1205 I ActivityTaskManager: START u0 {flg=0x10000000 cmp=com.amandabenavidez.bitzahugs/.MainActivity} with LAUNCH_SINGLE_TASK from uid 2000 (BAL_ALLOW_PERMISSION) result code=0
+05-22 19:58:22.252  1428  1428 W SplitSelectStateCtor: Missing session instanceIds
+05-22 19:58:22.252  1428  1428 D StatsLog: LAUNCHER_SPLIT_SELECTION_EXIT_INTERRUPTED
+05-22 19:58:22.295  1428  1428 I TopTaskTracker: onTaskMovedToFront: (moved taskInfo to front) taskId=14, baseIntent=Intent { flg=0x10000000 cmp=com.amandabenavidez.bitzahugs/.MainActivity }
+05-22 19:58:22.298   570   592 V GrammaticalInflectionUtils: AttributionSource: android.content.AttributionSource@7717e640 does not have READ_SYSTEM_GRAMMATICAL_GENDER permission.
+05-22 19:58:22.342   570  1210 D CoreBackPreview: Window{afec8be u0 Splash Screen com.amandabenavidez.bitzahugs}: Setting back callback OnBackInvokedCallbackInfo{mCallback=android.window.IOnBackInvokedCallback$Stub$Proxy@d599e35, mPriority=0, mIsAnimationCallback=false}
+05-22 19:58:22.401  5841  5856 W Bugle   : TextClassifierLibManagerImpl: Reclaiming memory at level: 40
+05-22 19:58:22.404   357   357 D Zygote  : Forked child process 7778
+05-22 19:58:22.407   570   600 W ActivityManager: Slow operation: 103ms so far, now at startProcess: returned from zygote!
+05-22 19:58:22.407   570   600 W ActivityManager: Slow operation: 104ms so far, now at startProcess: done updating battery stats
+05-22 19:58:22.407   570   600 W ActivityManager: Slow operation: 104ms so far, now at startProcess: building log message
+05-22 19:58:22.407   570   600 I ActivityManager: Start proc 7778:com.amandabenavidez.bitzahugs/u0a205 for next-top-activity {com.amandabenavidez.bitzahugs/com.amandabenavidez.bitzahugs.MainActivity}
+05-22 19:58:22.407   570   600 W ActivityManager: Slow operation: 104ms so far, now at startProcess: starting to update pids map
+05-22 19:58:22.407   570   600 W ActivityManager: Slow operation: 104ms so far, now at startProcess: done updating pids map
+05-22 19:58:22.432   400   400 I BpBinder: onLastStrongRef automatically unlinking death recipients: 
+05-22 19:58:22.561  7778  7778 I videz.bitzahugs: Using CollectorTypeCMC GC.
+05-22 19:58:22.606   570   590 W Looper  : Slow dispatch took 215ms android.ui h=com.android.server.am.ActivityManagerService$UiHandler c=com.android.server.am.UidObserverController$$ExternalSyntheticLambda0@73e0b53 m=0
+05-22 19:58:22.614  7778  7778 E videz.bitzahugs: Not starting debugger since process cannot load the jdwp agent.
+05-22 19:58:22.616  7778  7778 D nativeloader: Load libframework-connectivity-tiramisu-jni.so using APEX ns com_android_tethering for caller /apex/com.android.tethering/javalib/framework-connectivity-t.jar: ok
+05-22 19:58:22.791  7778  7778 D CompatChangeReporter: Compat change id reported: 242716250; UID 10205; state: ENABLED
+05-22 19:58:22.882  1114  1233 I Choreographer: Skipped 32 frames!  The application may be doing too much work on its main thread.
+05-22 19:58:22.928  1114  1137 V WindowManagerShell: onTransitionReady(transaction=2448131359870)
+05-22 19:58:22.963  1114  1175 V WindowManagerShell: onTransitionReady (#42) android.os.BinderProxy@5fd3ef6: {id=42 t=OPEN f=0x0 trk=0 r=[0@Point(0, 0)] c=[{WCT{android.window.IWindowContainerToken$Stub$Proxy@92d6ce8} m=OPEN f=NONE leash=Surface(name=Task=14)/@0xf677cfc sb=Rect(0, 0 - 1080, 2400) eb=Rect(0, 0 - 1080, 2400) d=0 taskParent=-1},{WCT{android.window.IWindowContainerToken$Stub$Proxy@2f63f01} m=TO_BACK f=SHOW_WALLPAPER leash=Surface(name=Task=1)/@0xe0d2f85 sb=Rect(0, 0 - 1080, 2400) eb=Rect(0, 0 - 1080, 2400) d=0 taskParent=-1}]}
+05-22 19:58:22.964  1114  1175 V WindowManagerShell: Playing animation for (#42) android.os.BinderProxy@5fd3ef6@0
+05-22 19:58:22.964  1114  1175 V WindowManagerShell:  try handler com.android.wm.shell.transition.DefaultMixedHandler@84385b5
+05-22 19:58:22.964  1114  1175 V WindowManagerShell:  try handler com.android.wm.shell.keyguard.KeyguardTransitionHandler@67b444a
+05-22 19:58:22.964  1114  1175 V WindowManagerShell:  try handler com.android.wm.shell.pip.PipTransition@c86cfbb
+05-22 19:58:22.964  1114  1175 V WindowManagerShell:  try handler com.android.wm.shell.activityembedding.ActivityEmbeddingController@e539cd8
+05-22 19:58:22.964  1114  1175 V WindowManagerShell:  try handler com.android.wm.shell.recents.RecentsTransitionHandler@a73c831
+05-22 19:58:22.964  1114  1175 V ShellRecents: RecentsTransitionHandler.startAnimation: no controller found
+05-22 19:58:22.964  1114  1175 V WindowManagerShell:  try handler com.android.wm.shell.splitscreen.StageCoordinator@1315b16
+05-22 19:58:22.964  1114  1175 V WindowManagerShell:  try handler com.android.wm.shell.transition.RemoteTransitionHandler@4c8ac97
+05-22 19:58:22.964  1114  1175 V WindowManagerShell: Transition doesn't have explicit remote, search filters for match for {id=42 t=OPEN f=0x0 trk=0 r=[0@Point(0, 0)] c=[{WCT{android.window.IWindowContainerToken$Stub$Proxy@92d6ce8} m=OPEN f=NONE leash=Surface(name=Task=14)/@0xf677cfc sb=Rect(0, 0 - 1080, 2400) eb=Rect(0, 0 - 1080, 2400) d=0 taskParent=-1},{WCT{android.window.IWindowContainerToken$Stub$Proxy@2f63f01} m=TO_BACK f=SHOW_WALLPAPER leash=Surface(name=Task=1)/@0xe0d2f85 sb=Rect(0, 0 - 1080, 2400) eb=Rect(0, 0 - 1080, 2400) d=0 taskParent=-1}]}
+05-22 19:58:22.964  1114  1175 V WindowManagerShell:  Checking filter Pair{{types=[] flags=0x0] notFlags=0x0 checks=[{atype=undefined independent=true modes=[OPEN,TO_FRONT] flags=IN_TASK_WITH_EMBEDDED_ACTIVITY mustBeTask=false order=ANY topActivity=ComponentInfo{com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity} launchCookie=null},{atype=undefined independent=true modes=[CLOSE,TO_BACK] flags=IN_TASK_WITH_EMBEDDED_ACTIVITY mustBeTask=false order=ANY topActivity=null launchCookie=null}]} RemoteTransition { remoteTransition = android.window.IRemoteTransition$Stub$Proxy@beeff47, appThread = android.app.IApplicationThread$Stub$Proxy@e748374, debugName = OverlaySwipeBack }}
+05-22 19:58:22.964  1114  1175 V WindowManagerShell:  Checking filter Pair{{types=[] flags=0x0] notFlags=0x0 checks=[{atype=dream independent=true modes=[OPEN,TO_FRONT] flags=NONE mustBeTask=false order=ANY topActivity=null launchCookie=null},{atype=home independent=true modes=[CLOSE,TO_BACK] flags=NONE mustBeTask=false order=ANY topActivity=null launchCookie=null}]} RemoteTransition { remoteTransition = android.window.IRemoteTransition$Stub$Proxy@761809d, appThread = android.app.IApplicationThread$Stub$Proxy@21c912, debugName = LauncherToDream }}
+05-22 19:58:22.964  1114  1175 V WindowManagerShell:  Checking filter Pair{{types=[] flags=0x0] notFlags=0x100 checks=[{atype=home independent=true modes=[OPEN,TO_FRONT] flags=NONE mustBeTask=false order=TOP topActivity=ComponentInfo{com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity} launchCookie=null},{atype=standard independent=true modes=[CLOSE,TO_BACK] flags=NONE mustBeTask=false order=ANY topActivity=null launchCookie=null}]} RemoteTransition { remoteTransition = android.window.IRemoteTransition$Stub$Proxy@f9248e3, appThread = android.app.IApplicationThread$Stub$Proxy@61062e0, debugName = QuickstepLaunchHome }}
+05-22 19:58:22.964  1114  1175 V WindowManagerShell:  Delegate animation for (#42) to null
+05-22 19:58:22.964  1114  1175 V WindowManagerShell:  try handler com.android.wm.shell.transition.DefaultTransitionHandler@ed0b6ee
+05-22 19:58:22.964  1114  1175 V WindowManagerShell: start default transition animation, info = {id=42 t=OPEN f=0x0 trk=0 r=[0@Point(0, 0)] c=[{WCT{android.window.IWindowContainerToken$Stub$Proxy@92d6ce8} m=OPEN f=NONE leash=Surface(name=Task=14)/@0xf677cfc sb=Rect(0, 0 - 1080, 2400) eb=Rect(0, 0 - 1080, 2400) d=0 taskParent=-1},{WCT{android.window.IWindowContainerToken$Stub$Proxy@2f63f01} m=TO_BACK f=SHOW_WALLPAPER leash=Surface(name=Task=1)/@0xe0d2f85 sb=Rect(0, 0 - 1080, 2400) eb=Rect(0, 0 - 1080, 2400) d=0 taskParent=-1}]}
+05-22 19:58:22.965  1114  1175 V WindowManagerShell: loadAnimation: anim=android.view.animation.AnimationSet@5d151a6 animAttr=0x13 type=OPEN isEntrance=false
+05-22 19:58:22.965  1114  1175 V WindowManagerShell: loadAnimation: anim=android.view.animation.AnimationSet@d6487e7 animAttr=0x12 type=OPEN isEntrance=true
+05-22 19:58:22.973  1114  1175 V WindowManagerShell:  animated by com.android.wm.shell.transition.DefaultTransitionHandler@ed0b6ee
+05-22 19:58:22.984   570   589 V WindowManager: Sent Transition (#42) createdAt=05-22 19:58:21.919 via request=TransitionRequestInfo { type = OPEN, triggerTask = TaskInfo{userId=0 taskId=14 displayId=0 isRunning=true baseIntent=Intent { flg=0x10000000 cmp=com.amandabenavidez.bitzahugs/.MainActivity } baseActivity=ComponentInfo{com.amandabenavidez.bitzahugs/com.amandabenavidez.bitzahugs.MainActivity} topActivity=ComponentInfo{com.amandabenavidez.bitzahugs/com.amandabenavidez.bitzahugs.MainActivity} origActivity=null realActivity=ComponentInfo{com.amandabenavidez.bitzahugs/com.amandabenavidez.bitzahugs.MainActivity} numActivities=1 lastActiveTime=1294282 supportsMultiWindow=true resizeMode=1 isResizeable=true minWidth=-1 minHeight=-1 defaultMinSize=220 token=WCT{RemoteToken{8c5fc0f Task{bf65c7d #14 type=standard A=10205:com.amandabenavidez.bitzahugs}}} topActivityType=1 pictureInPictureParams=null shouldDockBigOverlays=false launchIntoPipHostTaskId=-1 lastParentTaskIdBeforePip=-1 displayCutoutSafeInsets=Rect(0, 136 - 0, 0) topActivityInfo=ActivityInfo{1b3149c com.amandabenavidez.bitzahugs.MainActivity} launchCookies=[] positionInParent=Point(0, 0) parentTaskId=-1 isFocused=false isVisible=false isVisibleRequested=false isSleeping=false locusId=null displayAreaFeatureId=1 isTopActivityTransparent=false appCompatTaskInfo=AppCompatTaskInfo { topActivityInSizeCompat=false topActivityEligibleForLetterboxEducation= falseisLetterboxEducationEnabled= true isLetterboxDoubleTapEnabled= false topActivityEligibleForUserAspectRatioButton= false topActivityBoundsLetterboxed= false isFromLetterboxDoubleTap= false topActivityLetterboxVerticalPosition= -1 topActivityLetterboxHorizontalPosition= -1 topActivityLetterboxWidth=1080 topActivityLetterboxHeight=2400 isUserFullscreenOverrideEnabled=false isSystemFullscreenOverrideEnabled=false cameraCompatTaskInfo=CameraCompatTaskInfo { cameraCompatControlState=hidden freeformCameraCompatMode=inactive}}}, pipTask = null, remoteTransition = null, displayChange = null, flags = 0, debugId = 42 }
+05-22 19:58:22.984   570   589 V WindowManager:     startWCT=WindowContainerTransaction { changes = {} hops = [] errorCallbackToken=null taskFragmentOrganizer=null }
+05-22 19:58:22.984   570   589 V WindowManager:     info={id=42 t=OPEN f=0x0 trk=0 r=[0@Point(0, 0)] c=[
+05-22 19:58:22.984   570   589 V WindowManager:         {WCT{RemoteToken{8c5fc0f Task{bf65c7d #14 type=standard A=10205:com.amandabenavidez.bitzahugs}}} m=OPEN f=NONE leash=Surface(name=Task=14)/@0x7b1a904 sb=Rect(0, 0 - 1080, 2400) eb=Rect(0, 0 - 1080, 2400) d=0 taskParent=-1},
+05-22 19:58:22.984   570   589 V WindowManager:         {WCT{RemoteToken{1b52cce Task{4e4ba76 #1 type=home}}} m=TO_BACK f=SHOW_WALLPAPER leash=Surface(name=Task=1)/@0x82dacea sb=Rect(0, 0 - 1080, 2400) eb=Rect(0, 0 - 1080, 2400) d=0 taskParent=-1}
+05-22 19:58:22.984   570   589 V WindowManager:     ]}
+05-22 19:58:22.995  7778  7778 D nativeloader: Configuring clns-7 for other apk /data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk. target_sdk_version=34, uses_libraries=, library_path=/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/lib/arm64:/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a, permitted_path=/data:/mnt/expand:/data/user/0/com.amandabenavidez.bitzahugs
+05-22 19:58:23.008   570  1292 W UserManagerService: Requested status bar icon for non-badged user 0
+05-22 19:58:23.024  7778  7778 V GraphicsEnvironment: Currently set values for:
+05-22 19:58:23.024  7778  7778 V GraphicsEnvironment:   angle_gl_driver_selection_pkgs=[]
+05-22 19:58:23.024  7778  7778 V GraphicsEnvironment:   angle_gl_driver_selection_values=[]
+05-22 19:58:23.024  7778  7778 V GraphicsEnvironment: Global.Settings values are invalid: number of packages: 0, number of values: 0
+05-22 19:58:23.024  7778  7778 V GraphicsEnvironment: Neither updatable production driver nor prerelease driver is supported.
+05-22 19:58:23.200  7778  7778 W FirebaseApp: Default FirebaseApp failed to initialize because no default options were found. This usually means that com.google.gms:google-services was not applied to your gradle project.
+05-22 19:58:23.200  7778  7778 I FirebaseInitProvider: FirebaseApp initialization unsuccessful
+05-22 19:58:23.221  7778  7778 W SoLoader: Initializing SoLoader: 0
+05-22 19:58:23.221  7778  7778 W SoLoader: Recording new base apk path: /data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk
+05-22 19:58:23.221  7778  7778 W SoLoader: Previously recorded 0 base apk paths.
+05-22 19:58:23.222  7778  7778 I SoLoader: Preparing SO source: DirectorySoSource[root = /vendor/lib64 flags = 2]
+05-22 19:58:23.222  7778  7778 I SoLoader: Preparing SO source: DirectorySoSource[root = /system/lib64 flags = 2]
+05-22 19:58:23.222  7778  7778 I SoLoader: Preparing SO source: DirectApkSoSource[root = [/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a]]
+05-22 19:58:23.232  7778  7778 I SoLoader: Preparing SO source: ApplicationSoSource[DirectorySoSource[root = /data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/lib/arm64 flags = 0]]
+05-22 19:58:23.232  7778  7778 I SoLoader: init finish: 4 SO sources prepared
+05-22 19:58:23.232  7778  7778 W SoLoader: SoLoader initialized: 8
+05-22 19:58:23.240   570  1292 W OptProp : Cannot read opt property android.window.PROPERTY_COMPAT_ENABLE_FAKE_FOCUS
+05-22 19:58:23.462   570   570 D CompatChangeReporter: Compat change id reported: 311208629; UID 1000; state: ENABLED
+05-22 19:58:23.617   570   570 W Looper  : Slow dispatch took 156ms main h=android.app.job.JobServiceEngine$JobHandler c=null m=2
+05-22 19:58:23.620  1114  1175 V WindowManagerShell: Transition animation finished (aborted=false), notifying core (#42) android.os.BinderProxy@5fd3ef6@0
+05-22 19:58:23.695   570   589 V WindowManager: Finish Transition (#42): created at 05-22 19:58:21.919 collect-started=0.987ms request-sent=136.552ms started=364.176ms ready=964.097ms sent=984.963ms finished=1701.739ms
+05-22 19:58:23.696  1114  1175 V WindowManagerShell: Track 0 became idle
+05-22 19:58:23.696  1114  1175 V WindowManagerShell: All active transition animations finished
+05-22 19:58:23.698   570  1292 W UserManagerService: Requested status bar icon for non-badged user 0
+05-22 19:58:23.699  7778  7778 D AppCompatDelegate: Checking for metadata for AppLocalesMetadataHolderService : Service not found
+05-22 19:58:23.699   570  1292 W UserManagerService: Requested status bar icon for non-badged user 0
+05-22 19:58:23.957  1428  1863 D EGL_emulation: app_time_stats: avg=23890.38ms min=23890.38ms max=23890.38ms count=1
+05-22 19:58:23.968  1428  1428 I Choreographer: Skipped 54 frames!  The application may be doing too much work on its main thread.
+05-22 19:58:24.090  7778  7778 W SoLoader: SoLoader already initialized
+05-22 19:58:24.140   400   400 E SurfaceFlinger: Out of order buffers detected for RequestedLayerState{com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity#225 parentId=118} producedId=8 frameNumber=28 -> producedId=8 frameNumber=11
+05-22 19:58:24.148  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x13cb40 arg 0x13ab40) (ignoring)
+05-22 19:58:24.148  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x80b8 arg 0x0) (ignoring)
+05-22 19:58:24.148  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0xf00000020 arg 0x3) (ignoring)
+05-22 19:58:24.148  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x144bf8 arg 0x142bf8) (ignoring)
+05-22 19:58:24.148  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0xe00000014 arg 0x3) (ignoring)
+05-22 19:58:24.148  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x144c08 arg 0x142c08) (ignoring)
+05-22 19:58:24.148  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x6000000f6 arg 0x3) (ignoring)
+05-22 19:58:24.148  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x144c20 arg 0x142c20) (ignoring)
+05-22 19:58:24.148  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x1d0 arg 0x9) (ignoring)
+05-22 19:58:24.148  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x100000032 arg 0x3) (ignoring)
+05-22 19:58:24.148  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x144df0 arg 0x142df0) (ignoring)
+05-22 19:58:24.149  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x5e8 arg 0x0) (ignoring)
+05-22 19:58:24.149  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x100000054 arg 0x3) (ignoring)
+05-22 19:58:24.149  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x1453d8 arg 0x1433d8) (ignoring)
+05-22 19:58:24.149  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0xf68 arg 0x0) (ignoring)
+05-22 19:58:24.149  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x100000111 arg 0x3) (ignoring)
+05-22 19:58:24.149  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x147340 arg 0x144340) (ignoring)
+05-22 19:58:24.149  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x1c8 arg 0x0) (ignoring)
+05-22 19:58:24.149  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x800000067 arg 0x3) (ignoring)
+05-22 19:58:24.149  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x147540 arg 0x144508) (ignoring)
+05-22 19:58:24.149  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x7b80 arg 0x0) (ignoring)
+05-22 19:58:24.149  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x40 arg 0x0) (ignoring)
+05-22 19:58:24.149  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x100000037 arg 0x30) (ignoring)
+05-22 19:58:24.192  7778  7778 D nativeloader: Load /data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so using ns clns-7 from class loader (caller=/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!classes2.dex): dlopen failed: empty/missing DT_HASH/DT_GNU_HASH in "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" (new hash type from the future?)
+05-22 19:58:24.194  7778  7778 W SoLoader: libc++_shared.so not found on /data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a flag: 5
+05-22 19:58:24.194  7778  7778 W SoLoader: java.lang.UnsatisfiedLinkError: dlopen failed: empty/missing DT_HASH/DT_GNU_HASH in "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" (new hash type from the future?)
+05-22 19:58:24.194  7778  7778 W SoLoader: 	at java.lang.Runtime.load0(Runtime.java:933)
+05-22 19:58:24.194  7778  7778 W SoLoader: 	at java.lang.System.load(System.java:1729)
+05-22 19:58:24.194  7778  7778 W SoLoader: 	at com.facebook.soloader.SoFileLoaderImpl.load(SoFileLoaderImpl.java:64)
+05-22 19:58:24.194  7778  7778 W SoLoader: 	at com.facebook.soloader.InstrumentedSoFileLoader.load(InstrumentedSoFileLoader.java:36)
+05-22 19:58:24.194  7778  7778 W SoLoader: 	at com.facebook.soloader.DirectApkSoSource.loadLibrary(DirectApkSoSource.java:81)
+05-22 19:58:24.194  7778  7778 W SoLoader: 	at com.facebook.soloader.SoLoader.loadLibraryFromSoSource(SoLoader.java:1246)
+05-22 19:58:24.194  7778  7778 W SoLoader: 	at com.facebook.soloader.SoLoader.doLoadLibraryBySoName(SoLoader.java:1210)
+05-22 19:58:24.194  7778  7778 W SoLoader: 	at com.facebook.soloader.SoLoader.loadLibraryBySoNameImpl(SoLoader.java:1078)
+05-22 19:58:24.194  7778  7778 W SoLoader: 	at com.facebook.soloader.SoLoader.loadDependency(SoLoader.java:920)
+05-22 19:58:24.194  7778  7778 W SoLoader: 	at com.facebook.soloader.DirectApkSoSource.loadDependencies(DirectApkSoSource.java:166)
+05-22 19:58:24.194  7778  7778 W SoLoader: 	at com.facebook.soloader.DirectApkSoSource.loadLibrary(DirectApkSoSource.java:76)
+05-22 19:58:24.194  7778  7778 W SoLoader: 	at com.facebook.soloader.SoLoader.loadLibraryFromSoSource(SoLoader.java:1246)
+05-22 19:58:24.194  7778  7778 W SoLoader: 	at com.facebook.soloader.SoLoader.doLoadLibraryBySoName(SoLoader.java:1210)
+05-22 19:58:24.194  7778  7778 W SoLoader: 	at com.facebook.soloader.SoLoader.loadLibraryBySoNameImpl(SoLoader.java:1078)
+05-22 19:58:24.194  7778  7778 W SoLoader: 	at com.facebook.soloader.SoLoader.loadLibraryBySoName(SoLoader.java:943)
+05-22 19:58:24.194  7778  7778 W SoLoader: 	at com.facebook.soloader.SoLoader.loadLibraryOnAndroid(SoLoader.java:859)
+05-22 19:58:24.194  7778  7778 W SoLoader: 	at com.facebook.soloader.SoLoader.loadLibrary(SoLoader.java:842)
+05-22 19:58:24.194  7778  7778 W SoLoader: 	at com.facebook.soloader.SoLoader.loadLibrary(SoLoader.java:812)
+05-22 19:58:24.194  7778  7778 W SoLoader: 	at com.facebook.hermes.reactexecutor.HermesExecutor.loadLibrary(HermesExecutor.java:26)
+05-22 19:58:24.194  7778  7778 W SoLoader: 	at com.facebook.hermes.reactexecutor.HermesExecutor.<clinit>(HermesExecutor.java:20)
+05-22 19:58:24.194  7778  7778 W SoLoader: 	at com.facebook.react.ReactInstanceManagerBuilder.getDefaultJSExecutorFactory(ReactInstanceManagerBuilder.java:407)
+05-22 19:58:24.194  7778  7778 W SoLoader: 	at com.facebook.react.ReactInstanceManagerBuilder.build(ReactInstanceManagerBuilder.java:349)
+05-22 19:58:24.194  7778  7778 W SoLoader: 	at com.facebook.react.ReactNativeHost.createReactInstanceManager(ReactNativeHost.java:87)
+05-22 19:58:24.194  7778  7778 W SoLoader: 	at expo.modules.ReactNativeHostWrapperBase.createReactInstanceManager(ReactNativeHostWrapperBase.kt:29)
+05-22 19:58:24.194  7778  7778 W SoLoader: 	at com.facebook.react.ReactNativeHost.getReactInstanceManager(ReactNativeHost.java:57)
+05-22 19:58:24.194  7778  7778 W SoLoader: 	at com.facebook.react.ReactDelegate.loadApp(ReactDelegate.java:301)
+05-22 19:58:24.194  7778  7778 W SoLoader: 	at com.facebook.react.ReactActivityDelegate.loadApp(ReactActivityDelegate.java:137)
+05-22 19:58:24.194  7778  7778 W SoLoader: 	at java.lang.reflect.Method.invoke(Native Method)
+05-22 19:58:24.194  7778  7778 W SoLoader: 	at expo.modules.ReactActivityDelegateWrapper.invokeDelegateMethod(ReactActivityDelegateWrapper.kt:356)
+05-22 19:58:24.194  7778  7778 W SoLoader: 	at expo.modules.ReactActivityDelegateWrapper.loadApp(ReactActivityDelegateWrapper.kt:126)
+05-22 19:58:24.194  7778  7778 W SoLoader: 	at expo.modules.ReactActivityDelegateWrapper.onCreate(ReactActivityDelegateWrapper.kt:178)
+05-22 19:58:24.194  7778  7778 W SoLoader: 	at com.facebook.react.ReactActivity.onCreate(ReactActivity.java:47)
+05-22 19:58:24.194  7778  7778 W SoLoader: 	at com.amandabenavidez.bitzahugs.MainActivity.onCreate(MainActivity.kt:23)
+05-22 19:58:24.194  7778  7778 W SoLoader: 	at android.app.Activity.performCreate(Activity.java:9002)
+05-22 19:58:24.194  7778  7778 W SoLoader: 	at android.app.Activity.performCreate(Activity.java:8980)
+05-22 19:58:24.194  7778  7778 W SoLoader: 	at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1526)
+05-22 19:58:24.194  7778  7778 W SoLoader: 	at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:4030)
+05-22 19:58:24.194  7778  7778 W SoLoader: 	at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:4235)
+05-22 19:58:24.194  7778  7778 W SoLoader: 	at android.app.servertransaction.LaunchActivityItem.execute(LaunchActivityItem.java:112)
+05-22 19:58:24.194  7778  7778 W SoLoader: 	at android.app.servertransaction.TransactionExecutor.executeNonLifecycleItem(TransactionExecutor.java:174)
+05-22 19:58:24.194  7778  7778 W SoLoader: 	at android.app.servertransaction.TransactionExecutor.executeTransactionItems(TransactionExecutor.java:109)
+05-22 19:58:24.194  7778  7778 W SoLoader: 	at android.app.servertransaction.TransactionExecutor.execute(TransactionExecutor.java:81)
+05-22 19:58:24.194  7778  7778 W SoLoader: 	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2636)
+05-22 19:58:24.194  7778  7778 W SoLoader: 	at android.os.Handler.dispatchMessage(Handler.java:107)
+05-22 19:58:24.194  7778  7778 W SoLoader: 	at android.os.Looper.loopOnce(Looper.java:232)
+05-22 19:58:24.194  7778  7778 W SoLoader: 	at android.os.Looper.loop(Looper.java:317)
+05-22 19:58:24.194  7778  7778 W SoLoader: 	at android.app.ActivityThread.main(ActivityThread.java:8705)
+05-22 19:58:24.194  7778  7778 W SoLoader: 	at java.lang.reflect.Method.invoke(Native Method)
+05-22 19:58:24.194  7778  7778 W SoLoader: 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:580)
+05-22 19:58:24.194  7778  7778 W SoLoader: 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:886)
+05-22 19:58:24.195  7778  7778 W SoLoader: Running a recovery step for libhermes.so due to com.facebook.soloader.SoLoaderDSONotFoundError: couldn't find DSO to load: libc++_shared.so
+05-22 19:58:24.195  7778  7778 W SoLoader: 	existing SO sources: 
+05-22 19:58:24.195  7778  7778 W SoLoader: 		SoSource 0: ApplicationSoSource[DirectorySoSource[root = /data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/lib/arm64 flags = 0]]
+05-22 19:58:24.195  7778  7778 W SoLoader: 		SoSource 1: DirectApkSoSource[root = [/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a]]
+05-22 19:58:24.195  7778  7778 W SoLoader: 		SoSource 2: DirectorySoSource[root = /system/lib64 flags = 2]
+05-22 19:58:24.195  7778  7778 W SoLoader: 		SoSource 3: DirectorySoSource[root = /vendor/lib64 flags = 2]
+05-22 19:58:24.195  7778  7778 W SoLoader: 	Native lib dir: /data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/lib/arm64
+05-22 19:58:24.196  7778  7778 W soloader.recovery.CheckBaseApkExists: Base apk exists: /data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk
+05-22 19:58:24.198  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x13cb40 arg 0x13ab40) (ignoring)
+05-22 19:58:24.198  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x80b8 arg 0x0) (ignoring)
+05-22 19:58:24.199  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0xf00000020 arg 0x3) (ignoring)
+05-22 19:58:24.199  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x144bf8 arg 0x142bf8) (ignoring)
+05-22 19:58:24.199  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0xe00000014 arg 0x3) (ignoring)
+05-22 19:58:24.199  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x144c08 arg 0x142c08) (ignoring)
+05-22 19:58:24.199  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x6000000f6 arg 0x3) (ignoring)
+05-22 19:58:24.199  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x144c20 arg 0x142c20) (ignoring)
+05-22 19:58:24.199  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x1d0 arg 0x9) (ignoring)
+05-22 19:58:24.199  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x100000032 arg 0x3) (ignoring)
+05-22 19:58:24.199  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x144df0 arg 0x142df0) (ignoring)
+05-22 19:58:24.199  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x5e8 arg 0x0) (ignoring)
+05-22 19:58:24.199  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x100000054 arg 0x3) (ignoring)
+05-22 19:58:24.199  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x1453d8 arg 0x1433d8) (ignoring)
+05-22 19:58:24.199  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0xf68 arg 0x0) (ignoring)
+05-22 19:58:24.199  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x100000111 arg 0x3) (ignoring)
+05-22 19:58:24.199  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x147340 arg 0x144340) (ignoring)
+05-22 19:58:24.199  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x1c8 arg 0x0) (ignoring)
+05-22 19:58:24.199  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x800000067 arg 0x3) (ignoring)
+05-22 19:58:24.199  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x147540 arg 0x144508) (ignoring)
+05-22 19:58:24.199  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x7b80 arg 0x0) (ignoring)
+05-22 19:58:24.199  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x40 arg 0x0) (ignoring)
+05-22 19:58:24.199  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x100000037 arg 0x30) (ignoring)
+05-22 19:58:24.200  7778  7778 D nativeloader: Load /data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so using ns clns-7 from class loader (caller=/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!classes2.dex): dlopen failed: empty/missing DT_HASH/DT_GNU_HASH in "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" (new hash type from the future?)
+05-22 19:58:24.205  7778  7778 W SoLoader: libc++_shared.so not found on /data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a flag: 5
+05-22 19:58:24.205  7778  7778 W SoLoader: java.lang.UnsatisfiedLinkError: dlopen failed: empty/missing DT_HASH/DT_GNU_HASH in "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" (new hash type from the future?)
+05-22 19:58:24.205  7778  7778 W SoLoader: 	at java.lang.Runtime.load0(Runtime.java:933)
+05-22 19:58:24.205  7778  7778 W SoLoader: 	at java.lang.System.load(System.java:1729)
+05-22 19:58:24.205  7778  7778 W SoLoader: 	at com.facebook.soloader.SoFileLoaderImpl.load(SoFileLoaderImpl.java:64)
+05-22 19:58:24.205  7778  7778 W SoLoader: 	at com.facebook.soloader.InstrumentedSoFileLoader.load(InstrumentedSoFileLoader.java:36)
+05-22 19:58:24.205  7778  7778 W SoLoader: 	at com.facebook.soloader.DirectApkSoSource.loadLibrary(DirectApkSoSource.java:81)
+05-22 19:58:24.205  7778  7778 W SoLoader: 	at com.facebook.soloader.SoLoader.loadLibraryFromSoSource(SoLoader.java:1246)
+05-22 19:58:24.205  7778  7778 W SoLoader: 	at com.facebook.soloader.SoLoader.doLoadLibraryBySoName(SoLoader.java:1210)
+05-22 19:58:24.205  7778  7778 W SoLoader: 	at com.facebook.soloader.SoLoader.loadLibraryBySoNameImpl(SoLoader.java:1078)
+05-22 19:58:24.205  7778  7778 W SoLoader: 	at com.facebook.soloader.SoLoader.loadDependency(SoLoader.java:920)
+05-22 19:58:24.205  7778  7778 W SoLoader: 	at com.facebook.soloader.DirectApkSoSource.loadDependencies(DirectApkSoSource.java:166)
+05-22 19:58:24.205  7778  7778 W SoLoader: 	at com.facebook.soloader.DirectApkSoSource.loadLibrary(DirectApkSoSource.java:76)
+05-22 19:58:24.205  7778  7778 W SoLoader: 	at com.facebook.soloader.SoLoader.loadLibraryFromSoSource(SoLoader.java:1246)
+05-22 19:58:24.205  7778  7778 W SoLoader: 	at com.facebook.soloader.SoLoader.doLoadLibraryBySoName(SoLoader.java:1210)
+05-22 19:58:24.205  7778  7778 W SoLoader: 	at com.facebook.soloader.SoLoader.loadLibraryBySoNameImpl(SoLoader.java:1078)
+05-22 19:58:24.205  7778  7778 W SoLoader: 	at com.facebook.soloader.SoLoader.loadLibraryBySoName(SoLoader.java:943)
+05-22 19:58:24.205  7778  7778 W SoLoader: 	at com.facebook.soloader.SoLoader.loadLibraryOnAndroid(SoLoader.java:859)
+05-22 19:58:24.205  7778  7778 W SoLoader: 	at com.facebook.soloader.SoLoader.loadLibrary(SoLoader.java:842)
+05-22 19:58:24.205  7778  7778 W SoLoader: 	at com.facebook.soloader.SoLoader.loadLibrary(SoLoader.java:812)
+05-22 19:58:24.205  7778  7778 W SoLoader: 	at com.facebook.hermes.reactexecutor.HermesExecutor.loadLibrary(HermesExecutor.java:26)
+05-22 19:58:24.205  7778  7778 W SoLoader: 	at com.facebook.hermes.reactexecutor.HermesExecutor.<clinit>(HermesExecutor.java:20)
+05-22 19:58:24.205  7778  7778 W SoLoader: 	at com.facebook.react.ReactInstanceManagerBuilder.getDefaultJSExecutorFactory(ReactInstanceManagerBuilder.java:407)
+05-22 19:58:24.205  7778  7778 W SoLoader: 	at com.facebook.react.ReactInstanceManagerBuilder.build(ReactInstanceManagerBuilder.java:349)
+05-22 19:58:24.205  7778  7778 W SoLoader: 	at com.facebook.react.ReactNativeHost.createReactInstanceManager(ReactNativeHost.java:87)
+05-22 19:58:24.205  7778  7778 W SoLoader: 	at expo.modules.ReactNativeHostWrapperBase.createReactInstanceManager(ReactNativeHostWrapperBase.kt:29)
+05-22 19:58:24.205  7778  7778 W SoLoader: 	at com.facebook.react.ReactNativeHost.getReactInstanceManager(ReactNativeHost.java:57)
+05-22 19:58:24.205  7778  7778 W SoLoader: 	at com.facebook.react.ReactDelegate.loadApp(ReactDelegate.java:301)
+05-22 19:58:24.205  7778  7778 W SoLoader: 	at com.facebook.react.ReactActivityDelegate.loadApp(ReactActivityDelegate.java:137)
+05-22 19:58:24.205  7778  7778 W SoLoader: 	at java.lang.reflect.Method.invoke(Native Method)
+05-22 19:58:24.205  7778  7778 W SoLoader: 	at expo.modules.ReactActivityDelegateWrapper.invokeDelegateMethod(ReactActivityDelegateWrapper.kt:356)
+05-22 19:58:24.205  7778  7778 W SoLoader: 	at expo.modules.ReactActivityDelegateWrapper.loadApp(ReactActivityDelegateWrapper.kt:126)
+05-22 19:58:24.205  7778  7778 W SoLoader: 	at expo.modules.ReactActivityDelegateWrapper.onCreate(ReactActivityDelegateWrapper.kt:178)
+05-22 19:58:24.205  7778  7778 W SoLoader: 	at com.facebook.react.ReactActivity.onCreate(ReactActivity.java:47)
+05-22 19:58:24.205  7778  7778 W SoLoader: 	at com.amandabenavidez.bitzahugs.MainActivity.onCreate(MainActivity.kt:23)
+05-22 19:58:24.205  7778  7778 W SoLoader: 	at android.app.Activity.performCreate(Activity.java:9002)
+05-22 19:58:24.205  7778  7778 W SoLoader: 	at android.app.Activity.performCreate(Activity.java:8980)
+05-22 19:58:24.205  7778  7778 W SoLoader: 	at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1526)
+05-22 19:58:24.205  7778  7778 W SoLoader: 	at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:4030)
+05-22 19:58:24.205  7778  7778 W SoLoader: 	at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:4235)
+05-22 19:58:24.205  7778  7778 W SoLoader: 	at android.app.servertransaction.LaunchActivityItem.execute(LaunchActivityItem.java:112)
+05-22 19:58:24.205  7778  7778 W SoLoader: 	at android.app.servertransaction.TransactionExecutor.executeNonLifecycleItem(TransactionExecutor.java:174)
+05-22 19:58:24.205  7778  7778 W SoLoader: 	at android.app.servertransaction.TransactionExecutor.executeTransactionItems(TransactionExecutor.java:109)
+05-22 19:58:24.205  7778  7778 W SoLoader: 	at android.app.servertransaction.TransactionExecutor.execute(TransactionExecutor.java:81)
+05-22 19:58:24.205  7778  7778 W SoLoader: 	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2636)
+05-22 19:58:24.205  7778  7778 W SoLoader: 	at android.os.Handler.dispatchMessage(Handler.java:107)
+05-22 19:58:24.205  7778  7778 W SoLoader: 	at android.os.Looper.loopOnce(Looper.java:232)
+05-22 19:58:24.205  7778  7778 W SoLoader: 	at android.os.Looper.loop(Looper.java:317)
+05-22 19:58:24.206  7778  7778 W SoLoader: 	at android.app.ActivityThread.main(ActivityThread.java:8705)
+05-22 19:58:24.206  7778  7778 W SoLoader: 	at java.lang.reflect.Method.invoke(Native Method)
+05-22 19:58:24.206  7778  7778 W SoLoader: 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:580)
+05-22 19:58:24.206  7778  7778 W SoLoader: 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:886)
+05-22 19:58:24.206  7778  7778 W SoLoader: Running a recovery step for libhermes.so due to com.facebook.soloader.SoLoaderDSONotFoundError: couldn't find DSO to load: libc++_shared.so
+05-22 19:58:24.206  7778  7778 W SoLoader: 	existing SO sources: 
+05-22 19:58:24.206  7778  7778 W SoLoader: 		SoSource 0: ApplicationSoSource[DirectorySoSource[root = /data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/lib/arm64 flags = 0]]
+05-22 19:58:24.206  7778  7778 W SoLoader: 		SoSource 1: DirectApkSoSource[root = [/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a]]
+05-22 19:58:24.206  7778  7778 W SoLoader: 		SoSource 2: DirectorySoSource[root = /system/lib64 flags = 2]
+05-22 19:58:24.206  7778  7778 W SoLoader: 		SoSource 3: DirectorySoSource[root = /vendor/lib64 flags = 2]
+05-22 19:58:24.206  7778  7778 W SoLoader: 	Native lib dir: /data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/lib/arm64
+05-22 19:58:24.206  7778  7778 E SoLoader: Checking /data/app missing libraries.
+05-22 19:58:24.206  7778  7778 E SoLoader: Successfully recovered from /data/app disk failure.
+05-22 19:58:24.297  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x13cb40 arg 0x13ab40) (ignoring)
+05-22 19:58:24.297  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x80b8 arg 0x0) (ignoring)
+05-22 19:58:24.297  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0xf00000020 arg 0x3) (ignoring)
+05-22 19:58:24.297  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x144bf8 arg 0x142bf8) (ignoring)
+05-22 19:58:24.297  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0xe00000014 arg 0x3) (ignoring)
+05-22 19:58:24.298  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x144c08 arg 0x142c08) (ignoring)
+05-22 19:58:24.298  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x6000000f6 arg 0x3) (ignoring)
+05-22 19:58:24.298  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x144c20 arg 0x142c20) (ignoring)
+05-22 19:58:24.298  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x1d0 arg 0x9) (ignoring)
+05-22 19:58:24.298  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x100000032 arg 0x3) (ignoring)
+05-22 19:58:24.298  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x144df0 arg 0x142df0) (ignoring)
+05-22 19:58:24.298  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x5e8 arg 0x0) (ignoring)
+05-22 19:58:24.298  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x100000054 arg 0x3) (ignoring)
+05-22 19:58:24.298  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x1453d8 arg 0x1433d8) (ignoring)
+05-22 19:58:24.298  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0xf68 arg 0x0) (ignoring)
+05-22 19:58:24.298  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x100000111 arg 0x3) (ignoring)
+05-22 19:58:24.298  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x147340 arg 0x144340) (ignoring)
+05-22 19:58:24.298  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x1c8 arg 0x0) (ignoring)
+05-22 19:58:24.298  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x800000067 arg 0x3) (ignoring)
+05-22 19:58:24.298  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x147540 arg 0x144508) (ignoring)
+05-22 19:58:24.298  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x7b80 arg 0x0) (ignoring)
+05-22 19:58:24.298  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x40 arg 0x0) (ignoring)
+05-22 19:58:24.298  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x100000037 arg 0x30) (ignoring)
+05-22 19:58:24.299  7778  7778 D nativeloader: Load /data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so using ns clns-7 from class loader (caller=/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!classes2.dex): dlopen failed: empty/missing DT_HASH/DT_GNU_HASH in "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" (new hash type from the future?)
+05-22 19:58:24.299  7778  7778 W SoLoader: libc++_shared.so not found on /data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a flag: 5
+05-22 19:58:24.299  7778  7778 W SoLoader: java.lang.UnsatisfiedLinkError: dlopen failed: empty/missing DT_HASH/DT_GNU_HASH in "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" (new hash type from the future?)
+05-22 19:58:24.299  7778  7778 W SoLoader: 	at java.lang.Runtime.load0(Runtime.java:933)
+05-22 19:58:24.299  7778  7778 W SoLoader: 	at java.lang.System.load(System.java:1729)
+05-22 19:58:24.299  7778  7778 W SoLoader: 	at com.facebook.soloader.SoFileLoaderImpl.load(SoFileLoaderImpl.java:64)
+05-22 19:58:24.299  7778  7778 W SoLoader: 	at com.facebook.soloader.InstrumentedSoFileLoader.load(InstrumentedSoFileLoader.java:36)
+05-22 19:58:24.299  7778  7778 W SoLoader: 	at com.facebook.soloader.DirectApkSoSource.loadLibrary(DirectApkSoSource.java:81)
+05-22 19:58:24.299  7778  7778 W SoLoader: 	at com.facebook.soloader.SoLoader.loadLibraryFromSoSource(SoLoader.java:1246)
+05-22 19:58:24.299  7778  7778 W SoLoader: 	at com.facebook.soloader.SoLoader.doLoadLibraryBySoName(SoLoader.java:1210)
+05-22 19:58:24.299  7778  7778 W SoLoader: 	at com.facebook.soloader.SoLoader.loadLibraryBySoNameImpl(SoLoader.java:1078)
+05-22 19:58:24.299  7778  7778 W SoLoader: 	at com.facebook.soloader.SoLoader.loadDependency(SoLoader.java:920)
+05-22 19:58:24.299  7778  7778 W SoLoader: 	at com.facebook.soloader.DirectApkSoSource.loadDependencies(DirectApkSoSource.java:166)
+05-22 19:58:24.299  7778  7778 W SoLoader: 	at com.facebook.soloader.DirectApkSoSource.loadLibrary(DirectApkSoSource.java:76)
+05-22 19:58:24.299  7778  7778 W SoLoader: 	at com.facebook.soloader.SoLoader.loadLibraryFromSoSource(SoLoader.java:1246)
+05-22 19:58:24.299  7778  7778 W SoLoader: 	at com.facebook.soloader.SoLoader.doLoadLibraryBySoName(SoLoader.java:1210)
+05-22 19:58:24.299  7778  7778 W SoLoader: 	at com.facebook.soloader.SoLoader.loadLibraryBySoNameImpl(SoLoader.java:1078)
+05-22 19:58:24.299  7778  7778 W SoLoader: 	at com.facebook.soloader.SoLoader.loadLibraryBySoName(SoLoader.java:943)
+05-22 19:58:24.299  7778  7778 W SoLoader: 	at com.facebook.soloader.SoLoader.loadLibraryOnAndroid(SoLoader.java:859)
+05-22 19:58:24.299  7778  7778 W SoLoader: 	at com.facebook.soloader.SoLoader.loadLibrary(SoLoader.java:842)
+05-22 19:58:24.299  7778  7778 W SoLoader: 	at com.facebook.soloader.SoLoader.loadLibrary(SoLoader.java:812)
+05-22 19:58:24.299  7778  7778 W SoLoader: 	at com.facebook.hermes.reactexecutor.HermesExecutor.loadLibrary(HermesExecutor.java:26)
+05-22 19:58:24.299  7778  7778 W SoLoader: 	at com.facebook.hermes.reactexecutor.HermesExecutor.<clinit>(HermesExecutor.java:20)
+05-22 19:58:24.299  7778  7778 W SoLoader: 	at com.facebook.react.ReactInstanceManagerBuilder.getDefaultJSExecutorFactory(ReactInstanceManagerBuilder.java:407)
+05-22 19:58:24.299  7778  7778 W SoLoader: 	at com.facebook.react.ReactInstanceManagerBuilder.build(ReactInstanceManagerBuilder.java:349)
+05-22 19:58:24.299  7778  7778 W SoLoader: 	at com.facebook.react.ReactNativeHost.createReactInstanceManager(ReactNativeHost.java:87)
+05-22 19:58:24.299  7778  7778 W SoLoader: 	at expo.modules.ReactNativeHostWrapperBase.createReactInstanceManager(ReactNativeHostWrapperBase.kt:29)
+05-22 19:58:24.299  7778  7778 W SoLoader: 	at com.facebook.react.ReactNativeHost.getReactInstanceManager(ReactNativeHost.java:57)
+05-22 19:58:24.299  7778  7778 W SoLoader: 	at com.facebook.react.ReactDelegate.loadApp(ReactDelegate.java:301)
+05-22 19:58:24.299  7778  7778 W SoLoader: 	at com.facebook.react.ReactActivityDelegate.loadApp(ReactActivityDelegate.java:137)
+05-22 19:58:24.299  7778  7778 W SoLoader: 	at java.lang.reflect.Method.invoke(Native Method)
+05-22 19:58:24.299  7778  7778 W SoLoader: 	at expo.modules.ReactActivityDelegateWrapper.invokeDelegateMethod(ReactActivityDelegateWrapper.kt:356)
+05-22 19:58:24.299  7778  7778 W SoLoader: 	at expo.modules.ReactActivityDelegateWrapper.loadApp(ReactActivityDelegateWrapper.kt:126)
+05-22 19:58:24.299  7778  7778 W SoLoader: 	at expo.modules.ReactActivityDelegateWrapper.onCreate(ReactActivityDelegateWrapper.kt:178)
+05-22 19:58:24.299  7778  7778 W SoLoader: 	at com.facebook.react.ReactActivity.onCreate(ReactActivity.java:47)
+05-22 19:58:24.299  7778  7778 W SoLoader: 	at com.amandabenavidez.bitzahugs.MainActivity.onCreate(MainActivity.kt:23)
+05-22 19:58:24.299  7778  7778 W SoLoader: 	at android.app.Activity.performCreate(Activity.java:9002)
+05-22 19:58:24.299  7778  7778 W SoLoader: 	at android.app.Activity.performCreate(Activity.java:8980)
+05-22 19:58:24.299  7778  7778 W SoLoader: 	at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1526)
+05-22 19:58:24.299  7778  7778 W SoLoader: 	at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:4030)
+05-22 19:58:24.299  7778  7778 W SoLoader: 	at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:4235)
+05-22 19:58:24.299  7778  7778 W SoLoader: 	at android.app.servertransaction.LaunchActivityItem.execute(LaunchActivityItem.java:112)
+05-22 19:58:24.299  7778  7778 W SoLoader: 	at android.app.servertransaction.TransactionExecutor.executeNonLifecycleItem(TransactionExecutor.java:174)
+05-22 19:58:24.299  7778  7778 W SoLoader: 	at android.app.servertransaction.TransactionExecutor.executeTransactionItems(TransactionExecutor.java:109)
+05-22 19:58:24.299  7778  7778 W SoLoader: 	at android.app.servertransaction.TransactionExecutor.execute(TransactionExecutor.java:81)
+05-22 19:58:24.299  7778  7778 W SoLoader: 	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2636)
+05-22 19:58:24.299  7778  7778 W SoLoader: 	at android.os.Handler.dispatchMessage(Handler.java:107)
+05-22 19:58:24.299  7778  7778 W SoLoader: 	at android.os.Looper.loopOnce(Looper.java:232)
+05-22 19:58:24.299  7778  7778 W SoLoader: 	at android.os.Looper.loop(Looper.java:317)
+05-22 19:58:24.299  7778  7778 W SoLoader: 	at android.app.ActivityThread.main(ActivityThread.java:8705)
+05-22 19:58:24.299  7778  7778 W SoLoader: 	at java.lang.reflect.Method.invoke(Native Method)
+05-22 19:58:24.299  7778  7778 W SoLoader: 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:580)
+05-22 19:58:24.299  7778  7778 W SoLoader: 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:886)
+05-22 19:58:24.300  7778  7778 W SoLoader: Running a recovery step for libhermes.so due to com.facebook.soloader.SoLoaderDSONotFoundError: couldn't find DSO to load: libc++_shared.so
+05-22 19:58:24.300  7778  7778 W SoLoader: 	existing SO sources: 
+05-22 19:58:24.300  7778  7778 W SoLoader: 		SoSource 0: ApplicationSoSource[DirectorySoSource[root = /data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/lib/arm64 flags = 0]]
+05-22 19:58:24.300  7778  7778 W SoLoader: 		SoSource 1: DirectApkSoSource[root = [/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a]]
+05-22 19:58:24.300  7778  7778 W SoLoader: 		SoSource 2: DirectorySoSource[root = /system/lib64 flags = 3]
+05-22 19:58:24.300  7778  7778 W SoLoader: 		SoSource 3: DirectorySoSource[root = /vendor/lib64 flags = 3]
+05-22 19:58:24.300  7778  7778 W SoLoader: 	Native lib dir: /data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/lib/arm64
+05-22 19:58:24.300  7778  7778 E SoLoader: Checking /data/data missing libraries.
+05-22 19:58:24.300  7778  7778 E SoLoader: No libraries missing from unpacking so paths while recovering /data/data failure
+05-22 19:58:24.301  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x13cb40 arg 0x13ab40) (ignoring)
+05-22 19:58:24.301  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x80b8 arg 0x0) (ignoring)
+05-22 19:58:24.301  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0xf00000020 arg 0x3) (ignoring)
+05-22 19:58:24.301  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x144bf8 arg 0x142bf8) (ignoring)
+05-22 19:58:24.301  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0xe00000014 arg 0x3) (ignoring)
+05-22 19:58:24.301  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x144c08 arg 0x142c08) (ignoring)
+05-22 19:58:24.301  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x6000000f6 arg 0x3) (ignoring)
+05-22 19:58:24.301  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x144c20 arg 0x142c20) (ignoring)
+05-22 19:58:24.301  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x1d0 arg 0x9) (ignoring)
+05-22 19:58:24.301  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x100000032 arg 0x3) (ignoring)
+05-22 19:58:24.301  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x144df0 arg 0x142df0) (ignoring)
+05-22 19:58:24.302  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x5e8 arg 0x0) (ignoring)
+05-22 19:58:24.302  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x100000054 arg 0x3) (ignoring)
+05-22 19:58:24.302  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x1453d8 arg 0x1433d8) (ignoring)
+05-22 19:58:24.302  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0xf68 arg 0x0) (ignoring)
+05-22 19:58:24.302  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x100000111 arg 0x3) (ignoring)
+05-22 19:58:24.302  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x147340 arg 0x144340) (ignoring)
+05-22 19:58:24.302  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x1c8 arg 0x0) (ignoring)
+05-22 19:58:24.302  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x800000067 arg 0x3) (ignoring)
+05-22 19:58:24.302  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x147540 arg 0x144508) (ignoring)
+05-22 19:58:24.302  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x7b80 arg 0x0) (ignoring)
+05-22 19:58:24.302  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x40 arg 0x0) (ignoring)
+05-22 19:58:24.302  7778  7778 W linker  : Warning: "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" unused DT entry: unknown (type 0x100000037 arg 0x30) (ignoring)
+05-22 19:58:24.303  7778  7778 D nativeloader: Load /data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so using ns clns-7 from class loader (caller=/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!classes2.dex): dlopen failed: empty/missing DT_HASH/DT_GNU_HASH in "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" (new hash type from the future?)
+05-22 19:58:24.303  7778  7778 W SoLoader: libc++_shared.so not found on /data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a flag: 5
+05-22 19:58:24.303  7778  7778 W SoLoader: java.lang.UnsatisfiedLinkError: dlopen failed: empty/missing DT_HASH/DT_GNU_HASH in "/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a/libc++_shared.so" (new hash type from the future?)
+05-22 19:58:24.303  7778  7778 W SoLoader: 	at java.lang.Runtime.load0(Runtime.java:933)
+05-22 19:58:24.303  7778  7778 W SoLoader: 	at java.lang.System.load(System.java:1729)
+05-22 19:58:24.303  7778  7778 W SoLoader: 	at com.facebook.soloader.SoFileLoaderImpl.load(SoFileLoaderImpl.java:64)
+05-22 19:58:24.303  7778  7778 W SoLoader: 	at com.facebook.soloader.InstrumentedSoFileLoader.load(InstrumentedSoFileLoader.java:36)
+05-22 19:58:24.303  7778  7778 W SoLoader: 	at com.facebook.soloader.DirectApkSoSource.loadLibrary(DirectApkSoSource.java:81)
+05-22 19:58:24.303  7778  7778 W SoLoader: 	at com.facebook.soloader.SoLoader.loadLibraryFromSoSource(SoLoader.java:1246)
+05-22 19:58:24.303  7778  7778 W SoLoader: 	at com.facebook.soloader.SoLoader.doLoadLibraryBySoName(SoLoader.java:1210)
+05-22 19:58:24.303  7778  7778 W SoLoader: 	at com.facebook.soloader.SoLoader.loadLibraryBySoNameImpl(SoLoader.java:1078)
+05-22 19:58:24.303  7778  7778 W SoLoader: 	at com.facebook.soloader.SoLoader.loadDependency(SoLoader.java:920)
+05-22 19:58:24.303  7778  7778 W SoLoader: 	at com.facebook.soloader.DirectApkSoSource.loadDependencies(DirectApkSoSource.java:166)
+05-22 19:58:24.303  7778  7778 W SoLoader: 	at com.facebook.soloader.DirectApkSoSource.loadLibrary(DirectApkSoSource.java:76)
+05-22 19:58:24.303  7778  7778 W SoLoader: 	at com.facebook.soloader.SoLoader.loadLibraryFromSoSource(SoLoader.java:1246)
+05-22 19:58:24.303  7778  7778 W SoLoader: 	at com.facebook.soloader.SoLoader.doLoadLibraryBySoName(SoLoader.java:1210)
+05-22 19:58:24.303  7778  7778 W SoLoader: 	at com.facebook.soloader.SoLoader.loadLibraryBySoNameImpl(SoLoader.java:1078)
+05-22 19:58:24.303  7778  7778 W SoLoader: 	at com.facebook.soloader.SoLoader.loadLibraryBySoName(SoLoader.java:943)
+05-22 19:58:24.303  7778  7778 W SoLoader: 	at com.facebook.soloader.SoLoader.loadLibraryOnAndroid(SoLoader.java:859)
+05-22 19:58:24.303  7778  7778 W SoLoader: 	at com.facebook.soloader.SoLoader.loadLibrary(SoLoader.java:842)
+05-22 19:58:24.303  7778  7778 W SoLoader: 	at com.facebook.soloader.SoLoader.loadLibrary(SoLoader.java:812)
+05-22 19:58:24.303  7778  7778 W SoLoader: 	at com.facebook.hermes.reactexecutor.HermesExecutor.loadLibrary(HermesExecutor.java:26)
+05-22 19:58:24.303  7778  7778 W SoLoader: 	at com.facebook.hermes.reactexecutor.HermesExecutor.<clinit>(HermesExecutor.java:20)
+05-22 19:58:24.303  7778  7778 W SoLoader: 	at com.facebook.react.ReactInstanceManagerBuilder.getDefaultJSExecutorFactory(ReactInstanceManagerBuilder.java:407)
+05-22 19:58:24.303  7778  7778 W SoLoader: 	at com.facebook.react.ReactInstanceManagerBuilder.build(ReactInstanceManagerBuilder.java:349)
+05-22 19:58:24.303  7778  7778 W SoLoader: 	at com.facebook.react.ReactNativeHost.createReactInstanceManager(ReactNativeHost.java:87)
+05-22 19:58:24.303  7778  7778 W SoLoader: 	at expo.modules.ReactNativeHostWrapperBase.createReactInstanceManager(ReactNativeHostWrapperBase.kt:29)
+05-22 19:58:24.303  7778  7778 W SoLoader: 	at com.facebook.react.ReactNativeHost.getReactInstanceManager(ReactNativeHost.java:57)
+05-22 19:58:24.303  7778  7778 W SoLoader: 	at com.facebook.react.ReactDelegate.loadApp(ReactDelegate.java:301)
+05-22 19:58:24.303  7778  7778 W SoLoader: 	at com.facebook.react.ReactActivityDelegate.loadApp(ReactActivityDelegate.java:137)
+05-22 19:58:24.303  7778  7778 W SoLoader: 	at java.lang.reflect.Method.invoke(Native Method)
+05-22 19:58:24.303  7778  7778 W SoLoader: 	at expo.modules.ReactActivityDelegateWrapper.invokeDelegateMethod(ReactActivityDelegateWrapper.kt:356)
+05-22 19:58:24.303  7778  7778 W SoLoader: 	at expo.modules.ReactActivityDelegateWrapper.loadApp(ReactActivityDelegateWrapper.kt:126)
+05-22 19:58:24.303  7778  7778 W SoLoader: 	at expo.modules.ReactActivityDelegateWrapper.onCreate(ReactActivityDelegateWrapper.kt:178)
+05-22 19:58:24.303  7778  7778 W SoLoader: 	at com.facebook.react.ReactActivity.onCreate(ReactActivity.java:47)
+05-22 19:58:24.303  7778  7778 W SoLoader: 	at com.amandabenavidez.bitzahugs.MainActivity.onCreate(MainActivity.kt:23)
+05-22 19:58:24.303  7778  7778 W SoLoader: 	at android.app.Activity.performCreate(Activity.java:9002)
+05-22 19:58:24.303  7778  7778 W SoLoader: 	at android.app.Activity.performCreate(Activity.java:8980)
+05-22 19:58:24.303  7778  7778 W SoLoader: 	at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1526)
+05-22 19:58:24.303  7778  7778 W SoLoader: 	at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:4030)
+05-22 19:58:24.303  7778  7778 W SoLoader: 	at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:4235)
+05-22 19:58:24.303  7778  7778 W SoLoader: 	at android.app.servertransaction.LaunchActivityItem.execute(LaunchActivityItem.java:112)
+05-22 19:58:24.303  7778  7778 W SoLoader: 	at android.app.servertransaction.TransactionExecutor.executeNonLifecycleItem(TransactionExecutor.java:174)
+05-22 19:58:24.303  7778  7778 W SoLoader: 	at android.app.servertransaction.TransactionExecutor.executeTransactionItems(TransactionExecutor.java:109)
+05-22 19:58:24.303  7778  7778 W SoLoader: 	at android.app.servertransaction.TransactionExecutor.execute(TransactionExecutor.java:81)
+05-22 19:58:24.303  7778  7778 W SoLoader: 	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2636)
+05-22 19:58:24.303  7778  7778 W SoLoader: 	at android.os.Handler.dispatchMessage(Handler.java:107)
+05-22 19:58:24.303  7778  7778 W SoLoader: 	at android.os.Looper.loopOnce(Looper.java:232)
+05-22 19:58:24.303  7778  7778 W SoLoader: 	at android.os.Looper.loop(Looper.java:317)
+05-22 19:58:24.303  7778  7778 W SoLoader: 	at android.app.ActivityThread.main(ActivityThread.java:8705)
+05-22 19:58:24.303  7778  7778 W SoLoader: 	at java.lang.reflect.Method.invoke(Native Method)
+05-22 19:58:24.303  7778  7778 W SoLoader: 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:580)
+05-22 19:58:24.303  7778  7778 W SoLoader: 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:886)
+05-22 19:58:24.304  7778  7778 W SoLoader: Running a recovery step for libhermes.so due to com.facebook.soloader.SoLoaderDSONotFoundError: couldn't find DSO to load: libc++_shared.so
+05-22 19:58:24.304  7778  7778 W SoLoader: 	existing SO sources: 
+05-22 19:58:24.304  7778  7778 W SoLoader: 		SoSource 0: ApplicationSoSource[DirectorySoSource[root = /data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/lib/arm64 flags = 0]]
+05-22 19:58:24.304  7778  7778 W SoLoader: 		SoSource 1: DirectApkSoSource[root = [/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a]]
+05-22 19:58:24.304  7778  7778 W SoLoader: 		SoSource 2: DirectorySoSource[root = /system/lib64 flags = 3]
+05-22 19:58:24.304  7778  7778 W SoLoader: 		SoSource 3: DirectorySoSource[root = /vendor/lib64 flags = 3]
+05-22 19:58:24.304  7778  7778 W SoLoader: 	Native lib dir: /data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/lib/arm64
+05-22 19:58:24.304  7778  7778 W SoLoader: Failed to recover
+05-22 19:58:24.304  7778  7778 E TransactionExecutor: Failed to execute the transaction: tId:-1246668765 ClientTransaction{
+05-22 19:58:24.304  7778  7778 E TransactionExecutor: tId:-1246668765   transactionItems=[
+05-22 19:58:24.304  7778  7778 E TransactionExecutor: tId:-1246668765     LaunchActivityItem{activityToken=android.os.BinderProxy@fb5b888,intent=Intent { flg=0x10000000 cmp=com.amandabenavidez.bitzahugs/.MainActivity },ident=132506324,info=ActivityInfo{439b1cf com.amandabenavidez.bitzahugs.MainActivity},curConfig={1.0 310mcc260mnc [en_US] ldltr sw411dp w411dp h838dp 420dpi nrml long port finger qwerty/v/v dpad/v winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 136 - 1080, 2337) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=undefined mAlwaysOnTop=undefined mRotation=ROTATION_0} as.3 s.50 fontWeightAdjustment=0},overrideConfig={1.0 310mcc260mnc [en_US] ldltr sw411dp w411dp h838dp 420dpi nrml long port finger qwerty/v/v dpad/v winConfig={ mBounds=Rect(0, 0 - 1080, 2400) mAppBounds=Rect(0, 136 - 1080, 2337) mMaxBounds=Rect(0, 0 - 1080, 2400) mDisplayRotation=ROTATION_0 mWindowingMode=fullscreen mActivityType=standard mAlwaysOnTop=undefined mRotation=ROTATION_0} as.3 s.3 fontWeightAdjustment=0},deviceId=0,referrer=com.android.shell,procState=2,state=null,persistentState=null,pendingResults=null,pendingNewIntents=null,sceneTransitionInfo=null,profilerInfo=null,assistToken=android.os.BinderProxy@31a8830,shareableActivityToken=android.os.BinderProxy@ceacca9,activityWindowInfo=ActivityWindowInfo{isEmbedded=false, taskBounds=Rect(0, 0 - 1080, 2400), taskFragmentBounds=Rect(0, 0 - 1080, 2400)}}
+05-22 19:58:24.304  7778  7778 E TransactionExecutor: tId:-1246668765     ResumeActivityItem{mActivityToken=android.os.BinderProxy@fb5b888,procState=-1,updateProcState=false,isForward=true,shouldSendCompatFakeFocus=false}
+05-22 19:58:24.304  7778  7778 E TransactionExecutor: tId:-1246668765     Target activity: com.amandabenavidez.bitzahugs.MainActivity
+05-22 19:58:24.304  7778  7778 E TransactionExecutor: tId:-1246668765   ]
+05-22 19:58:24.304  7778  7778 E TransactionExecutor: tId:-1246668765 }
+05-22 19:58:24.305  7778  7778 D AndroidRuntime: Shutting down VM
+--------- beginning of crash
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: FATAL EXCEPTION: main
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: Process: com.amandabenavidez.bitzahugs, PID: 7778
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: java.lang.RuntimeException: Unable to start activity ComponentInfo{com.amandabenavidez.bitzahugs/com.amandabenavidez.bitzahugs.MainActivity}: java.lang.reflect.InvocationTargetException
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 	at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:4048)
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 	at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:4235)
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 	at android.app.servertransaction.LaunchActivityItem.execute(LaunchActivityItem.java:112)
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 	at android.app.servertransaction.TransactionExecutor.executeNonLifecycleItem(TransactionExecutor.java:174)
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 	at android.app.servertransaction.TransactionExecutor.executeTransactionItems(TransactionExecutor.java:109)
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 	at android.app.servertransaction.TransactionExecutor.execute(TransactionExecutor.java:81)
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2636)
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 	at android.os.Handler.dispatchMessage(Handler.java:107)
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 	at android.os.Looper.loopOnce(Looper.java:232)
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 	at android.os.Looper.loop(Looper.java:317)
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 	at android.app.ActivityThread.main(ActivityThread.java:8705)
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 	at java.lang.reflect.Method.invoke(Native Method)
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:580)
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:886)
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: Caused by: java.lang.reflect.InvocationTargetException
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 	at java.lang.reflect.Method.invoke(Native Method)
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 	at expo.modules.ReactActivityDelegateWrapper.invokeDelegateMethod(ReactActivityDelegateWrapper.kt:356)
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 	at expo.modules.ReactActivityDelegateWrapper.loadApp(ReactActivityDelegateWrapper.kt:126)
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 	at expo.modules.ReactActivityDelegateWrapper.onCreate(ReactActivityDelegateWrapper.kt:178)
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 	at com.facebook.react.ReactActivity.onCreate(ReactActivity.java:47)
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 	at com.amandabenavidez.bitzahugs.MainActivity.onCreate(MainActivity.kt:23)
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 	at android.app.Activity.performCreate(Activity.java:9002)
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 	at android.app.Activity.performCreate(Activity.java:8980)
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 	at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1526)
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 	at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:4030)
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 	... 13 more
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: Caused by: com.facebook.soloader.SoLoaderDSONotFoundError: couldn't find DSO to load: libc++_shared.so
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 	existing SO sources: 
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 		SoSource 0: ApplicationSoSource[DirectorySoSource[root = /data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/lib/arm64 flags = 0]]
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 		SoSource 1: DirectApkSoSource[root = [/data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/base.apk!/lib/arm64-v8a]]
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 		SoSource 2: DirectorySoSource[root = /system/lib64 flags = 3]
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 		SoSource 3: DirectorySoSource[root = /vendor/lib64 flags = 3]
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 	Native lib dir: /data/app/~~hxBo_qKs7qBDD2Vttge12Q==/com.amandabenavidez.bitzahugs-EzsKtweNBM-HlIGXGYxDzg==/lib/arm64
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 	at com.facebook.soloader.SoLoader.doLoadLibraryBySoName(SoLoader.java:1216)
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 	at com.facebook.soloader.SoLoader.loadLibraryBySoNameImpl(SoLoader.java:1078)
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 	at com.facebook.soloader.SoLoader.loadDependency(SoLoader.java:920)
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 	at com.facebook.soloader.DirectApkSoSource.loadDependencies(DirectApkSoSource.java:166)
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 	at com.facebook.soloader.DirectApkSoSource.loadLibrary(DirectApkSoSource.java:76)
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 	at com.facebook.soloader.SoLoader.loadLibraryFromSoSource(SoLoader.java:1246)
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 	at com.facebook.soloader.SoLoader.doLoadLibraryBySoName(SoLoader.java:1210)
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 	at com.facebook.soloader.SoLoader.loadLibraryBySoNameImpl(SoLoader.java:1078)
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 	at com.facebook.soloader.SoLoader.loadLibraryBySoName(SoLoader.java:943)
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 	at com.facebook.soloader.SoLoader.loadLibraryOnAndroid(SoLoader.java:859)
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 	at com.facebook.soloader.SoLoader.loadLibrary(SoLoader.java:842)
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 	at com.facebook.soloader.SoLoader.loadLibrary(SoLoader.java:812)
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 	at com.facebook.hermes.reactexecutor.HermesExecutor.loadLibrary(HermesExecutor.java:26)
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 	at com.facebook.hermes.reactexecutor.HermesExecutor.<clinit>(HermesExecutor.java:20)
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 	at com.facebook.react.ReactInstanceManagerBuilder.getDefaultJSExecutorFactory(ReactInstanceManagerBuilder.java:407)
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 	at com.facebook.react.ReactInstanceManagerBuilder.build(ReactInstanceManagerBuilder.java:349)
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 	at com.facebook.react.ReactNativeHost.createReactInstanceManager(ReactNativeHost.java:87)
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 	at expo.modules.ReactNativeHostWrapperBase.createReactInstanceManager(ReactNativeHostWrapperBase.kt:29)
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 	at com.facebook.react.ReactNativeHost.getReactInstanceManager(ReactNativeHost.java:57)
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 	at com.facebook.react.ReactDelegate.loadApp(ReactDelegate.java:301)
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 	at com.facebook.react.ReactActivityDelegate.loadApp(ReactActivityDelegate.java:137)
+05-22 19:58:24.305  7778  7778 E AndroidRuntime: 	... 23 more
+05-22 19:58:24.335   570  1292 W ActivityTaskManager:   Force finishing activity com.amandabenavidez.bitzahugs/.MainActivity
+05-22 19:58:24.376   570  7795 I DropBoxManagerService: add tag=data_app_crash isTagEnabled=true flags=0x2
+05-22 19:58:24.383  1114  1175 V WindowManagerShell: Transition requested (#43): android.os.BinderProxy@29acd39 TransitionRequestInfo { type = CLOSE, triggerTask = null, pipTask = null, remoteTransition = null, displayChange = null, flags = 16, debugId = 43 }
+05-22 19:58:24.409  7778  7778 I Process : Sending signal. PID: 7778 SIG: 9
+05-22 19:58:24.553  1428  1438 I HWUI    : Davey! duration=1209ms; Flags=0, FrameTimelineVsyncId=24382, IntendedVsync=1295121159846, Vsync=1295137826512, InputEventId=0, HandleInputStart=1295153505033, AnimationStart=1295153505908, PerformTraversalsStart=1295153506366, DrawStart=1295153682658, FrameDeadline=1295137826512, FrameInterval=1295153498324, FrameStartTime=16666666, SyncQueued=1295155790783, SyncStart=1295156305658, IssueDrawCommandsStart=1295157269866, SwapBuffers=1295707088825, FrameCompleted=1296331285658, DequeueBufferDuration=18459, QueueBufferDuration=444291, GpuCompleted=1296331285658, SwapBuffersCompleted=1296190082825, DisplayPresentTime=0, CommandSubmissionCompleted=1295707088825, 
+05-22 19:58:24.554  1428  1428 D VRI[NexusLauncherActivity]: visibilityChanged oldVisibility=true newVisibility=false
+05-22 19:58:24.555  1428  1428 I Choreographer: Skipped 34 frames!  The application may be doing too much work on its main thread.
+05-22 19:58:24.572   400   400 E SurfaceFlinger: Out of order buffers detected for RequestedLayerState{com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity#225 parentId=118} producedId=8 frameNumber=28 -> producedId=8 frameNumber=12
+05-22 19:58:24.573   400   400 I BpBinder: onLastStrongRef automatically unlinking death recipients: 
+05-22 19:58:24.732  1428  1428 D NexusLauncherModelDelegate: notifySmartspaceEvent: SmartspaceTargetEvent{mSmartspaceTarget=null, mSmartspaceActionId='null', mEventType=7}
+05-22 19:58:24.750   570  1205 I ActivityManager: Process com.amandabenavidez.bitzahugs (pid 7778) has died: fg  TOP 
+05-22 19:58:24.808   570   601 I libprocessgroup: Removed cgroup /sys/fs/cgroup/uid_10205/pid_7778
+05-22 19:58:24.973   357   357 I Zygote  : Process 7778 exited due to signal 9 (Killed)
+05-22 19:58:24.996   570   590 D DisplayManagerService: Drop pending events for gone uid 10205
+05-22 19:58:25.008   570   592 W ActivityTaskManager: Activity top resumed state loss timeout for ActivityRecord{7e5e2d4 u0 com.amandabenavidez.bitzahugs/.MainActivity t14 f} isExiting}
+05-22 19:58:25.067   570   590 W Looper  : Slow dispatch took 295ms android.ui h=com.android.server.am.ActivityManagerService$UiHandler c=com.android.server.am.UidObserverController$$ExternalSyntheticLambda0@73e0b53 m=0
+05-22 19:58:25.072   570   590 W Looper  : Slow delivery took 252ms android.ui h=com.android.server.wm.DisplayPolicy$PolicyHandler c=com.android.server.wm.DisplayPolicy$$ExternalSyntheticLambda12@3365b15 m=0
+05-22 19:58:25.312   570  1020 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET, states=14
+05-22 19:58:25.313   570  1020 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET6, states=14
+05-22 19:58:25.313   570  1020 D InetDiagMessage: Destroyed live tcp sockets for uids={10205} in 233ms
+05-22 19:58:25.313   570  1020 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET, states=14
+05-22 19:58:25.313   570  1020 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET6, states=14
+05-22 19:58:25.313   570  1020 D InetDiagMessage: Destroyed live tcp sockets for uids={20205} in 1ms
+05-22 19:58:25.332  1428  1863 D EGL_emulation: app_time_stats: avg=459.73ms min=141.36ms max=778.10ms count=2
+05-22 19:58:25.332  1428  1437 I HWUI    : Davey! duration=701ms; Flags=0, FrameTimelineVsyncId=24405, IntendedVsync=1295204493176, Vsync=1295287826506, InputEventId=0, HandleInputStart=1295296954199, AnimationStart=1295296954949, PerformTraversalsStart=1295297102949, DrawStart=1295297145741, FrameDeadline=1296354493130, FrameInterval=1295296950574, FrameStartTime=16666666, SyncQueued=1295297278033, SyncStart=1296190188866, IssueDrawCommandsStart=1296191613325, SwapBuffers=1296330240658, FrameCompleted=1296798988825, DequeueBufferDuration=449264416, QueueBufferDuration=327416, GpuCompleted=1296798988825, SwapBuffersCompleted=1296780663075, DisplayPresentTime=0, CommandSubmissionCompleted=1296330240658, 
+05-22 19:58:25.477   570   590 W Looper  : Drained
+05-22 19:58:25.477   400   400 E SurfaceFlinger: Out of order buffers detected for RequestedLayerState{com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity#225 parentId=118} producedId=8 frameNumber=28 -> producedId=8 frameNumber=13
+05-22 19:58:25.587  1428  2216 E SurfaceSyncGroup: Failed to receive transaction ready in 1000ms. Marking SurfaceSyncGroup(SysUIAnimation#2) as ready
+05-22 19:58:25.588  1428  2216 E SurfaceSyncGroup: Failed to receive transaction ready in 1000ms. Marking SurfaceSyncGroup(VRI[NexusLauncherActivity]#3) as ready
+05-22 19:58:25.588  1428  2216 E SurfaceSyncGroup: Failed to receive transaction ready in 1000ms. Marking SurfaceSyncGroup(VRI[Taskbar]#4) as ready
+05-22 19:58:25.622  1428  1428 W SurfaceSyncGroup: Adding transaction to a completed SurfaceSyncGroup(VRI[NexusLauncherActivity]#3).  Applying immediately
+05-22 19:58:25.625  1428  1428 W SurfaceSyncGroup: Adding transaction to a completed SurfaceSyncGroup(VRI[NexusLauncherActivity]#3).  Applying immediately
+05-22 19:58:25.708  1428  1428 W SurfaceSyncGroup: Adding transaction to a completed SurfaceSyncGroup(VRI[Taskbar]#4).  Applying immediately
+05-22 19:58:26.022  1428  1863 W SurfaceSyncGroup: Adding transaction to a completed SurfaceSyncGroup(VRI[Taskbar]#4).  Applying immediately
+05-22 19:58:26.025  1428  1863 D EGL_emulation: app_time_stats: avg=139406.94ms min=139406.94ms max=139406.94ms count=1
+05-22 19:58:26.027  1428  1428 D VRI[NexusLauncherActivity]: visibilityChanged oldVisibility=false newVisibility=true
+05-22 19:58:26.028  1428  1428 I TopTaskTracker: onTaskMovedToFront: (moved taskInfo to front) taskId=7, baseIntent=Intent { act=android.intent.action.MAIN cat=[android.intent.category.HOME] flg=0x10000100 cmp=com.google.android.apps.nexuslauncher/.NexusLauncherActivity }
+05-22 19:58:26.028  1428  1428 I Choreographer: Skipped 87 frames!  The application may be doing too much work on its main thread.
+05-22 19:58:26.030  1428  1428 D NexusLauncherModelDelegate: notifySmartspaceEvent: SmartspaceTargetEvent{mSmartspaceTarget=null, mSmartspaceActionId='null', mEventType=6}
+05-22 19:58:26.031  1428  1428 D BaseDepthController: mSurface is not valid
+05-22 19:58:26.069  1428  1428 D BaseDepthController: setSurface:
+05-22 19:58:26.069  1428  1428 D BaseDepthController: 	mWaitingOnSurfaceValidity: true
+05-22 19:58:26.069  1428  1428 D BaseDepthController: 	mSurface: Surface(name=com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity)/@0x332ca10
+05-22 19:58:26.426   570  3565 E TaskPersister: File error accessing recents directory (directory doesn't exist?).
+05-22 19:58:26.428  1428  1751 I HWUI    : Davey! duration=1783ms; Flags=0, FrameTimelineVsyncId=24522, IntendedVsync=1296204493136, Vsync=1296771159780, InputEventId=0, HandleInputStart=1296781795700, AnimationStart=1296781796033, PerformTraversalsStart=1296791315575, DrawStart=1297935029951, FrameDeadline=1296221159802, FrameInterval=1296781565367, FrameStartTime=16666666, SyncQueued=1297935581826, SyncStart=1298238070909, IssueDrawCommandsStart=1298238905242, SwapBuffers=1298240542367, FrameCompleted=1298290236992, DequeueBufferDuration=7292, QueueBufferDuration=2885375, GpuCompleted=1298290236992, SwapBuffersCompleted=1298253076159, DisplayPresentTime=0, CommandSubmissionCompleted=1298240542367, 
+05-22 19:58:26.787  1428  1428 I Choreographer: Skipped 43 frames!  The application may be doing too much work on its main thread.
+05-22 19:58:26.808  1428  1428 D StatsLog: LAUNCHER_ONRESUME
+05-22 19:58:26.824  1428  1467 D QuickstepModelDelegate: notifyAppTargetEvent action=1 launchLocation=
+05-22 19:58:26.840  1114  1137 V WindowManagerShell: onTransitionReady(transaction=2448131359893)
+05-22 19:58:26.841  1114  1175 V WindowManagerShell: onTransitionReady (#43) android.os.BinderProxy@29acd39: {id=43 t=CLOSE f=0x10 trk=0 r=[0@Point(0, 0)] c=[{WCT{android.window.IWindowContainerToken$Stub$Proxy@c09e018} m=TO_FRONT f=SHOW_WALLPAPER|MOVE_TO_TOP leash=Surface(name=Task=1)/@0x2021d2c sb=Rect(0, 0 - 1080, 2400) eb=Rect(0, 0 - 1080, 2400) d=0 taskParent=-1},{WCT{android.window.IWindowContainerToken$Stub$Proxy@d0bea71} m=CLOSE f=NONE leash=Surface(name=Task=14)/@0xbd203f5 sb=Rect(0, 0 - 1080, 2400) eb=Rect(0, 0 - 1080, 2400) d=0 taskParent=-1},{null m=TO_FRONT f=IS_WALLPAPER leash=Surface(name=WallpaperWindowToken{c43bcdc token=android.os.Binder@48b1d4f})/@0xa1e858a sb=Rect(0, 0 - 1080, 2400) eb=Rect(0, 0 - 1080, 2400) d=0}]}
+05-22 19:58:26.843  1114  1175 V WindowManagerShell: Playing animation for (#43) android.os.BinderProxy@29acd39@0
+05-22 19:58:26.843  1114  1175 V WindowManagerShell:  try handler com.android.wm.shell.transition.DefaultMixedHandler@84385b5
+05-22 19:58:26.843  1114  1175 V WindowManagerShell:  try handler com.android.wm.shell.keyguard.KeyguardTransitionHandler@67b444a
+05-22 19:58:26.843  1114  1175 V WindowManagerShell:  try handler com.android.wm.shell.pip.PipTransition@c86cfbb
+05-22 19:58:26.843  1114  1175 V WindowManagerShell:  try handler com.android.wm.shell.activityembedding.ActivityEmbeddingController@e539cd8
+05-22 19:58:26.843  1114  1175 V WindowManagerShell:  try handler com.android.wm.shell.recents.RecentsTransitionHandler@a73c831
+05-22 19:58:26.843  1114  1175 V ShellRecents: RecentsTransitionHandler.startAnimation: no controller found
+05-22 19:58:26.843  1114  1175 V WindowManagerShell:  try handler com.android.wm.shell.splitscreen.StageCoordinator@1315b16
+05-22 19:58:26.843  1114  1175 V WindowManagerShell:  try handler com.android.wm.shell.transition.RemoteTransitionHandler@4c8ac97
+05-22 19:58:26.882  1114  1175 V WindowManagerShell: Transition doesn't have explicit remote, search filters for match for {id=43 t=CLOSE f=0x10 trk=0 r=[0@Point(0, 0)] c=[{WCT{android.window.IWindowContainerToken$Stub$Proxy@c09e018} m=TO_FRONT f=SHOW_WALLPAPER|MOVE_TO_TOP leash=Surface(name=Task=1)/@0x2021d2c sb=Rect(0, 0 - 1080, 2400) eb=Rect(0, 0 - 1080, 2400) d=0 taskParent=-1},{WCT{android.window.IWindowContainerToken$Stub$Proxy@d0bea71} m=CLOSE f=NONE leash=Surface(name=Task=14)/@0xbd203f5 sb=Rect(0, 0 - 1080, 2400) eb=Rect(0, 0 - 1080, 2400) d=0 taskParent=-1},{null m=TO_FRONT f=IS_WALLPAPER leash=Surface(name=WallpaperWindowToken{c43bcdc token=android.os.Binder@48b1d4f})/@0xa1e858a sb=Rect(0, 0 - 1080, 2400) eb=Rect(0, 0 - 1080, 2400) d=0}]}
+05-22 19:58:26.883  1114  1175 V WindowManagerShell:  Checking filter Pair{{types=[] flags=0x0] notFlags=0x0 checks=[{atype=undefined independent=true modes=[OPEN,TO_FRONT] flags=IN_TASK_WITH_EMBEDDED_ACTIVITY mustBeTask=false order=ANY topActivity=ComponentInfo{com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity} launchCookie=null},{atype=undefined independent=true modes=[CLOSE,TO_BACK] flags=IN_TASK_WITH_EMBEDDED_ACTIVITY mustBeTask=false order=ANY topActivity=null launchCookie=null}]} RemoteTransition { remoteTransition = android.window.IRemoteTransition$Stub$Proxy@beeff47, appThread = android.app.IApplicationThread$Stub$Proxy@e748374, debugName = OverlaySwipeBack }}
+05-22 19:58:26.883  1114  1175 V WindowManagerShell:  Checking filter Pair{{types=[] flags=0x0] notFlags=0x0 checks=[{atype=dream independent=true modes=[OPEN,TO_FRONT] flags=NONE mustBeTask=false order=ANY topActivity=null launchCookie=null},{atype=home independent=true modes=[CLOSE,TO_BACK] flags=NONE mustBeTask=false order=ANY topActivity=null launchCookie=null}]} RemoteTransition { remoteTransition = android.window.IRemoteTransition$Stub$Proxy@761809d, appThread = android.app.IApplicationThread$Stub$Proxy@21c912, debugName = LauncherToDream }}
+05-22 19:58:26.883  1114  1175 V WindowManagerShell:  Checking filter Pair{{types=[] flags=0x0] notFlags=0x100 checks=[{atype=home independent=true modes=[OPEN,TO_FRONT] flags=NONE mustBeTask=false order=TOP topActivity=ComponentInfo{com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity} launchCookie=null},{atype=standard independent=true modes=[CLOSE,TO_BACK] flags=NONE mustBeTask=false order=ANY topActivity=null launchCookie=null}]} RemoteTransition { remoteTransition = android.window.IRemoteTransition$Stub$Proxy@f9248e3, appThread = android.app.IApplicationThread$Stub$Proxy@61062e0, debugName = QuickstepLaunchHome }}
+05-22 19:58:26.883  1114  1175 D RemoteTransitionHandler: Found filterPair{{types=[] flags=0x0] notFlags=0x100 checks=[{atype=home independent=true modes=[OPEN,TO_FRONT] flags=NONE mustBeTask=false order=TOP topActivity=ComponentInfo{com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity} launchCookie=null},{atype=standard independent=true modes=[CLOSE,TO_BACK] flags=NONE mustBeTask=false order=ANY topActivity=null launchCookie=null}]} RemoteTransition { remoteTransition = android.window.IRemoteTransition$Stub$Proxy@f9248e3, appThread = android.app.IApplicationThread$Stub$Proxy@61062e0, debugName = QuickstepLaunchHome }}
+05-22 19:58:26.883  1114  1175 V WindowManagerShell:  Delegate animation for (#43) to RemoteTransition { remoteTransition = android.window.IRemoteTransition$Stub$Proxy@f9248e3, appThread = android.app.IApplicationThread$Stub$Proxy@61062e0, debugName = QuickstepLaunchHome }
+05-22 19:58:26.987   570  1734 W AppSearchIcing: icing-search-engine.cc:321: Error: 5, Message: Document (com.google.android.googlequicksearchbox$OneSearchZeroStateGoogleSuggestions/default, zp) not found.
+05-22 19:58:26.998  1428  2247 D OneSearchSuggestProvider: AppSearch 0-state cache not available, fallback to AGA
+05-22 19:58:26.998  1428  2247 D OneSearchSuggestProvider: java.util.concurrent.CompletionException: java.util.NoSuchElementException: No value present
+05-22 19:58:26.998  1428  2247 D OneSearchSuggestProvider: 	at java.util.concurrent.CompletableFuture.encodeThrowable(CompletableFuture.java:308)
+05-22 19:58:26.998  1428  2247 D OneSearchSuggestProvider: 	at java.util.concurrent.CompletableFuture.completeThrowable(CompletableFuture.java:323)
+05-22 19:58:26.998  1428  2247 D OneSearchSuggestProvider: 	at java.util.concurrent.CompletableFuture$UniAccept.tryFire(CompletableFuture.java:684)
+05-22 19:58:26.998  1428  2247 D OneSearchSuggestProvider: 	at java.util.concurrent.CompletableFuture.postComplete(CompletableFuture.java:486)
+05-22 19:58:26.998  1428  2247 D OneSearchSuggestProvider: 	at java.util.concurrent.CompletableFuture.completeExceptionally(CompletableFuture.java:2138)
+05-22 19:58:26.998  1428  2247 D OneSearchSuggestProvider: 	at com.google.android.apps.nexuslauncher.allapps.E0.onResult(go/retraceme 2855a437b73635ce9cad76b9289087e631bbb67fc90008a0da13d343a00e5041:67)
+05-22 19:58:26.998  1428  2247 D OneSearchSuggestProvider: 	at android.app.appsearch.SearchSessionUtil$1.lambda$onResult$0(go/retraceme 64eee9e9f568ff45978879ad2ff83146f2618ee8a88278736fbdf5fae931976e:144)
+05-22 19:58:26.998  1428  2247 D OneSearchSuggestProvider: 	at android.app.appsearch.SearchSessionUtil$1.$r8$lambda$CEk3q8sDAQVhU3rQwVueB8FAj_M(go/retraceme 64eee9e9f568ff45978879ad2ff83146f2618ee8a88278736fbdf5fae931976e:1)
+05-22 19:58:26.998  1428  2247 D OneSearchSuggestProvider: 	at android.app.appsearch.SearchSessionUtil$1$$ExternalSyntheticLambda0.run(go/retraceme 64eee9e9f568ff45978879ad2ff83146f2618ee8a88278736fbdf5fae931976e:22)
+05-22 19:58:26.998  1428  2247 D OneSearchSuggestProvider: 	at android.os.Handler.handleCallback(Handler.java:959)
+05-22 19:58:26.998  1428  2247 D OneSearchSuggestProvider: 	at android.os.Handler.dispatchMessage(Handler.java:100)
+05-22 19:58:26.998  1428  2247 D OneSearchSuggestProvider: 	at android.os.Looper.loopOnce(Looper.java:232)
+05-22 19:58:26.998  1428  2247 D OneSearchSuggestProvider: 	at android.os.Looper.loop(Looper.java:317)
+05-22 19:58:26.998  1428  2247 D OneSearchSuggestProvider: 	at android.os.HandlerThread.run(HandlerThread.java:85)
+05-22 19:58:26.998  1428  2247 D OneSearchSuggestProvider: Caused by: java.util.NoSuchElementException: No value present
+05-22 19:58:26.998  1428  2247 D OneSearchSuggestProvider: 	at java.util.Optional.get(Optional.java:143)
+05-22 19:58:26.998  1428  2247 D OneSearchSuggestProvider: 	at com.google.android.apps.nexuslauncher.allapps.E0.onResult(go/retraceme 2855a437b73635ce9cad76b9289087e631bbb67fc90008a0da13d343a00e5041:28)
+05-22 19:58:26.998  1428  2247 D OneSearchSuggestProvider: 	... 8 more
+05-22 19:58:26.999  1428  2247 D OneSearchSuggestProvider: Established or reuse existing binder channel authority=com.google.android.googlequicksearchbox
+05-22 19:58:27.056  1683  1895 I AiAiEcho: Predicting[0]:  [CONTEXT sampling_count=5 ]
+05-22 19:58:27.056  1683  1895 I AiAiEcho: EchoTargets: 
+05-22 19:58:27.056  1683  1895 I AiAiEcho: Filtered by AiAi flag check: 
+05-22 19:58:27.056  1683  1895 I AiAiEcho: [CONTEXT ratelimit_period="10 SECONDS" ]
+05-22 19:58:27.056  1683  1895 I AiAiEcho: Ranked targets strategy: SORT, count: 0, ranking metadata:  [CONTEXT ratelimit_period="10 SECONDS" ]
+05-22 19:58:27.712  1683  1895 I AiAiEcho: #remoteViewsTwiddler: feature disabled.
+05-22 19:58:27.714  1683  1895 I AiAiEcho: #postPredictionTargets: Sending updates to UISurface home with targets# 0 (types=[])
+05-22 19:58:27.730   570   586 D ActivityManager: sync unfroze 6629 com.google.android.googlequicksearchbox:search for 6
+05-22 19:58:28.107  1428  1437 E FrameEvents: addRelease: Did not find frame.
+05-22 19:58:28.107  1428  1437 I HWUI    : Davey! duration=2730ms; Flags=1, FrameTimelineVsyncId=24576, IntendedVsync=1296804493112, Vsync=1298254493054, InputEventId=0, HandleInputStart=1298255710159, AnimationStart=1298255711117, PerformTraversalsStart=1298255859409, DrawStart=1298694440118, FrameDeadline=1296821159778, FrameInterval=1298255024034, FrameStartTime=16666666, SyncQueued=1298761591451, SyncStart=1298903439868, IssueDrawCommandsStart=1298904233909, SwapBuffers=1298905903243, FrameCompleted=1299676681285, DequeueBufferDuration=3500, QueueBufferDuration=259292, GpuCompleted=1299676681285, SwapBuffersCompleted=1299010975868, DisplayPresentTime=0, CommandSubmissionCompleted=1298905903243, 
+05-22 19:58:28.108   570   593 I Choreographer: Skipped 75 frames!  The application may be doing too much work on its main thread.
+05-22 19:58:28.120   570   589 V WindowManager: Sent Transition (#43) createdAt=05-22 19:58:24.336 via request=TransitionRequestInfo { type = CLOSE, triggerTask = null, pipTask = null, remoteTransition = null, displayChange = null, flags = 16, debugId = 43 }
+05-22 19:58:28.120   570   589 V WindowManager:     startWCT=WindowContainerTransaction { changes = {} hops = [] errorCallbackToken=null taskFragmentOrganizer=null }
+05-22 19:58:28.120   570   589 V WindowManager:     info={id=43 t=CLOSE f=0x10 trk=0 r=[0@Point(0, 0)] c=[
+05-22 19:58:28.120   570   589 V WindowManager:         {WCT{RemoteToken{1b52cce Task{4e4ba76 #1 type=home}}} m=TO_FRONT f=SHOW_WALLPAPER|MOVE_TO_TOP leash=Surface(name=Task=1)/@0x82dacea sb=Rect(0, 0 - 1080, 2400) eb=Rect(0, 0 - 1080, 2400) d=0 taskParent=-1},
+05-22 19:58:28.120   570   589 V WindowManager:         {WCT{RemoteToken{8c5fc0f Task{bf65c7d #14 type=standard A=10205:com.amandabenavidez.bitzahugs}}} m=CLOSE f=NONE leash=Surface(name=Task=14)/@0x7b1a904 sb=Rect(0, 0 - 1080, 2400) eb=Rect(0, 0 - 1080, 2400) d=0 taskParent=-1},
+05-22 19:58:28.120   570   589 V WindowManager:         {null m=TO_FRONT f=IS_WALLPAPER leash=Surface(name=WallpaperWindowToken{c43bcdc token=android.os.Binder@48b1d4f})/@0xff01cae sb=Rect(0, 0 - 1080, 2400) eb=Rect(0, 0 - 1080, 2400) d=0}
+05-22 19:58:28.120   570   589 V WindowManager:     ]}
+05-22 19:58:28.122  6629  6629 I A       : (REDACTED) Created gRPC endpoint for service %s
+05-22 19:58:28.131   570   586 W ProcessStats: Tracking association SourceState{b642a46 com.google.android.apps.nexuslauncher/10174 BTop #9656} whose proc state 2 is better than process ProcessState{df988e com.google.android.googlequicksearchbox:search/10145 pkg=com.google.android.googlequicksearchbox} proc state 14 (4 skipped)
+05-22 19:58:28.134  1428  1428 I Choreographer: Skipped 40 frames!  The application may be doing too much work on its main thread.
+05-22 19:58:28.142   570   590 W Looper  : Slow delivery took 221ms android.ui h=com.android.server.am.ActivityManagerService$UiHandler c=com.android.server.am.UidObserverController$$ExternalSyntheticLambda0@73e0b53 m=0
+05-22 19:58:28.412  1114  1175 V WindowManagerShell:  animated by com.android.wm.shell.transition.RemoteTransitionHandler@4c8ac97
+05-22 19:58:28.416  1114  1175 V WindowManagerShell: Transition animation finished (aborted=false), notifying core (#43) android.os.BinderProxy@29acd39@0
+05-22 19:58:28.745   570   589 V WindowManager: Finish Transition (#43): created at 05-22 19:58:24.336 collect-started=0.083ms request-sent=38.874ms started=72.356ms ready=1729.696ms sent=2503.404ms finished=4328.755ms
+05-22 19:58:28.805   570   590 W Looper  : Drained
+05-22 19:58:28.862   570  2682 W InputManager-JNI: Input channel object 'afec8be Splash Screen com.amandabenavidez.bitzahugs (client)' was disposed without first being removed with the input manager!
+05-22 19:58:28.964  1114  1175 V WindowManagerShell: Track 0 became idle
+05-22 19:58:28.986  1114  1175 V WindowManagerShell: All active transition animations finished
+05-22 19:58:28.991   400   400 E SurfaceFlinger: Out of order buffers detected for RequestedLayerState{com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity#225 parentId=118} producedId=9 frameNumber=28 -> producedId=9 frameNumber=2
+05-22 19:58:29.000   570  2060 W UserManagerService: Requested status bar icon for non-badged user 0
+05-22 19:58:29.038  6629  6633 W earchbox:search: Missing inline cache for java.util.Set com.google.bp.d.a.a.f.d.g.a(java.lang.Object, p.h.a.l)
+05-22 19:58:29.297   570  1292 W WindowManager: Failed looking up window session=Session{1716fb7 1114:u0a10179} callers=com.android.server.wm.WindowManagerService.windowForClientLocked:6311 com.android.server.wm.WindowManagerService.relayoutWindowInner:2328 com.android.server.wm.WindowManagerService.relayoutWindow:2293 
+05-22 19:58:29.301  1428  2216 E SurfaceSyncGroup: Failed to receive transaction ready in 1000ms. Marking SurfaceSyncGroup(SysUIAnimation#11) as ready
+05-22 19:58:29.304  1114  1233 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=false callback=android.view.ViewRootImpl$$ExternalSyntheticLambda11@f6dc793
+05-22 19:58:29.308   570  1292 W WindowManager: Failed looking up window session=Session{1716fb7 1114:u0a10179} callers=com.android.server.wm.WindowManagerService.windowForClientLocked:6311 com.android.server.wm.Session.setOnBackInvokedCallbackInfo:1020 android.view.IWindowSession$Stub.onTransact:1199 
+05-22 19:58:29.308   570  1292 I WindowManager: setOnBackInvokedCallback(): No window state for package:com.android.systemui
+05-22 19:58:29.444  1428  2216 E SurfaceSyncGroup: Failed to receive transaction ready in 1000ms. Marking SurfaceSyncGroup(VRI[NexusLauncherActivity]#12) as ready
+05-22 19:58:29.464  1428  2216 E SurfaceSyncGroup: Failed to receive transaction ready in 1000ms. Marking SurfaceSyncGroup(VRI[Taskbar]#13) as ready
+05-22 19:58:29.525  1428  1437 I HWUI    : Davey! duration=1928ms; Flags=0, FrameTimelineVsyncId=24741, IntendedVsync=1299287826346, Vsync=1299637826332, InputEventId=0, HandleInputStart=1299654173701, AnimationStart=1299654174493, PerformTraversalsStart=1299654873326, DrawStart=1299655882868, FrameDeadline=1299704492996, FrameInterval=1299654069826, FrameStartTime=16666666, SyncQueued=1300081019077, SyncStart=1300081256452, IssueDrawCommandsStart=1300081498035, SwapBuffers=1300533480369, FrameCompleted=1301216944327, DequeueBufferDuration=8375, QueueBufferDuration=389000, GpuCompleted=1301216944327, SwapBuffersCompleted=1301116890952, DisplayPresentTime=0, CommandSubmissionCompleted=1300533480369, 
+05-22 19:58:29.563   570  2682 W WindowManager: Failed looking up window session=Session{1716fb7 1114:u0a10179} callers=com.android.server.wm.WindowManagerService.removeClientToken:2058 com.android.server.wm.Session.remove:274 android.view.IWindowSession$Stub.onTransact:685 
