@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
+  ImageBackground,
   Platform,
 } from "react-native";
 
@@ -13,6 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Feather, Ionicons } from "@expo/vector-icons";
 
 const supportHeartHug = require("../assets/icons/support-heart-hug.png");
+const supportBackground = require("../assets/icons/support-background.png");
 
 function PremiumBadge() {
   return (
@@ -71,11 +73,16 @@ export default function SupportScreen({ navigation }) {
     navigation.navigate(screen, params);
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.content}
-      >
+    <ImageBackground
+      source={supportBackground}
+      style={styles.background}
+      resizeMode="cover"
+    >
+      <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.content}
+        >
         {/* Header */}
         <View style={styles.header}>
           <View>
@@ -210,12 +217,14 @@ export default function SupportScreen({ navigation }) {
           If there is immediate danger or a medical emergency, contact emergency services right away.
         </Text>
       </ScrollView>
-    </SafeAreaView>
+      </SafeAreaView>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#FFF9F2" },
+  background: { flex: 1, width: "100%", height: "100%" },
+  safeArea: { flex: 1, backgroundColor: "transparent" },
   content: { paddingHorizontal: 16, paddingTop: Platform.OS === "android" ? 22 : 8, paddingBottom: 120 },
 
   header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 14 },

@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
+  ImageBackground,
   Platform,
   Modal,
 } from "react-native";
@@ -279,12 +280,17 @@ export default function RoutineScreen({ navigation }) {
     childAvatar && avatarSources[childAvatar] ? avatarSources[childAvatar] : null;
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
+    <ImageBackground
+      source={require("../assets/icons/routine-background.png")}
+      style={styles.background}
+      resizeMode="cover"
+    >
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView
+          style={styles.container}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
         {/* Header */}
         <View style={styles.header}>
           <View>
@@ -570,18 +576,25 @@ export default function RoutineScreen({ navigation }) {
         </View>
       </Modal>
     </SafeAreaView>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
+  background: {
+    flex: 1,
+    width: "100%",
+    height: "100%",
+  },
+
   safeArea: {
     flex: 1,
-    backgroundColor: "#FFF9F2",
+    backgroundColor: "transparent",
   },
 
   container: {
     flex: 1,
-    backgroundColor: "#FFF9F2",
+    backgroundColor: "transparent",
   },
 
   content: {

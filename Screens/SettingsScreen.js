@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
+  ImageBackground,
   Alert,
   Platform,
 } from "react-native";
@@ -13,6 +14,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
+
+const settingsBackground = require("../assets/icons/setting-background.png");
 
 // ─── Small Components ─────────────────────────────────────────────────────────
 function PremiumBadge({ onPress }) {
@@ -307,8 +310,13 @@ export default function SettingsScreen({ navigation }) {
   ];
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+    <ImageBackground
+      source={settingsBackground}
+      style={styles.background}
+      resizeMode="cover"
+    >
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
 
         {/* Header */}
         <View style={styles.header}>
@@ -408,13 +416,15 @@ export default function SettingsScreen({ navigation }) {
         </Text>
 
       </ScrollView>
-    </SafeAreaView>
+      </SafeAreaView>
+    </ImageBackground>
   );
 }
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#FFF9F2" },
+  background: { flex: 1, width: "100%", height: "100%" },
+  safeArea: { flex: 1, backgroundColor: "transparent" },
   content: { paddingHorizontal: 16, paddingTop: Platform.OS === "ios" ? 6 : 16, paddingBottom: 100 },
 
   sectionHeader: { marginTop: 4, marginBottom: 8 },

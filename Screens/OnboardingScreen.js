@@ -11,7 +11,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 
-const CHILD_PROFILE_KEY = 'familyAppChildProfile';
+const CHILD_PROFILE_KEY = 'bitzaChildProfile';
 
 const sensoryOptions = [
   { id: 1, label: 'Loud Noises', icon: 'volume-high-outline', color: '#6F4BCB' },
@@ -68,8 +68,8 @@ export default function OnboardingScreen({ navigation }) {
     }
 
     await saveOnboardingProfile();
-    await AsyncStorage.setItem('hasOnboarded', 'true');
-    navigation.navigate('Home');
+    await AsyncStorage.setItem('bitzaOnboardingComplete', 'true');
+    navigation.replace('MainTabs');
   };
 
   const goBack = () => {

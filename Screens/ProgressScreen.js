@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from "react";
 import {
   ScrollView, View, Text, StyleSheet,
-  Image, Platform, TouchableOpacity,
+  Image, ImageBackground, Platform, TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -27,6 +27,7 @@ const BADGE_DEFS = [
   { label: "Journal Starter", icon: require("../assets/icons/badge-star.png"), desc: "Write 3 journal entries" },
   { label: "Support Seeker", icon: require("../assets/icons/badge-small-wins-star.png"), desc: "Use Support Mode 3 times" },
 ];
+const progressBackground = require("../assets/icons/progress-background.png");
 
 // ─── Dynamic Badge Calculator ─────────────────────────────────────────────────
 const calculateBadges = (moodHistory, journalEntries, calmToolUses, supportModeUses, routineCompleteDays) => {
@@ -220,8 +221,13 @@ export default function ProgressScreen({ navigation }) {
   const earnedCount = badges.filter((b) => b.earned).length;
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+    <ImageBackground
+      source={progressBackground}
+      style={styles.background}
+      resizeMode="cover"
+    >
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
 
         {/* Header */}
         <View style={styles.header}>
@@ -391,12 +397,14 @@ export default function ProgressScreen({ navigation }) {
           <Text style={styles.footerText}>Every small step counts. You're doing better than you think.</Text>
         </View>
       </ScrollView>
-    </SafeAreaView>
+      </SafeAreaView>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#FFF9F2" },
+  background: { flex: 1, width: "100%", height: "100%" },
+  safeArea: { flex: 1, backgroundColor: "transparent" },
   content: { paddingHorizontal: 16, paddingTop: Platform.OS === "ios" ? 6 : 16, paddingBottom: 100 },
 
   header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 },
