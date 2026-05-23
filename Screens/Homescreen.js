@@ -20,6 +20,7 @@ const CARD = "#FFFFFF";
 const BORDER = "#EFE5DD";
 const SOFT_TEXT = "#8E87A0";
 const BACKGROUND = "#FFF9F2";
+const IS_PREMIUM = false; 
 
 // ─── Personalization Logic ────────────────────────────────────────────────────
 const getPersonalizedSuggestions = (profile) => {
@@ -232,12 +233,13 @@ export default function HomeScreen({ navigation }) {
       color: "#E3F2FF",
     },
     {
-      title: "Calm",
-      text: "Journal",
-      icon: require("../assets/icons/support-calm-journal.png"),
-      screen: "CalmJournal",
-      color: "#EEF7E9",
-    },
+  title: "Calm",
+  text: "Journal",
+  icon: require("../assets/icons/support-calm-journal.png"),
+  screen: "CalmJournal",
+  color: "#EEF7E9",
+  premium: true,
+},
     {
       title: "Calming",
       text: "Sounds",
@@ -512,17 +514,28 @@ export default function HomeScreen({ navigation }) {
 
           <View style={styles.toolsRow}>
             {tools.map((tool) => (
-              <TouchableOpacity
-                key={tool.title}
-                activeOpacity={0.75}
-                style={[styles.toolCard, { backgroundColor: tool.color }]}
-                onPress={() => goToScreen(tool.screen)}
-              >
-                <Image source={tool.icon} style={styles.toolIcon} />
-                <Text style={styles.toolTitle}>{tool.title}</Text>
-                <Text style={styles.toolText}>{tool.text}</Text>
-              </TouchableOpacity>
-            ))}
+  <TouchableOpacity
+    key={tool.title}
+    activeOpacity={0.75}
+    style={[styles.toolCard, { backgroundColor: tool.color }]}
+    onPress={() => {
+      if (tool.premium && !IS_PREMIUM) {
+        goToScreen("PremiumUpgrade");
+      } else {
+        goToScreen(tool.screen);
+      }
+    }}
+  >
+    <Image source={tool.icon} style={styles.toolIcon} />
+    <Text style={styles.toolTitle}>{tool.title}</Text>
+    <Text style={styles.toolText}>{tool.text}</Text>
+    {tool.premium && (
+      <View style={styles.toolPremiumBadge}>
+        <Text style={styles.toolPremiumText}>✦ Premium</Text>
+      </View>
+    )}
+  </TouchableOpacity>
+))}
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -539,6 +552,19 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: "transparent",
+  },
+
+toolPremiumBadge: {
+    backgroundColor: "#EFE1FF",
+    borderRadius: 6,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    marginTop: 2,
+  },
+  toolPremiumText: {
+    color: "#7548D8",
+    fontSize: 8,
+    fontWeight: "900",
   },
 
   container: {
@@ -1007,5 +1033,7 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     color: "#4D4662",
     textAlign: "center",
+
+    
   },
 });

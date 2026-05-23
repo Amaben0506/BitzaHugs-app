@@ -8,11 +8,13 @@ import {
   TextInput,
   Image,
   Platform,
+  Alert,
 } from "react-native";
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
+import * as ImagePicker from "expo-image-picker";
 
 const PARENT_PROFILE_KEY = "bitzaParentProfile";
 
@@ -33,10 +35,9 @@ const TONE_COLORS = {
 const BLANK = {
   name: "", relationship: "", preferredGreeting: "",
   stressSupport: "", wordsThatHelp: "", wordsThatDontHelp: "",
-  calmingStrategies: "", hugiTone: "gentle",
+  calmingStrategies: "", hugiTone: "gentle", photoUri: "",
 };
 
-// ─── Section Row (view mode) ──────────────────────────────────────────────────
 function InfoRow({ label, value, last }) {
   if (!value?.trim()) return null;
   return (
@@ -47,7 +48,6 @@ function InfoRow({ label, value, last }) {
   );
 }
 
-// ─── Main Screen ──────────────────────────────────────────────────────────────
 export default function ParentProfileScreen({ navigation }) {
   const [profile, setProfile] = useState(BLANK);
   const [editing, setEditing] = useState(false);
@@ -95,14 +95,49 @@ export default function ParentProfileScreen({ navigation }) {
   };
 
   const handleClear = async () => {
-    try {
-      await AsyncStorage.removeItem(PARENT_PROFILE_KEY);
-      setProfile(BLANK);
-      setDraft(BLANK);
-      setEditing(false);
-      showStatus("Profile cleared");
-    } catch (e) {
-      console.log("Error clearing:", e);
+    Alert.alert(
+      "Clear Profile",
+      "Are you sure you want to clear your profile? This cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Clear",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await AsyncStorage.removeItem(PARENT_PROFILE_KEY);
+              setProfile(BLANK);
+              setDraft(BLANK);
+              setEditing(false);
+              showStatus("Profile cleared");
+            } catch (e) {
+              console.log("Error clearing:", e);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handlePickPhoto = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert("Permission Needed", "Please allow access to your photos to set a profile picture.");
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+    });
+    if (!result.canceled) {
+      const uri = result.assets[0].uri;
+      const updated = { ...profile, photoUri: uri };
+      await AsyncStorage.setItem(PARENT_PROFILE_KEY, JSON.stringify(updated));
+      setProfile(updated);
+      setDraft((prev) => ({ ...prev, photoUri: uri }));
+      showStatus("Photo updated 💜");
     }
   };
 
@@ -148,27 +183,26 @@ export default function ParentProfileScreen({ navigation }) {
           <>
             {/* Profile Hero Card */}
             <View style={styles.profileHeroCard}>
-              {/* Avatar */}
               <View style={styles.avatarWrap}>
-                <View style={styles.avatarCircle}>
-                  <Ionicons name="person" size={36} color="#6F42D8" />
-                </View>
-                <TouchableOpacity
-                  style={styles.avatarEditBtn}
-                  onPress={() => setEditing(true)}
-                  activeOpacity={0.85}
-                >
+                <TouchableOpacity onPress={handlePickPhoto} activeOpacity={0.85}>
+                  {profile.photoUri ? (
+                    <Image source={{ uri: profile.photoUri }} style={styles.avatarCircle} />
+                  ) : (
+                    <View style={styles.avatarCircle}>
+                      <Ionicons name="person" size={36} color="#6F42D8" />
+                    </View>
+                  )}
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.avatarEditBtn} onPress={handlePickPhoto} activeOpacity={0.85}>
                   <Feather name="camera" size={13} color="#FFFFFF" />
                 </TouchableOpacity>
               </View>
 
-              {/* Name + tone */}
               <Text style={styles.profileDisplayName}>{displayName}</Text>
               {profile.relationship?.trim() ? (
                 <Text style={styles.profileRelationship}>{profile.relationship}</Text>
               ) : null}
 
-              {/* Hugi tone badge */}
               <View style={[styles.toneBadge, { backgroundColor: toneColor.bg }]}>
                 <Feather name={toneIcon} size={13} color={toneColor.color} />
                 <Text style={[styles.toneBadgeText, { color: toneColor.color }]}>
@@ -176,11 +210,16 @@ export default function ParentProfileScreen({ navigation }) {
                 </Text>
               </View>
 
-              {/* Edit button */}
-              <TouchableOpacity style={styles.editProfileBtn} onPress={() => setEditing(true)} activeOpacity={0.88}>
-                <Feather name="edit-2" size={15} color="#6F42D8" />
-                <Text style={styles.editProfileBtnText}>Edit Profile</Text>
-              </TouchableOpacity>
+              <View style={styles.heroButtonRow}>
+                <TouchableOpacity style={styles.editProfileBtn} onPress={() => setEditing(true)} activeOpacity={0.88}>
+                  <Feather name="edit-2" size={15} color="#6F42D8" />
+                  <Text style={styles.editProfileBtnText}>Edit Profile</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.photoBtn} onPress={handlePickPhoto} activeOpacity={0.88}>
+                  <Feather name="camera" size={15} color="#4C9ED9" />
+                  <Text style={styles.photoBtnText}>Change Photo</Text>
+                </TouchableOpacity>
+              </View>
             </View>
 
             {/* No profile nudge */}
@@ -189,7 +228,9 @@ export default function ParentProfileScreen({ navigation }) {
                 <Ionicons name="person-add-outline" size={20} color="#6F42D8" />
                 <View style={styles.nudgeTextWrap}>
                   <Text style={styles.nudgeTitle}>Your profile is empty</Text>
-                  <Text style={styles.nudgeText}>Add your name and preferences so Hugi can support you in a way that feels personal.</Text>
+                  <Text style={styles.nudgeText}>
+                    Add your name and preferences so Hugi can support you in a way that feels personal.
+                  </Text>
                 </View>
               </View>
             )}
@@ -209,7 +250,8 @@ export default function ParentProfileScreen({ navigation }) {
                   <InfoRow label="Preferred greeting" value={profile.preferredGreeting} last />
                 </View>
 
-                {(profile.stressSupport?.trim() || profile.wordsThatHelp?.trim() || profile.wordsThatDontHelp?.trim() || profile.calmingStrategies?.trim()) && (
+                {(profile.stressSupport?.trim() || profile.wordsThatHelp?.trim() ||
+                  profile.wordsThatDontHelp?.trim() || profile.calmingStrategies?.trim()) && (
                   <View style={styles.card}>
                     <View style={styles.cardHeader}>
                       <View style={[styles.iconBubble, { backgroundColor: "#FFE3DA" }]}>
@@ -229,10 +271,27 @@ export default function ParentProfileScreen({ navigation }) {
         ) : (
           /* ── EDIT MODE ── */
           <>
-            {/* Edit banner */}
             <View style={styles.editModeBanner}>
               <Feather name="edit-2" size={14} color="#6F42D8" />
               <Text style={styles.editModeBannerText}>Editing your profile</Text>
+            </View>
+
+            {/* Photo picker in edit mode */}
+            <View style={styles.editPhotoCard}>
+              <TouchableOpacity onPress={handlePickPhoto} activeOpacity={0.85} style={styles.editAvatarWrap}>
+                {draft.photoUri ? (
+                  <Image source={{ uri: draft.photoUri }} style={styles.editAvatarCircle} />
+                ) : (
+                  <View style={styles.editAvatarCircle}>
+                    <Ionicons name="person" size={32} color="#6F42D8" />
+                  </View>
+                )}
+                <View style={styles.editAvatarOverlay}>
+                  <Feather name="camera" size={18} color="#FFFFFF" />
+                  <Text style={styles.editAvatarOverlayText}>Tap to change</Text>
+                </View>
+              </TouchableOpacity>
+              <Text style={styles.editPhotoHint}>Tap your photo to update it from your library</Text>
             </View>
 
             {/* Basic Info */}
@@ -348,7 +407,6 @@ const styles = StyleSheet.create({
   statusBanner: { height: 40, borderRadius: 13, backgroundColor: "#F0E2FF", borderWidth: 1, borderColor: "#E3D2F8", flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 12, marginBottom: 10 },
   statusText: { color: "#6F42D8", fontSize: 13, fontWeight: "800" },
 
-  // ── Profile Hero ──
   profileHeroCard: {
     backgroundColor: "#FFFFFF", borderRadius: 24, borderWidth: 1, borderColor: "#EFE4DC",
     paddingVertical: 24, paddingHorizontal: 16, alignItems: "center", marginBottom: 12,
@@ -358,6 +416,7 @@ const styles = StyleSheet.create({
   avatarCircle: {
     width: 84, height: 84, borderRadius: 42, backgroundColor: "#F0E2FF",
     alignItems: "center", justifyContent: "center", borderWidth: 2, borderColor: "#E3D2F8",
+    overflow: "hidden",
   },
   avatarEditBtn: {
     position: "absolute", bottom: 0, right: 0,
@@ -368,12 +427,19 @@ const styles = StyleSheet.create({
   profileRelationship: { color: "#837E96", fontSize: 13, fontWeight: "600", marginBottom: 12 },
   toneBadge: { flexDirection: "row", alignItems: "center", gap: 5, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 6, marginBottom: 16 },
   toneBadgeText: { fontSize: 12, fontWeight: "800" },
+  heroButtonRow: { flexDirection: "row", gap: 10 },
   editProfileBtn: {
     flexDirection: "row", alignItems: "center", gap: 7,
-    backgroundColor: "#F0E2FF", borderRadius: 14, paddingHorizontal: 18, paddingVertical: 10,
+    backgroundColor: "#F0E2FF", borderRadius: 14, paddingHorizontal: 14, paddingVertical: 10,
     borderWidth: 1, borderColor: "#E3D2F8",
   },
   editProfileBtnText: { color: "#6F42D8", fontSize: 13, fontWeight: "800" },
+  photoBtn: {
+    flexDirection: "row", alignItems: "center", gap: 7,
+    backgroundColor: "#E7F4FF", borderRadius: 14, paddingHorizontal: 14, paddingVertical: 10,
+    borderWidth: 1, borderColor: "#C5DFF5",
+  },
+  photoBtnText: { color: "#4C9ED9", fontSize: 13, fontWeight: "800" },
 
   nudgeCard: {
     backgroundColor: "#F6ECFF", borderRadius: 16, borderWidth: 1, borderColor: "#E3D2F8",
@@ -384,19 +450,36 @@ const styles = StyleSheet.create({
   nudgeTitle: { color: "#2B2463", fontSize: 13, fontWeight: "800", marginBottom: 2 },
   nudgeText: { color: "#5B5672", fontSize: 11, lineHeight: 16, fontWeight: "600" },
 
-  // ── Info Rows ──
   infoRow: { paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: "#F0E8E2" },
   infoRowLast: { paddingVertical: 10, borderBottomWidth: 0 },
   infoLabel: { color: "#837E96", fontSize: 10, fontWeight: "700", marginBottom: 3, textTransform: "uppercase", letterSpacing: 0.5 },
   infoValue: { color: "#2B2463", fontSize: 13, fontWeight: "700", lineHeight: 18 },
 
-  // ── Edit mode banner ──
   editModeBanner: {
     flexDirection: "row", alignItems: "center", gap: 7,
     backgroundColor: "#F0E2FF", borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8,
     marginBottom: 10, borderWidth: 1, borderColor: "#E3D2F8",
   },
   editModeBannerText: { color: "#6F42D8", fontSize: 12, fontWeight: "800" },
+
+  editPhotoCard: {
+    backgroundColor: "#FFFFFF", borderRadius: 18, borderWidth: 1, borderColor: "#EFE4DC",
+    padding: 16, marginBottom: 10, alignItems: "center",
+    shadowColor: "#BFA99D", shadowOpacity: 0.06, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 2,
+  },
+  editAvatarWrap: { position: "relative", marginBottom: 8 },
+  editAvatarCircle: {
+    width: 90, height: 90, borderRadius: 45, backgroundColor: "#F0E2FF",
+    alignItems: "center", justifyContent: "center", borderWidth: 2, borderColor: "#E3D2F8",
+    overflow: "hidden",
+  },
+  editAvatarOverlay: {
+    position: "absolute", bottom: 0, left: 0, right: 0, height: 32,
+    backgroundColor: "rgba(0,0,0,0.45)", borderBottomLeftRadius: 45, borderBottomRightRadius: 45,
+    alignItems: "center", justifyContent: "center", flexDirection: "row", gap: 4,
+  },
+  editAvatarOverlayText: { color: "#FFFFFF", fontSize: 10, fontWeight: "700" },
+  editPhotoHint: { color: "#837E96", fontSize: 11, fontWeight: "600", textAlign: "center" },
 
   card: { backgroundColor: "#FFFFFF", borderRadius: 18, borderWidth: 1, borderColor: "#EFE4DC", paddingHorizontal: 13, paddingTop: 13, paddingBottom: 13, marginBottom: 10, shadowColor: "#BFA99D", shadowOpacity: 0.06, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 2 },
   cardHeader: { flexDirection: "row", alignItems: "center", marginBottom: 10 },

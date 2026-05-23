@@ -58,6 +58,7 @@ import OnboardingScreen from "./Screens/OnboardingScreen";
 import AppointmentTrackerScreen from "./Screens/AppointmentTrackerScreen";
 import CommunityScreen from "./Screens/CommunityScreen";
 import PremiumUpgradeScreen from "./Screens/PremiumUpgradeScreen";
+import ResourcesScreen from "./Screens/ResourcesScreen";
 
 // ─── Navigators ───────────────────────────────────────────────────────────────
 const Stack = createNativeStackNavigator();
@@ -121,6 +122,7 @@ function CustomDrawerContent({ navigation }) {
     { label: "Calm Journal", icon: "book-outline", screen: "CalmJournal" },
     { label: "Appointment Tracker", icon: "calendar-outline", screen: "AppointmentTracker" },
     { label: "Affirmations", icon: "star-outline", screen: "Affirmations" },
+    { label: "Printable Resources", icon: "print-outline", screen: "Resources" },
   ];
 
   const settingsItems = [
@@ -389,6 +391,7 @@ export default function App() {
           <Stack.Screen name="AppointmentTracker" component={AppointmentTrackerScreen} />
           <Stack.Screen name="Community" component={CommunityScreen} />
           <Stack.Screen name="PremiumUpgrade" component={PremiumUpgradeScreen} />
+          <Stack.Screen name="Resources" component={ResourcesScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>

@@ -111,6 +111,17 @@ export default function SupportScreen({ navigation }) {
           onPress={() => nav("HugiChat")}
         />
 
+        {/* Printable Resources */}
+<BigSupportRow
+  title="Printable Resources"
+  subtitle="Visual tools you can print & keep"
+  icon="printer"
+  bg="#EEF7E9"
+  accent="#4A9E5C"
+  premium
+  onPress={() => nav("Resources")}
+/>
+
         {/* ✅ Support Right Now — navigates to SupportMode */}
         <BigSupportRow
           title="I Need Support Right Now"
