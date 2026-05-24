@@ -8,7 +8,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 
-// ─── Constants ────────────────────────────────────────────────────────────────
 const MOOD_COLORS = {
   overwhelmed: "#F59E8B", struggling: "#F4A84A",
   okay: "#F5D060", hopeful: "#83B87A", good: "#6EB8A3",
@@ -27,14 +26,28 @@ const BADGE_DEFS = [
   { label: "Journal Starter", icon: require("../assets/icons/badge-star.png"), desc: "Write 3 journal entries" },
   { label: "Support Seeker", icon: require("../assets/icons/badge-small-wins-star.png"), desc: "Use Support Mode 3 times" },
 ];
+
 const progressBackground = require("../assets/icons/progress-background.png");
 
-// ─── Dynamic Badge Calculator ─────────────────────────────────────────────────
+const calculateStreak = (moodHistory) => {
+  if (!moodHistory || moodHistory.length === 0) return 0;
+  const days = [...new Set(moodHistory.map((e) => new Date(e.date).toDateString()))];
+  const today = new Date().toDateString();
+  const yesterday = new Date(Date.now() - 86400000).toDateString();
+  if (days[0] !== today && days[0] !== yesterday) return 0;
+  let streak = 1;
+  for (let i = 1; i < days.length; i++) {
+    const prev = new Date(days[i - 1]);
+    const curr = new Date(days[i]);
+    if ((prev - curr) / 86400000 === 1) streak++;
+    else break;
+  }
+  return streak;
+};
+
 const calculateBadges = (moodHistory, journalEntries, calmToolUses, supportModeUses, routineCompleteDays) => {
   const earned = new Set();
-
   if (moodHistory.length >= 1) earned.add("First Check-In");
-
   if (moodHistory.length >= 3) {
     const days = [...new Set(moodHistory.map((e) => new Date(e.date).toDateString()))];
     if (days.length >= 3) {
@@ -43,25 +56,18 @@ const calculateBadges = (moodHistory, journalEntries, calmToolUses, supportModeU
         const prev = new Date(days[i - 1]);
         const curr = new Date(days[i]);
         const diff = (prev - curr) / (1000 * 60 * 60 * 24);
-        if (diff === 1) {
-          streak++;
-          if (streak >= 3) { earned.add("3-Day Streak"); break; }
-        } else {
-          streak = 1;
-        }
+        if (diff === 1) { streak++; if (streak >= 3) { earned.add("3-Day Streak"); break; } }
+        else streak = 1;
       }
     }
   }
-
   if (journalEntries.length >= 3) earned.add("Journal Starter");
   if (calmToolUses >= 10) earned.add("Calm Champion");
   if (supportModeUses >= 3) earned.add("Support Seeker");
   if (routineCompleteDays >= 5) earned.add("Routine Hero");
-
   return BADGE_DEFS.map((b) => ({ ...b, earned: earned.has(b.label) }));
 };
 
-// ─── Insights Engine ──────────────────────────────────────────────────────────
 const generateInsights = (moodHistory, routineItems, journalEntries) => {
   const insights = [];
   if (!moodHistory || moodHistory.length === 0) return insights;
@@ -132,7 +138,6 @@ const generateInsights = (moodHistory, routineItems, journalEntries) => {
   return insights.slice(0, 5);
 };
 
-// ─── Mini Mood Chart ──────────────────────────────────────────────────────────
 function MoodChart({ moodHistory }) {
   const last7 = moodHistory.slice(0, 7).reverse();
   if (last7.length === 0) return null;
@@ -165,13 +170,13 @@ const chartStyles = StyleSheet.create({
   barLabel: { color: "#837E96", fontSize: 8, fontWeight: "600", marginTop: 3 },
 });
 
-// ─── Main Screen ──────────────────────────────────────────────────────────────
 export default function ProgressScreen({ navigation }) {
   const [moodHistory, setMoodHistory] = useState([]);
   const [routineItems, setRoutineItems] = useState([]);
   const [journalEntries, setJournalEntries] = useState([]);
   const [insights, setInsights] = useState([]);
   const [badges, setBadges] = useState(BADGE_DEFS.map((b) => ({ ...b, earned: false })));
+  const [streak, setStreak] = useState(0);
 
   useFocusEffect(
     useCallback(() => {
@@ -180,6 +185,7 @@ export default function ProgressScreen({ navigation }) {
           const moods = await AsyncStorage.getItem("familyAppMoodHistory");
           const parsedMoods = moods ? JSON.parse(moods) : [];
           setMoodHistory(parsedMoods.slice(0, 20));
+          setStreak(calculateStreak(parsedMoods));
 
           const routine = await AsyncStorage.getItem("bitzaRoutineItems");
           const parsedRoutine = routine ? JSON.parse(routine) : [];
@@ -219,184 +225,246 @@ export default function ProgressScreen({ navigation }) {
   }, {});
   const topMood = Object.entries(moodCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
   const earnedCount = badges.filter((b) => b.earned).length;
+  const isNewUser = moodHistory.length === 0 && journalEntries.length === 0;
 
   return (
-    <ImageBackground
-      source={progressBackground}
-      style={styles.background}
-      resizeMode="cover"
-    >
+    <ImageBackground source={progressBackground} style={styles.background} resizeMode="cover">
       <SafeAreaView style={styles.safeArea}>
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
 
-        {/* Header */}
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.screenTitle}>Progress</Text>
-            <Text style={styles.screenSubtitle}>Your family's journey, one step at a time.</Text>
-          </View>
-          <View style={styles.headerIcon}>
-            <Ionicons name="bar-chart-outline" size={20} color="#6F42D8" />
-          </View>
-        </View>
-
-        {/* Stats Row */}
-        <View style={styles.statsRow}>
-          <View style={[styles.statCard, { backgroundColor: "#F0E8FF" }]}>
-            <Text style={styles.statNumber}>{moodHistory.length}</Text>
-            <Text style={styles.statLabel}>Mood{"\n"}Check-ins</Text>
-          </View>
-          <View style={[styles.statCard, { backgroundColor: "#E8F4FF" }]}>
-            <Text style={styles.statNumber}>{completedCount}</Text>
-            <Text style={styles.statLabel}>Activities{"\n"}Done Today</Text>
-          </View>
-          <View style={[styles.statCard, { backgroundColor: "#EEF7E9" }]}>
-            <Text style={styles.statNumber}>{journalEntries.length}</Text>
-            <Text style={styles.statLabel}>Journal{"\n"}Entries</Text>
-          </View>
-          <View style={[styles.statCard, { backgroundColor: "#FFF0DF" }]}>
-            <Text style={styles.statNumber}>{earnedCount}</Text>
-            <Text style={styles.statLabel}>Badges{"\n"}Earned</Text>
-          </View>
-        </View>
-
-        {/* Insights */}
-        {insights.length > 0 && (
-          <>
-            <View style={styles.sectionHeader}>
-              <View style={styles.sectionIconBubble}>
-                <Ionicons name="sparkles" size={13} color="#6F42D8" />
-              </View>
-              <Text style={styles.sectionTitle}>Insights for your family</Text>
+          {/* Header */}
+          <View style={styles.header}>
+            <View>
+              <Text style={styles.screenTitle}>Progress</Text>
+              <Text style={styles.screenSubtitle}>Your family's journey, one step at a time.</Text>
             </View>
-            {insights.map((insight, i) => (
-              <View key={i} style={[styles.insightCard, { borderLeftColor: insight.color }]}>
-                <View style={[styles.insightIconBubble, { backgroundColor: insight.bg }]}>
-                  <Feather name={insight.icon} size={16} color={insight.color} />
-                </View>
-                <View style={styles.insightTextWrap}>
-                  <Text style={styles.insightTitle}>{insight.title}</Text>
-                  <Text style={styles.insightText}>{insight.text}</Text>
-                  {insight.action && (
-                    <TouchableOpacity
-                      style={[styles.insightAction, { backgroundColor: insight.bg }]}
-                      onPress={() => navigation.navigate(insight.action.screen)}
-                      activeOpacity={0.85}
-                    >
-                      <Text style={[styles.insightActionText, { color: insight.color }]}>
-                        {insight.action.label} →
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
-              </View>
-            ))}
-          </>
-        )}
-
-        {/* Routine Progress */}
-        <View style={styles.card}>
-          <View style={styles.cardHeaderRow}>
-            <View style={styles.cardIconBubble}>
-              <Ionicons name="calendar-outline" size={16} color="#6F42D8" />
+            <View style={styles.headerIcon}>
+              <Ionicons name="bar-chart-outline" size={20} color="#6F42D8" />
             </View>
-            <Text style={styles.cardTitle}>Today's Routine</Text>
-            <TouchableOpacity onPress={() => navigation.getParent()?.navigate("RoutineTab") ?? navigation?.navigate("RoutineTab")}>
-              <Text style={styles.linkText}>View ›</Text>
-            </TouchableOpacity>
           </View>
-          <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { width: `${progressPercent}%` }]} />
-          </View>
-          <Text style={styles.progressSubtext}>{completedCount} of {totalCount} activities complete · {progressPercent}%</Text>
-        </View>
 
-        {/* Mood Chart */}
-        {moodHistory.length > 0 && (
+          {/* Streak Card */}
+          <View style={styles.streakCard}>
+            <View style={styles.streakLeft}>
+              <Text style={styles.streakNumber}>{streak}</Text>
+              <Text style={styles.streakLabel}>Day Streak 🔥</Text>
+            </View>
+            <View style={styles.streakDivider} />
+            <View style={styles.streakRight}>
+              <Text style={styles.streakTip}>
+                {streak === 0
+                  ? "Start your first check-in today to begin your streak!"
+                  : streak === 1
+                  ? "Great start! Check in tomorrow to keep it going."
+                  : `${streak} days in a row — you're building something real. 💜`}
+              </Text>
+              {streak === 0 && (
+                <TouchableOpacity
+                  style={styles.streakBtn}
+                  onPress={() => navigation.navigate("MoodSupport")}
+                  activeOpacity={0.85}
+                >
+                  <Text style={styles.streakBtnText}>Check in now →</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+
+          {/* Stats Row */}
+          <View style={styles.statsRow}>
+            <View style={[styles.statCard, { backgroundColor: "#F0E8FF" }]}>
+              <Text style={styles.statNumber}>{moodHistory.length}</Text>
+              <Text style={styles.statLabel}>Mood{"\n"}Check-ins</Text>
+            </View>
+            <View style={[styles.statCard, { backgroundColor: "#E8F4FF" }]}>
+              <Text style={styles.statNumber}>{completedCount}</Text>
+              <Text style={styles.statLabel}>Activities{"\n"}Done Today</Text>
+            </View>
+            <View style={[styles.statCard, { backgroundColor: "#EEF7E9" }]}>
+              <Text style={styles.statNumber}>{journalEntries.length}</Text>
+              <Text style={styles.statLabel}>Journal{"\n"}Entries</Text>
+            </View>
+            <View style={[styles.statCard, { backgroundColor: "#FFF0DF" }]}>
+              <Text style={styles.statNumber}>{earnedCount}</Text>
+              <Text style={styles.statLabel}>Badges{"\n"}Earned</Text>
+            </View>
+          </View>
+
+          {/* New User Empty State */}
+          {isNewUser && (
+            <View style={styles.newUserCard}>
+              <Image
+                source={require("../assets/icons/progress-plant-growth.png")}
+                style={styles.newUserIcon}
+                resizeMode="contain"
+              />
+              <Text style={styles.newUserTitle}>Your progress starts here 🌱</Text>
+              <Text style={styles.newUserText}>
+                As you use the app — check in moods, complete routines, and journal — your progress will show up here.
+              </Text>
+              <View style={styles.newUserActions}>
+                <TouchableOpacity
+                  style={styles.newUserBtn}
+                  onPress={() => navigation.navigate("MoodSupport")}
+                  activeOpacity={0.85}
+                >
+                  <Feather name="heart" size={14} color="#FFFFFF" />
+                  <Text style={styles.newUserBtnText}>First Check-In</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.newUserBtn, { backgroundColor: "#EEF7E8" }]}
+                  onPress={() => navigation.getParent()?.navigate("RoutineTab")}
+                  activeOpacity={0.85}
+                >
+                  <Feather name="calendar" size={14} color="#78A866" />
+                  <Text style={[styles.newUserBtnText, { color: "#78A866" }]}>View Routine</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+
+          {/* Insights */}
+          {insights.length > 0 && (
+            <>
+              <View style={styles.sectionHeader}>
+                <View style={styles.sectionIconBubble}>
+                  <Ionicons name="sparkles" size={13} color="#6F42D8" />
+                </View>
+                <Text style={styles.sectionTitle}>Insights for your family</Text>
+              </View>
+              {insights.map((insight, i) => (
+                <View key={i} style={[styles.insightCard, { borderLeftColor: insight.color }]}>
+                  <View style={[styles.insightIconBubble, { backgroundColor: insight.bg }]}>
+                    <Feather name={insight.icon} size={16} color={insight.color} />
+                  </View>
+                  <View style={styles.insightTextWrap}>
+                    <Text style={styles.insightTitle}>{insight.title}</Text>
+                    <Text style={styles.insightText}>{insight.text}</Text>
+                    {insight.action && (
+                      <TouchableOpacity
+                        style={[styles.insightAction, { backgroundColor: insight.bg }]}
+                        onPress={() => navigation.navigate(insight.action.screen)}
+                        activeOpacity={0.85}
+                      >
+                        <Text style={[styles.insightActionText, { color: insight.color }]}>
+                          {insight.action.label} →
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                </View>
+              ))}
+            </>
+          )}
+
+          {/* Routine Progress */}
           <View style={styles.card}>
             <View style={styles.cardHeaderRow}>
               <View style={styles.cardIconBubble}>
-                <Ionicons name="heart-outline" size={16} color="#6F42D8" />
+                <Ionicons name="calendar-outline" size={16} color="#6F42D8" />
               </View>
-              <Text style={styles.cardTitle}>Mood over time</Text>
+              <Text style={styles.cardTitle}>Today's Routine</Text>
+              <TouchableOpacity onPress={() => navigation.getParent()?.navigate("RoutineTab") ?? navigation?.navigate("RoutineTab")}>
+                <Text style={styles.linkText}>View ›</Text>
+              </TouchableOpacity>
             </View>
-            <MoodChart moodHistory={moodHistory} />
-            {topMood && (
-              <View style={styles.moodSummaryRow}>
-                <View style={[styles.moodDot, { backgroundColor: MOOD_COLORS[topMood] || "#ccc" }]} />
-                <Text style={styles.moodSummaryText}>Most frequent: <Text style={{ fontWeight: "800" }}>{MOOD_LABELS[topMood] || topMood}</Text></Text>
-                <Text style={styles.moodSummaryCount}>{moodCounts[topMood]}×</Text>
-              </View>
-            )}
-          </View>
-        )}
-
-        {/* Badges */}
-        <View style={styles.card}>
-          <View style={styles.cardHeaderRow}>
-            <View style={styles.cardIconBubble}>
-              <Ionicons name="star-outline" size={16} color="#6F42D8" />
+            <View style={styles.progressTrack}>
+              <View style={[styles.progressFill, { width: `${progressPercent}%` }]} />
             </View>
-            <Text style={styles.cardTitle}>Badges & Wins</Text>
-            <Text style={styles.linkText}>{earnedCount}/{badges.length} earned</Text>
+            <Text style={styles.progressSubtext}>{completedCount} of {totalCount} activities complete · {progressPercent}%</Text>
           </View>
-          <View style={styles.badgesRow}>
-            {badges.map((badge) => (
-              <View key={badge.label} style={[styles.badgeItem, !badge.earned && styles.badgeItemLocked]}>
-                <Image source={badge.icon} style={styles.badgeIcon} resizeMode="contain" />
-                <Text style={[styles.badgeLabel, !badge.earned && styles.badgeLabelLocked]}>{badge.label}</Text>
-                {badge.earned
-                  ? <Text style={styles.badgeEarnedDot}>✓</Text>
-                  : <View style={styles.lockOverlay}><Feather name="lock" size={10} color="#837E96" /></View>
-                }
-              </View>
-            ))}
-          </View>
-          <View style={styles.badgeHints}>
-            {badges.filter((b) => !b.earned).slice(0, 2).map((b) => (
-              <View key={b.label} style={styles.badgeHintRow}>
-                <Feather name="lock" size={11} color="#837E96" />
-                <Text style={styles.badgeHintText}><Text style={{ fontWeight: "800", color: "#2B2463" }}>{b.label}:</Text> {b.desc}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
 
-        {/* Recent Check-ins */}
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { marginLeft: 0 }]}>Recent Check-ins</Text>
-        </View>
-
-        {moodHistory.length === 0 ? (
-          <View style={styles.emptyCard}>
-            <Image source={require("../assets/icons/progress-plant-growth.png")} style={styles.emptyIcon} resizeMode="contain" />
-            <Text style={styles.emptyTitle}>No mood entries yet</Text>
-            <Text style={styles.emptyText}>Mood check-ins from the home screen will appear here over time.</Text>
-            <TouchableOpacity style={styles.emptyButton} onPress={() => navigation?.navigate("MoodSupport")}>
-              <Text style={styles.emptyButtonText}>Do a check-in now</Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          moodHistory.slice(0, 8).map((entry, index) => (
-            <View key={index} style={styles.moodCard}>
-              <View style={[styles.moodBubble, { backgroundColor: MOOD_COLORS[entry.mood?.toLowerCase()] || "#E5E5E5" }]} />
-              <View style={styles.moodTextBox}>
-                <Text style={styles.moodTitle}>{MOOD_LABELS[entry.mood?.toLowerCase()] || entry.mood}</Text>
-                <Text style={styles.moodDate}>
-                  {entry.date ? new Date(entry.date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : ""}
-                </Text>
-                {entry.note ? <Text style={styles.noteText}>"{entry.note}"</Text> : null}
+          {/* Mood Chart */}
+          {moodHistory.length > 0 && (
+            <View style={styles.card}>
+              <View style={styles.cardHeaderRow}>
+                <View style={styles.cardIconBubble}>
+                  <Ionicons name="heart-outline" size={16} color="#6F42D8" />
+                </View>
+                <Text style={styles.cardTitle}>Mood over time</Text>
               </View>
+              <MoodChart moodHistory={moodHistory} />
+              {topMood && (
+                <View style={styles.moodSummaryRow}>
+                  <View style={[styles.moodDot, { backgroundColor: MOOD_COLORS[topMood] || "#ccc" }]} />
+                  <Text style={styles.moodSummaryText}>
+                    Most frequent: <Text style={{ fontWeight: "800" }}>{MOOD_LABELS[topMood] || topMood}</Text>
+                  </Text>
+                  <Text style={styles.moodSummaryCount}>{moodCounts[topMood]}×</Text>
+                </View>
+              )}
             </View>
-          ))
-        )}
+          )}
 
-        {/* Footer */}
-        <View style={styles.footerCard}>
-          <Image source={require("../assets/icons/progress-mountain-flag.png")} style={styles.footerIcon} resizeMode="contain" />
-          <Text style={styles.footerText}>Every small step counts. You're doing better than you think.</Text>
-        </View>
-      </ScrollView>
+          {/* Badges */}
+          <View style={styles.card}>
+            <View style={styles.cardHeaderRow}>
+              <View style={styles.cardIconBubble}>
+                <Ionicons name="star-outline" size={16} color="#6F42D8" />
+              </View>
+              <Text style={styles.cardTitle}>Badges & Wins</Text>
+              <Text style={styles.linkText}>{earnedCount}/{badges.length} earned</Text>
+            </View>
+            <View style={styles.badgesRow}>
+              {badges.map((badge) => (
+                <View key={badge.label} style={[styles.badgeItem, !badge.earned && styles.badgeItemLocked]}>
+                  <Image source={badge.icon} style={styles.badgeIcon} resizeMode="contain" />
+                  <Text style={[styles.badgeLabel, !badge.earned && styles.badgeLabelLocked]}>{badge.label}</Text>
+                  {badge.earned
+                    ? <Text style={styles.badgeEarnedDot}>✓</Text>
+                    : <View style={styles.lockOverlay}><Feather name="lock" size={10} color="#837E96" /></View>
+                  }
+                </View>
+              ))}
+            </View>
+            <View style={styles.badgeHints}>
+              {badges.filter((b) => !b.earned).slice(0, 2).map((b) => (
+                <View key={b.label} style={styles.badgeHintRow}>
+                  <Feather name="lock" size={11} color="#837E96" />
+                  <Text style={styles.badgeHintText}>
+                    <Text style={{ fontWeight: "800", color: "#2B2463" }}>{b.label}:</Text> {b.desc}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </View>
+
+          {/* Recent Check-ins */}
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { marginLeft: 0 }]}>Recent Check-ins</Text>
+          </View>
+
+          {moodHistory.length === 0 ? (
+            <View style={styles.emptyCard}>
+              <Image source={require("../assets/icons/progress-plant-growth.png")} style={styles.emptyIcon} resizeMode="contain" />
+              <Text style={styles.emptyTitle}>No mood entries yet</Text>
+              <Text style={styles.emptyText}>Mood check-ins from the home screen will appear here over time.</Text>
+              <TouchableOpacity style={styles.emptyButton} onPress={() => navigation?.navigate("MoodSupport")}>
+                <Text style={styles.emptyButtonText}>Do a check-in now</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            moodHistory.slice(0, 8).map((entry, index) => (
+              <View key={index} style={styles.moodCard}>
+                <View style={[styles.moodBubble, { backgroundColor: MOOD_COLORS[entry.mood?.toLowerCase()] || "#E5E5E5" }]} />
+                <View style={styles.moodTextBox}>
+                  <Text style={styles.moodTitle}>{MOOD_LABELS[entry.mood?.toLowerCase()] || entry.mood}</Text>
+                  <Text style={styles.moodDate}>
+                    {entry.date ? new Date(entry.date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : ""}
+                  </Text>
+                  {entry.note ? <Text style={styles.noteText}>"{entry.note}"</Text> : null}
+                </View>
+              </View>
+            ))
+          )}
+
+          {/* Footer */}
+          <View style={styles.footerCard}>
+            <Image source={require("../assets/icons/progress-mountain-flag.png")} style={styles.footerIcon} resizeMode="contain" />
+            <Text style={styles.footerText}>Every small step counts. You're doing better than you think.</Text>
+          </View>
+
+        </ScrollView>
       </SafeAreaView>
     </ImageBackground>
   );
@@ -412,10 +480,46 @@ const styles = StyleSheet.create({
   screenSubtitle: { color: "#5B5672", fontSize: 12, fontWeight: "600", marginTop: 1 },
   headerIcon: { width: 38, height: 38, borderRadius: 13, backgroundColor: "#F0E2FF", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "#E3D2F8" },
 
+  streakCard: {
+    backgroundColor: "#2B2463", borderRadius: 18, padding: 16,
+    flexDirection: "row", alignItems: "center", marginBottom: 12,
+    shadowColor: "#2B2463", shadowOpacity: 0.2, shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 10, elevation: 4,
+  },
+  streakLeft: { alignItems: "center", paddingRight: 16, minWidth: 70 },
+  streakNumber: { color: "#FFFFFF", fontSize: 40, fontWeight: "800", lineHeight: 44 },
+  streakLabel: { color: "#C8C0F0", fontSize: 11, fontWeight: "700", marginTop: 2 },
+  streakDivider: { width: 1, height: 44, backgroundColor: "rgba(255,255,255,0.2)", marginRight: 16 },
+  streakRight: { flex: 1 },
+  streakTip: { color: "#E0DAFF", fontSize: 12, lineHeight: 18, fontWeight: "600" },
+  streakBtn: {
+    marginTop: 8, alignSelf: "flex-start",
+    backgroundColor: "rgba(255,255,255,0.15)", borderRadius: 10,
+    paddingHorizontal: 12, paddingVertical: 6,
+  },
+  streakBtnText: { color: "#FFFFFF", fontSize: 11, fontWeight: "800" },
+
   statsRow: { flexDirection: "row", gap: 7, marginBottom: 12 },
   statCard: { flex: 1, borderRadius: 14, padding: 10, alignItems: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.6)" },
   statNumber: { color: "#2B2463", fontSize: 19, fontWeight: "800", marginBottom: 2 },
   statLabel: { color: "#5B5672", fontSize: 9.5, fontWeight: "600", textAlign: "center", lineHeight: 13 },
+
+  newUserCard: {
+    backgroundColor: "#FFFFFF", borderRadius: 20, borderWidth: 1,
+    borderColor: "#EFE4DC", padding: 20, alignItems: "center", marginBottom: 12,
+    shadowColor: "#BFA99D", shadowOpacity: 0.06, shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 8, elevation: 2,
+  },
+  newUserIcon: { width: 70, height: 70, marginBottom: 12 },
+  newUserTitle: { color: "#2B2463", fontSize: 16, fontWeight: "800", marginBottom: 6, textAlign: "center" },
+  newUserText: { color: "#5B5672", fontSize: 12, lineHeight: 18, fontWeight: "600", textAlign: "center", marginBottom: 14 },
+  newUserActions: { flexDirection: "row", gap: 10 },
+  newUserBtn: {
+    flexDirection: "row", alignItems: "center", gap: 6,
+    backgroundColor: "#8B5BE8", borderRadius: 12,
+    paddingHorizontal: 14, paddingVertical: 9,
+  },
+  newUserBtnText: { color: "#FFFFFF", fontSize: 12, fontWeight: "800" },
 
   sectionHeader: { flexDirection: "row", alignItems: "center", gap: 7, marginBottom: 8, marginTop: 4 },
   sectionIconBubble: { width: 22, height: 22, borderRadius: 7, backgroundColor: "#EFE1FF", alignItems: "center", justifyContent: "center" },

@@ -37,6 +37,10 @@ const resetSteps = [
 export default function WaterReminderScreen({ navigation }) {
   const [completed, setCompleted] = useState(false);
 
+  const nav = (screen) =>
+    navigation.getParent()?.getParent()?.navigate(screen) ??
+    navigation.navigate(screen);
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView
@@ -163,10 +167,13 @@ export default function WaterReminderScreen({ navigation }) {
         <TouchableOpacity
           style={styles.hugiButton}
           activeOpacity={0.9}
-          onPress={() => navigation.navigate("HugiChat")}
+          onPress={() => nav("HugiChat")}
         >
           <Feather name="message-circle" size={22} color="#FFFFFF" />
           <Text style={styles.hugiButtonText}>Talk to Hugi</Text>
+          <View style={styles.hugiPremiumBadge}>
+            <Text style={styles.hugiPremiumText}>✦ Premium</Text>
+          </View>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -448,6 +455,19 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 17,
     fontWeight: "850",
+  },
+
+  hugiPremiumBadge: {
+    backgroundColor: "rgba(255,255,255,0.2)",
+    borderRadius: 8,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    marginLeft: 8,
+  },
+  hugiPremiumText: {
+    color: "#FFFFFF",
+    fontSize: 9,
+    fontWeight: "800",
   },
 
   doneButton: {

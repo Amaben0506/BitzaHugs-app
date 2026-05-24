@@ -13,6 +13,7 @@ import SplashScreen from "./Screens/SplashScreen";
 import WelcomeScreen from "./Screens/WelcomeScreen";
 import ChildProfileSetupScreen from "./Screens/ChildProfileSetupScreen";
 import SensorySupportScreen from "./Screens/SensorySupportScreen";
+import SensorySupportsScreen from "./Screens/SensorySupportsScreen";
 import CaregiverSupportScreen from "./Screens/CaregiverSupportScreen";
 import CalmSpaceReadyScreen from "./Screens/CalmSpaceReadyScreen";
 
@@ -123,6 +124,7 @@ function CustomDrawerContent({ navigation }) {
     { label: "Appointment Tracker", icon: "calendar-outline", screen: "AppointmentTracker" },
     { label: "Affirmations", icon: "star-outline", screen: "Affirmations" },
     { label: "Printable Resources", icon: "print-outline", screen: "Resources" },
+    { label: "Sensory Support", icon: "hand-left-outline", screen: "SensorySupports" },
   ];
 
   const settingsItems = [
@@ -341,6 +343,7 @@ export default function App() {
           <Stack.Screen name="Welcome" component={WelcomeScreen} />
           <Stack.Screen name="ChildProfileSetup" component={ChildProfileSetupScreen} />
           <Stack.Screen name="SensorySupport" component={SensorySupportScreen} />
+          <Stack.Screen name="SensorySupports" component={SensorySupportsScreen} />
           <Stack.Screen name="CaregiverSupport" component={CaregiverSupportScreen} />
           <Stack.Screen name="CalmSpaceReady" component={CalmSpaceReadyScreen} />
 

@@ -208,18 +208,44 @@ export default function CommunityScreen({ navigation }) {
   const [activeRoom, setActiveRoom] = useState(null);
   const [agreedToGuidelines, setAgreedToGuidelines] = useState(false);
   const [showJoinModal, setShowJoinModal] = useState(false);
+  const [isPremium, setIsPremium] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
-      const check = async () => {
-        const agreed = await AsyncStorage.getItem("bitzaCommunityAgreed");
-        if (agreed) setAgreedToGuidelines(true);
+      const loadState = async () => {
+        try {
+          const agreed = await AsyncStorage.getItem("bitzaCommunityAgreed");
+          const premium = await AsyncStorage.getItem("bitzaIsPremium");
+          if (agreed) setAgreedToGuidelines(true);
+          setIsPremium(premium === "true");
+        } catch (e) {
+          console.log("Error loading community state:", e);
+        }
       };
-      check();
+      loadState();
     }, [])
   );
 
+  const goToPremium = () => navigation.navigate("PremiumUpgrade");
+
+  const handleRoomPress = (room) => {
+    if (!isPremium) {
+      goToPremium();
+      return;
+    }
+    if (!agreedToGuidelines) {
+      setShowJoinModal(true);
+      return;
+    }
+    setActiveRoom(room);
+  };
+
   const handleJoin = async () => {
+    if (!isPremium) {
+      setShowJoinModal(false);
+      goToPremium();
+      return;
+    }
     await AsyncStorage.setItem("bitzaCommunityAgreed", "true");
     setAgreedToGuidelines(true);
     setShowJoinModal(false);
@@ -273,8 +299,20 @@ export default function CommunityScreen({ navigation }) {
           </TouchableOpacity>
         </View>
 
+        {!isPremium && (
+          <View style={styles.premiumFeatureCard}>
+            <Text style={styles.premiumFeatureTitle}>Community is a Premium feature</Text>
+            <Text style={styles.premiumFeatureSubtitle}>
+              Upgrade to Premium to join caregiver rooms and connect with other parents.
+            </Text>
+            <TouchableOpacity style={styles.upgradeButton} onPress={goToPremium} activeOpacity={0.88}>
+              <Text style={styles.upgradeButtonText}>Upgrade to Premium</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* Join Banner (if not agreed) */}
-        {!agreedToGuidelines && (
+        {isPremium && !agreedToGuidelines && (
           <TouchableOpacity style={styles.joinBanner} onPress={() => setShowJoinModal(true)} activeOpacity={0.88}>
             <Ionicons name="hand-left-outline" size={20} color="#6F42D8" />
             <View style={styles.joinBannerText}>
@@ -285,49 +323,47 @@ export default function CommunityScreen({ navigation }) {
           </TouchableOpacity>
         )}
 
-        {/* Stats */}
-        <View style={styles.statsRow}>
-          <View style={[styles.statCard, { backgroundColor: "#F0E2FF" }]}>
-            <Text style={styles.statNumber}>8</Text>
-            <Text style={styles.statLabel}>Rooms</Text>
-          </View>
-          <View style={[styles.statCard, { backgroundColor: "#EEF7E8" }]}>
-            <Text style={styles.statNumber}>247</Text>
-            <Text style={styles.statLabel}>Caregivers</Text>
-          </View>
-          <View style={[styles.statCard, { backgroundColor: "#FFE6E4" }]}>
-            <Text style={styles.statNumber}>1.2k</Text>
-            <Text style={styles.statLabel}>Messages</Text>
-          </View>
-        </View>
+          {isPremium && (
+            <>
+              {/* Stats */}
+              <View style={styles.statsRow}>
+                <View style={[styles.statCard, { backgroundColor: "#F0E2FF" }]}>
+                  <Text style={styles.statNumber}>8</Text>
+                  <Text style={styles.statLabel}>Rooms</Text>
+                </View>
+                <View style={[styles.statCard, { backgroundColor: "#EEF7E8" }]}>
+                  <Text style={styles.statNumber}>247</Text>
+                  <Text style={styles.statLabel}>Caregivers</Text>
+                </View>
+                <View style={[styles.statCard, { backgroundColor: "#FFE6E4" }]}>
+                  <Text style={styles.statNumber}>1.2k</Text>
+                  <Text style={styles.statLabel}>Messages</Text>
+                </View>
+              </View>
 
-        {/* Rooms */}
-        <Text style={styles.roomsTitle}>Choose a room</Text>
-        {ROOMS.map((room) => (
-          <TouchableOpacity
-            key={room.id}
-            style={[styles.roomCard, { borderLeftColor: room.color, borderLeftWidth: 3 }]}
-            onPress={() => {
-              if (!agreedToGuidelines) {
-                setShowJoinModal(true);
-              } else {
-                setActiveRoom(room);
-              }
-            }}
-            activeOpacity={0.86}
-          >
-            <View style={[styles.roomIconBubble, { backgroundColor: room.bg }]}>
-              <Feather name={room.icon} size={20} color={room.color} />
-            </View>
-            <View style={styles.roomTextWrap}>
-              <Text style={styles.roomCardTitle}>{room.label}</Text>
-              <Text style={styles.roomCardDesc}>{room.desc}</Text>
-            </View>
-            <View style={styles.roomChevronWrap}>
-              <Feather name="chevron-right" size={16} color="#2B2463" />
-            </View>
-          </TouchableOpacity>
-        ))}
+              {/* Rooms */}
+              <Text style={styles.roomsTitle}>Choose a room</Text>
+              {ROOMS.map((room) => (
+                <TouchableOpacity
+                  key={room.id}
+                  style={[styles.roomCard, { borderLeftColor: room.color, borderLeftWidth: 3 }]}
+                  onPress={() => handleRoomPress(room)}
+                  activeOpacity={0.86}
+                >
+                  <View style={[styles.roomIconBubble, { backgroundColor: room.bg }]}>
+                    <Feather name={room.icon} size={20} color={room.color} />
+                  </View>
+                  <View style={styles.roomTextWrap}>
+                    <Text style={styles.roomCardTitle}>{room.label}</Text>
+                    <Text style={styles.roomCardDesc}>{room.desc}</Text>
+                  </View>
+                  <View style={styles.roomChevronWrap}>
+                    <Feather name="chevron-right" size={16} color="#2B2463" />
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </>
+          )}
 
         {/* Reminder */}
         <View style={styles.reminderCard}>
@@ -407,6 +443,12 @@ const styles = StyleSheet.create({
   joinBannerText: { flex: 1 },
   joinBannerTitle: { color: "#2B2463", fontSize: 12, fontWeight: "800", marginBottom: 1 },
   joinBannerSub: { color: "#5B5672", fontSize: 10, fontWeight: "600" },
+
+  premiumFeatureCard: { backgroundColor: "#F6F0FF", borderRadius: 18, borderWidth: 1, borderColor: "#E3D2F8", padding: 16, marginBottom: 14 },
+  premiumFeatureTitle: { color: "#2B2463", fontSize: 15, fontWeight: "800", marginBottom: 8 },
+  premiumFeatureSubtitle: { color: "#5B5672", fontSize: 12, lineHeight: 18, fontWeight: "600", marginBottom: 14 },
+  upgradeButton: { backgroundColor: "#6F42D8", borderRadius: 14, paddingVertical: 12, alignItems: "center" },
+  upgradeButtonText: { color: "#FFFFFF", fontSize: 14, fontWeight: "800" },
 
   statsRow: { flexDirection: "row", gap: 8, marginBottom: 14 },
   statCard: { flex: 1, borderRadius: 12, padding: 10, alignItems: "center" },

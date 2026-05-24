@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -11,6 +11,8 @@ import {
 } from "react-native";
 
 import { SafeAreaView } from "react-native-safe-area-context";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect } from "@react-navigation/native";
 import { Feather, Ionicons } from "@expo/vector-icons";
 
 const supportHeartHug = require("../assets/icons/support-heart-hug.png");
@@ -67,10 +69,34 @@ function ToolCard({ title, subtitle, icon, bg, accent, onPress }) {
 }
 
 export default function SupportScreen({ navigation }) {
+  const [isPremium, setIsPremium] = useState(false);
+
   // ✅ Fixed: getParent().getParent() reaches Drawer level where HugiChat + SupportMode live
   const nav = (screen, params) =>
     navigation.getParent()?.getParent()?.navigate(screen, params) ??
     navigation.navigate(screen, params);
+
+  useFocusEffect(
+    useCallback(() => {
+      const loadPremium = async () => {
+        try {
+          const premium = await AsyncStorage.getItem("bitzaIsPremium");
+          setIsPremium(premium === "true");
+        } catch (e) {
+          console.log("Error loading premium state:", e);
+        }
+      };
+      loadPremium();
+    }, [])
+  );
+
+  const handleNav = (screen, params = {}, premiumOnly = false) => {
+    if (premiumOnly && !isPremium) {
+      nav("PremiumUpgrade");
+      return;
+    }
+    nav(screen, params);
+  };
 
   return (
     <ImageBackground
@@ -115,19 +141,19 @@ export default function SupportScreen({ navigation }) {
           bg="#F0E7FF"
           accent="#8B5BE8"
           premium
-          onPress={() => nav("HugiChat")}
+          onPress={() => handleNav("HugiChat", {}, true)}
         />
 
         {/* Printable Resources */}
-<BigSupportRow
-  title="Printable Resources"
-  subtitle="Visual tools you can print & keep"
-  icon="printer"
-  bg="#EEF7E9"
-  accent="#4A9E5C"
-  premium
-  onPress={() => nav("Resources")}
-/>
+        <BigSupportRow
+          title="Printable Resources"
+          subtitle="Visual tools you can print & keep"
+          icon="printer"
+          bg="#EEF7E9"
+          accent="#4A9E5C"
+          premium
+          onPress={() => handleNav("Resources", {}, true)}
+        />
 
         {/* ✅ Support Right Now — navigates to SupportMode */}
         <BigSupportRow
@@ -147,7 +173,7 @@ export default function SupportScreen({ navigation }) {
           bg="#F0E7FF"
           accent="#8B5BE8"
           premium
-          onPress={() => nav("Community")}
+          onPress={() => handleNav("Community", {}, true)}
         />
 
         {/* Support Tools */}
@@ -180,6 +206,14 @@ export default function SupportScreen({ navigation }) {
             bg="#EEF7E8"
             accent="#78A866"
             onPress={() => nav("GroundingSteps")}
+          />
+          <ToolCard
+            title="Sensory Support"
+            subtitle="Tools for your child's sensory needs"
+            icon="hand-left-outline"
+            bg="#F6ECFF"
+            accent="#7548D8"
+            onPress={() => nav("SensorySupports")}
           />
           <ToolCard
             title="Meltdown Plan"

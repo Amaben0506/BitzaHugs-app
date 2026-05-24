@@ -1,493 +1,313 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
-  StatusBar,
   ScrollView,
-  Alert,
+  TouchableOpacity,
+  Image,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Feather, Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
 
-const SENSORY_SUPPORTS_KEY = "bitzaSensorySupports";
+const PURPLE = "#2D246B";
+const ACCENT = "#7548D8";
 
-const supports = [
-  {
-    id: "loud-noises",
-    title: "Loud Noises",
-    description: "Unexpected sounds",
-    icon: "volume-high-outline",
-    color: "#8C55F6",
+const TOOL_MAP = {
+  "loud-noises": {
+    tip: "Try calming sounds or noise-cancelling headphones during overwhelming moments.",
+    tools: [{ label: "Calming Sounds", icon: "musical-notes-outline", screen: "Sounds", color: "#FFE7E0", accent: "#EF8F7D" }],
   },
-  {
-    id: "transitions",
-    title: "Transitions",
-    description: "Changes in routine",
-    icon: "sync-outline",
-    color: "#40A99B",
+  "transitions": {
+    tip: "Use a visual timer before changes to help your child prepare.",
+    tools: [{ label: "Transition Timer", icon: "timer-outline", screen: "Transitions", color: "#EFE2FF", accent: "#7548D8" }],
   },
-  {
-    id: "bright-lights",
-    title: "Bright Lights",
-    description: "Strong lights",
-    icon: "sunny-outline",
-    color: "#F3A63D",
+  "bright-lights": {
+    tip: "Dim lights before transitions and keep a quiet corner available.",
+    tools: [{ label: "Calming Sounds", icon: "musical-notes-outline", screen: "Sounds", color: "#FFE7E0", accent: "#EF8F7D" }],
   },
-  {
-    id: "textures",
-    title: "Textures",
-    description: "Tags or fabrics",
-    icon: "hand-left-outline",
-    color: "#F28C8C",
+  "textures": {
+    tip: "Keep familiar clothing nearby and avoid tags or scratchy fabrics.",
+    tools: [{ label: "Meltdown Plan", icon: "clipboard-outline", screen: "MeltdownPlan", color: "#FFF0DF", accent: "#D99A3D" }],
   },
-  {
-    id: "visuals",
-    title: "Visuals",
-    description: "Busy spaces",
-    icon: "image-outline",
-    color: "#4AA9B1",
+  "visuals": {
+    tip: "Reduce clutter in your child's space and use simple visual schedules.",
+    tools: [{ label: "Routine Planner", icon: "calendar-outline", screen: "Routine", color: "#E7F4FF", accent: "#4C9ED9" }],
   },
-  {
-    id: "timers",
-    title: "Timers",
-    description: "Countdown support",
-    icon: "time-outline",
-    color: "#8C55F6",
+  "timers": {
+    tip: "Visual countdowns help with time blindness and unexpected endings.",
+    tools: [{ label: "Transition Timer", icon: "timer-outline", screen: "Transitions", color: "#EFE2FF", accent: "#7548D8" }],
   },
-  {
-    id: "music",
-    title: "Music",
-    description: "Soft sounds",
-    icon: "musical-notes-outline",
-    color: "#8C55F6",
+  "music": {
+    tip: "Soft background music can regulate and calm the nervous system.",
+    tools: [{ label: "Calming Sounds", icon: "musical-notes-outline", screen: "Sounds", color: "#FFE7E0", accent: "#EF8F7D" }],
   },
-  {
-    id: "quiet-space",
-    title: "Quiet Space",
-    description: "A reset place",
-    icon: "home-outline",
-    color: "#7BA85E",
+  "quiet-space": {
+    tip: "A designated calm corner with familiar items gives your child a reset place.",
+    tools: [{ label: "Meltdown Plan", icon: "clipboard-outline", screen: "MeltdownPlan", color: "#FFF0DF", accent: "#D99A3D" }],
   },
-  {
-    id: "pressure",
-    title: "Deep Pressure",
-    description: "Hugs or blankets",
-    icon: "heart-outline",
-    color: "#F28C8C",
+  "pressure": {
+    tip: "Deep pressure like weighted blankets or firm hugs can calm the nervous system.",
+    tools: [{ label: "Grounding Steps", icon: "footsteps-outline", screen: "GroundingSteps", color: "#EEF7E8", accent: "#78A866" }],
   },
+};
+
+const ALL_SUPPORTS = [
+  { id: "loud-noises", title: "Loud Noises", icon: "volume-high-outline", color: "#8C55F6" },
+  { id: "transitions", title: "Transitions", icon: "sync-outline", color: "#40A99B" },
+  { id: "bright-lights", title: "Bright Lights", icon: "sunny-outline", color: "#F3A63D" },
+  { id: "textures", title: "Textures", icon: "hand-left-outline", color: "#F28C8C" },
+  { id: "visuals", title: "Visuals", icon: "image-outline", color: "#4AA9B1" },
+  { id: "timers", title: "Timers", icon: "time-outline", color: "#8C55F6" },
+  { id: "music", title: "Music", icon: "musical-notes-outline", color: "#8C55F6" },
+  { id: "quiet-space", title: "Quiet Space", icon: "home-outline", color: "#7BA85E" },
+  { id: "pressure", title: "Deep Pressure", icon: "heart-outline", color: "#F28C8C" },
 ];
 
-export default function SensorySupportScreen({ navigation }) {
-  const [selectedSupports, setSelectedSupports] = useState(() => {
-    return supports.reduce((acc, item) => {
-      acc[item.id] = false;
-      return acc;
-    }, {});
-  });
+export default function SensorySupportsScreen({ navigation }) {
+  const [savedSupports, setSavedSupports] = useState([]);
+  const [childName, setChildName] = useState("your child");
+  const [expandedId, setExpandedId] = useState(null);
 
-  const toggleSupport = (id) => {
-    setSelectedSupports((prev) => ({
-      ...prev,
-      [id]: !prev[id],
-    }));
-  };
+  const nav = (screen) =>
+    navigation.getParent()?.getParent()?.navigate(screen) ??
+    navigation.navigate(screen);
 
-  const saveSensorySupports = async () => {
-    const selectedList = supports
-      .filter((item) => selectedSupports[item.id])
-      .map((item) => ({
-        id: item.id,
-        title: item.title,
-        description: item.description,
-      }));
+  useFocusEffect(
+    useCallback(() => {
+      const load = async () => {
+        try {
+          const saved = await AsyncStorage.getItem("bitzaSensorySupports");
+          setSavedSupports(saved ? JSON.parse(saved) : []);
 
-    try {
-      await AsyncStorage.setItem(
-        SENSORY_SUPPORTS_KEY,
-        JSON.stringify(selectedList)
-      );
+          const profile = await AsyncStorage.getItem("bitzaChildProfile");
+          if (profile) {
+            const p = JSON.parse(profile);
+            setChildName(p.childName?.trim() || "your child");
+          }
+        } catch (e) {
+          console.log("Error loading sensory supports:", e);
+        }
+      };
+      load();
+    }, [])
+  );
 
-      navigation.navigate("CaregiverSupport");
-    } catch (error) {
-      console.log("Error saving sensory supports:", error);
-      Alert.alert("Oops", "Something went wrong saving these supports.");
-    }
-  };
+  const displaySupports = savedSupports.length > 0
+    ? ALL_SUPPORTS.filter((s) => savedSupports.some((saved) => saved.id === s.id))
+    : ALL_SUPPORTS;
 
-  const selectedCount = Object.values(selectedSupports).filter(Boolean).length;
+  const hasCustomSupports = savedSupports.length > 0;
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFF9F3" />
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
 
-      <ScrollView
-        contentContainerStyle={styles.container}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.topRow}>
-          <TouchableOpacity
-            style={styles.backButton}
-            activeOpacity={0.8}
-            onPress={() => navigation.goBack()}
-          >
-            <Ionicons name="arrow-back" size={22} color="#2D2357" />
+        {/* Header */}
+        <View style={styles.topBar}>
+          <TouchableOpacity style={styles.circleButton} onPress={() => navigation.goBack()} activeOpacity={0.85}>
+            <Feather name="chevron-left" size={22} color={PURPLE} />
           </TouchableOpacity>
+          <Text style={styles.topTitle}>Sensory Support</Text>
+          <TouchableOpacity
+            style={styles.circleButton}
+            onPress={() => navigation.navigate("SensorySupport")}
+            activeOpacity={0.85}
+          >
+            <Feather name="edit-2" size={18} color={PURPLE} />
+          </TouchableOpacity>
+        </View>
 
-          <View style={styles.brandRow}>
-            <Ionicons name="heart" size={24} color="#8C35F6" />
-            <Text style={styles.brandText}>
-              Bitza<Text style={styles.brandAccent}>Hugs</Text>
+        {/* Hero */}
+        <View style={styles.heroCard}>
+          <Image
+            source={require("../assets/icons/support-heart-hug.png")}
+            style={styles.heroIcon}
+            resizeMode="contain"
+          />
+          <View style={styles.heroTextWrap}>
+            <Text style={styles.heroTitle}>
+              {hasCustomSupports
+                ? `${childName}'s sensory profile`
+                : "Sensory support tools"}
+            </Text>
+            <Text style={styles.heroText}>
+              {hasCustomSupports
+                ? "Tap any support to see tips and tools that can help."
+                : "Set up a sensory profile to get personalized tips for your child."}
             </Text>
           </View>
-
-          <View style={styles.topSpacer} />
         </View>
 
-        <View style={styles.progressRow}>
-          <View style={styles.progressDot} />
-          <View style={[styles.progressDot, styles.progressActive]} />
-          <View style={styles.progressDot} />
-          <View style={styles.progressDot} />
-        </View>
-
-        <Text style={styles.stepLabel}>Step 2 of 4</Text>
-
-        <Text style={styles.title}>
-          What sensory supports{"\n"}help most?
-        </Text>
-
-        <Text style={styles.subtitle}>
-          Choose anything that applies.{"\n"}You can change this anytime.
-        </Text>
-
-        {selectedCount > 0 && (
-          <View style={styles.countBadge}>
-            <Ionicons name="checkmark-circle" size={16} color="#8C35F6" />
-            <Text style={styles.countText}>{selectedCount} selected</Text>
-          </View>
+        {/* Setup nudge if no profile */}
+        {!hasCustomSupports && (
+          <TouchableOpacity
+            style={styles.nudgeCard}
+            onPress={() => navigation.navigate("SensorySupport")}
+            activeOpacity={0.88}
+          >
+            <Ionicons name="person-add-outline" size={20} color={ACCENT} />
+            <View style={styles.nudgeTextWrap}>
+              <Text style={styles.nudgeTitle}>Set up {childName}'s sensory profile</Text>
+              <Text style={styles.nudgeSub}>Choose what affects your child most and get personalized tips.</Text>
+            </View>
+            <Feather name="chevron-right" size={16} color={ACCENT} />
+          </TouchableOpacity>
         )}
 
-        <View style={styles.grid}>
-          {supports.map((item) => {
-            const isSelected = selectedSupports[item.id];
+        {/* Supports List */}
+        <Text style={styles.sectionTitle}>
+          {hasCustomSupports ? "Your child's sensory needs" : "Browse all sensory supports"}
+        </Text>
 
-            return (
+        {displaySupports.map((support) => {
+          const toolInfo = TOOL_MAP[support.id];
+          const isExpanded = expandedId === support.id;
+
+          return (
+            <View key={support.id} style={styles.supportCard}>
               <TouchableOpacity
-                key={item.id}
-                activeOpacity={0.85}
-                onPress={() => toggleSupport(item.id)}
-                style={[
-                  styles.supportCard,
-                  isSelected && styles.supportCardSelected,
-                ]}
+                style={styles.supportHeader}
+                onPress={() => setExpandedId(isExpanded ? null : support.id)}
+                activeOpacity={0.8}
               >
-                {isSelected && (
-                  <View style={styles.checkBadge}>
-                    <Ionicons name="checkmark" size={12} color="#FFFFFF" />
-                  </View>
-                )}
-
+                <View style={[styles.supportIconBubble, { backgroundColor: support.color + "22" }]}>
+                  <Ionicons name={support.icon} size={22} color={support.color} />
+                </View>
+                <Text style={styles.supportTitle}>{support.title}</Text>
                 <Ionicons
-                  name={item.icon}
-                  size={26}
-                  color={item.color}
-                  style={styles.cardIcon}
+                  name={isExpanded ? "chevron-up" : "chevron-down"}
+                  size={18}
+                  color="#8E87A0"
                 />
-
-                <Text style={styles.cardTitle}>{item.title}</Text>
-                <Text style={styles.cardDescription}>{item.description}</Text>
               </TouchableOpacity>
-            );
-          })}
-        </View>
 
-        <View style={styles.noteCard}>
-          <View style={styles.noteIconCircle}>
-            <Ionicons name="heart-outline" size={22} color="#8C55F6" />
-          </View>
+              {isExpanded && toolInfo && (
+                <View style={styles.supportExpanded}>
+                  <View style={styles.tipCard}>
+                    <Ionicons name="bulb-outline" size={16} color="#D99A3D" />
+                    <Text style={styles.tipText}>{toolInfo.tip}</Text>
+                  </View>
 
-          <View style={styles.noteTextWrap}>
-            <Text style={styles.noteTitle}>There's no right or wrong.</Text>
-            <Text style={styles.noteText}>
-              We'll tailor support to what helps your child feel regulated.
-            </Text>
-          </View>
-        </View>
+                  <Text style={styles.toolsLabel}>Helpful tools:</Text>
+                  {toolInfo.tools.map((tool) => (
+                    <TouchableOpacity
+                      key={tool.label}
+                      style={[styles.toolBtn, { backgroundColor: tool.color }]}
+                      onPress={() => nav(tool.screen)}
+                      activeOpacity={0.85}
+                    >
+                      <Ionicons name={tool.icon} size={18} color={tool.accent} />
+                      <Text style={[styles.toolBtnText, { color: tool.accent }]}>{tool.label}</Text>
+                      <Feather name="chevron-right" size={14} color={tool.accent} />
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+            </View>
+          );
+        })}
 
+        {/* Edit Profile Button */}
         <TouchableOpacity
-          style={styles.button}
-          activeOpacity={0.86}
-          onPress={saveSensorySupports}
+          style={styles.editBtn}
+          onPress={() => navigation.navigate("SensorySupport")}
+          activeOpacity={0.85}
         >
-          <Text style={styles.buttonText}>Continue</Text>
-          <Ionicons name="arrow-forward" size={22} color="#FFFFFF" />
+          <Feather name="edit-2" size={16} color={ACCENT} />
+          <Text style={styles.editBtnText}>Update sensory profile</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.skipButton}
-          activeOpacity={0.75}
-          onPress={() => navigation.navigate("CaregiverSupport")}
-        >
-          <Text style={styles.skipText}>Skip for now</Text>
-        </TouchableOpacity>
+        {/* Footer */}
+        <View style={styles.footerCard}>
+          <Image
+            source={require("../assets/icons/support-positive-reminder.png")}
+            style={styles.footerIcon}
+            resizeMode="contain"
+          />
+          <Text style={styles.footerText}>
+            Every child is different. These are gentle suggestions, not rules.
+          </Text>
+        </View>
+
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: "#FFF9F3",
-  },
+  safeArea: { flex: 1, backgroundColor: "#FFF9F2" },
+  content: { paddingHorizontal: 16, paddingTop: Platform.OS === "ios" ? 6 : 16, paddingBottom: 100 },
 
-  container: {
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 24,
-  },
+  topBar: { height: 46, flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 },
+  circleButton: { width: 38, height: 38, borderRadius: 19, backgroundColor: "#F0E2FF", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "#E3D2F8" },
+  topTitle: { color: PURPLE, fontSize: 17, fontWeight: "800" },
 
-  topRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 10,
+  heroCard: {
+    backgroundColor: "#FFFFFF", borderRadius: 18, borderWidth: 1, borderColor: "#EFE4DC",
+    paddingHorizontal: 13, paddingVertical: 12, flexDirection: "row", alignItems: "center",
+    gap: 12, marginBottom: 10, shadowColor: "#BFA99D", shadowOpacity: 0.06,
+    shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 2,
   },
+  heroIcon: { width: 52, height: 52 },
+  heroTextWrap: { flex: 1 },
+  heroTitle: { color: PURPLE, fontSize: 14, fontWeight: "800", marginBottom: 3 },
+  heroText: { color: "#5B5672", fontSize: 11, lineHeight: 16, fontWeight: "600" },
 
-  backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "#F1E5FF",
-    alignItems: "center",
-    justifyContent: "center",
+  nudgeCard: {
+    backgroundColor: "#F6ECFF", borderRadius: 16, borderWidth: 1, borderColor: "#E3D2F8",
+    paddingHorizontal: 13, paddingVertical: 11, flexDirection: "row", alignItems: "center",
+    gap: 10, marginBottom: 14,
   },
+  nudgeTextWrap: { flex: 1 },
+  nudgeTitle: { color: PURPLE, fontSize: 13, fontWeight: "800", marginBottom: 2 },
+  nudgeSub: { color: "#5B5672", fontSize: 11, fontWeight: "600", lineHeight: 15 },
 
-  brandRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-
-  brandText: {
-    fontSize: 22,
-    fontWeight: "900",
-    color: "#20204F",
-  },
-
-  brandAccent: {
-    color: "#F1768E",
-  },
-
-  topSpacer: {
-    width: 44,
-  },
-
-  progressRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 8,
-    marginBottom: 4,
-  },
-
-  progressDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: "#D9D4D0",
-  },
-
-  progressActive: {
-    backgroundColor: "#8C55F6",
-    width: 24,
-  },
-
-  stepLabel: {
-    textAlign: "center",
-    color: "#837E96",
-    fontSize: 11,
-    fontWeight: "700",
-    marginBottom: 12,
-  },
-
-  title: {
-    fontSize: 26,
-    lineHeight: 32,
-    fontWeight: "900",
-    color: "#111A4D",
-    textAlign: "center",
-    letterSpacing: -0.5,
-    marginBottom: 6,
-  },
-
-  subtitle: {
-    fontSize: 14,
-    lineHeight: 20,
-    color: "#5F567A",
-    textAlign: "center",
-    fontWeight: "600",
-    marginBottom: 12,
-  },
-
-  countBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    justifyContent: "center",
-    backgroundColor: "#F3EAFE",
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    alignSelf: "center",
-    marginBottom: 10,
-  },
-
-  countText: {
-    color: "#8C35F6",
-    fontSize: 13,
-    fontWeight: "800",
-  },
-
-  grid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    rowGap: 8,
-    marginBottom: 12,
-  },
+  sectionTitle: { color: PURPLE, fontSize: 15, fontWeight: "800", marginBottom: 10 },
 
   supportCard: {
-    width: "31%",
-    height: 106,
-    borderRadius: 18,
-    backgroundColor: "rgba(255,255,255,0.94)",
-    borderWidth: 1,
-    borderColor: "#EFE6DE",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 6,
-    paddingVertical: 8,
-    position: "relative",
-    shadowColor: "#D8C6B8",
-    shadowOpacity: 0.07,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 1,
+    backgroundColor: "#FFFFFF", borderRadius: 16, borderWidth: 1, borderColor: "#EFE4DC",
+    marginBottom: 8, overflow: "hidden", shadowColor: "#BFA99D", shadowOpacity: 0.05,
+    shadowOffset: { width: 0, height: 2 }, shadowRadius: 6, elevation: 1,
   },
+  supportHeader: {
+    flexDirection: "row", alignItems: "center", padding: 12, gap: 11,
+  },
+  supportIconBubble: {
+    width: 42, height: 42, borderRadius: 13, alignItems: "center", justifyContent: "center",
+  },
+  supportTitle: { flex: 1, color: PURPLE, fontSize: 14, fontWeight: "800" },
 
-  supportCardSelected: {
-    backgroundColor: "#FBF6FF",
-    borderColor: "#9A67F6",
-    borderWidth: 1.5,
+  supportExpanded: {
+    paddingHorizontal: 12, paddingBottom: 12, borderTopWidth: 1, borderTopColor: "#F0E8E2",
   },
+  tipCard: {
+    flexDirection: "row", alignItems: "flex-start", gap: 8,
+    backgroundColor: "#FFF8EC", borderRadius: 12, borderWidth: 1,
+    borderColor: "#FFE4B0", padding: 10, marginTop: 10, marginBottom: 10,
+  },
+  tipText: { flex: 1, color: "#5B5672", fontSize: 12, lineHeight: 17, fontWeight: "600" },
+  toolsLabel: { color: "#8E87A0", fontSize: 11, fontWeight: "700", marginBottom: 7 },
+  toolBtn: {
+    flexDirection: "row", alignItems: "center", gap: 9,
+    borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, marginBottom: 6,
+  },
+  toolBtnText: { flex: 1, fontSize: 13, fontWeight: "800" },
 
-  checkBadge: {
-    position: "absolute",
-    top: 7,
-    right: 7,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: "#8C55F6",
-    alignItems: "center",
-    justifyContent: "center",
+  editBtn: {
+    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
+    backgroundColor: "#F6ECFF", borderRadius: 14, borderWidth: 1, borderColor: "#E3D2F8",
+    paddingVertical: 12, marginTop: 4, marginBottom: 12,
   },
+  editBtnText: { color: ACCENT, fontSize: 13, fontWeight: "800" },
 
-  cardIcon: {
-    marginBottom: 7,
+  footerCard: {
+    backgroundColor: "#F6ECFF", borderRadius: 16, borderWidth: 1, borderColor: "#E3D2F8",
+    padding: 12, flexDirection: "row", alignItems: "center", gap: 10,
   },
-
-  cardTitle: {
-    fontSize: 12,
-    fontWeight: "900",
-    color: "#111A4D",
-    textAlign: "center",
-    marginBottom: 2,
-  },
-
-  cardDescription: {
-    fontSize: 10,
-    lineHeight: 13,
-    color: "#6C6284",
-    textAlign: "center",
-    fontWeight: "600",
-  },
-
-  noteCard: {
-    minHeight: 62,
-    borderRadius: 18,
-    backgroundColor: "#F5E9FF",
-    borderWidth: 1,
-    borderColor: "#E4CFFF",
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 13,
-    paddingVertical: 10,
-    marginBottom: 12,
-    gap: 10,
-  },
-
-  noteIconCircle: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: "rgba(255,255,255,0.6)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  noteTextWrap: {
-    flex: 1,
-  },
-
-  noteTitle: {
-    fontSize: 13,
-    fontWeight: "900",
-    color: "#4F3B68",
-    marginBottom: 1,
-  },
-
-  noteText: {
-    fontSize: 11,
-    lineHeight: 15,
-    color: "#675A81",
-    fontWeight: "600",
-  },
-
-  button: {
-    width: "100%",
-    height: 56,
-    borderRadius: 22,
-    backgroundColor: "#8C35F6",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
-    shadowColor: "#8C55F6",
-    shadowOpacity: 0.22,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 5 },
-    elevation: 4,
-    marginBottom: 10,
-  },
-
-  buttonText: {
-    color: "#FFFFFF",
-    fontSize: 18,
-    fontWeight: "900",
-  },
-
-  skipButton: {
-    alignItems: "center",
-    paddingVertical: 6,
-  },
-
-  skipText: {
-    color: "#837E96",
-    fontSize: 13,
-    fontWeight: "700",
-  },
+  footerIcon: { width: 40, height: 40 },
+  footerText: { flex: 1, color: PURPLE, fontSize: 12, lineHeight: 17, fontWeight: "700" },
 });
