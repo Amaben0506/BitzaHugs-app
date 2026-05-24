@@ -19,6 +19,46 @@ import { Feather } from "@expo/vector-icons";
 const HOURS = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, "0"));
 const MINUTES = ["00", "05", "10", "15", "20", "25", "30", "35", "40", "45", "50", "55"];
 const PERIODS = ["AM", "PM"];
+const [reminderEnabled, setReminderEnabled] = useState(false);
+const [reminderOffset, setReminderOffset] = useState("10 min");
+
+
+{/* Reminder Toggle */}
+<View style={styles.inputCard}>
+  <View style={styles.reminderRow}>
+    <View>
+      <Text style={styles.inputLabel}>Remind me</Text>
+      <Text style={styles.reminderSub}>Get a notification before this activity</Text>
+    </View>
+    <TouchableOpacity
+      style={[styles.toggle, reminderEnabled && styles.toggleOn]}
+      onPress={() => setReminderEnabled((v) => !v)}
+      activeOpacity={0.85}
+    >
+      <View style={[styles.toggleThumb, reminderEnabled && styles.toggleThumbOn]} />
+    </TouchableOpacity>
+  </View>
+
+  {reminderEnabled && (
+    <View style={styles.reminderOptions}>
+      <Text style={styles.reminderLabel}>Remind me how early?</Text>
+      <View style={styles.reminderChips}>
+        {["5 min", "10 min", "15 min", "30 min"].map((opt) => (
+          <TouchableOpacity
+            key={opt}
+            style={[styles.reminderChip, reminderOffset === opt && styles.reminderChipActive]}
+            onPress={() => setReminderOffset(opt)}
+            activeOpacity={0.8}
+          >
+            <Text style={[styles.reminderChipText, reminderOffset === opt && styles.reminderChipTextActive]}>
+              {opt} before
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </View>
+  )}
+</View>
 
 // ─── Icon Options ─────────────────────────────────────────────────────────────
 const iconOptions = [
@@ -92,13 +132,15 @@ export default function AddRoutineActivityScreen({ navigation }) {
     if (!title.trim()) return;
 
     const newActivity = {
-      id: Date.now().toString(),
-      title: title.trim(),
-      time: timeDisplay,
-      icon: selectedIcon,
-      completed: false,
-      category: "custom",
-    };
+  id: Date.now().toString(),
+  title: title.trim(),
+  time: timeDisplay,
+  icon: selectedIcon,
+  completed: false,
+  category: "custom",
+  reminder: reminderEnabled,
+  reminderOffset: reminderEnabled ? reminderOffset : null,
+};
 
     try {
       const saved = await AsyncStorage.getItem("bitzaRoutineItems");
@@ -495,5 +537,19 @@ const styles = StyleSheet.create({
   },
   ampmText: { fontSize: 16, fontWeight: "700", color: "#837E96" },
   ampmTextSelected: { color: "#2B2463", fontWeight: "800" },
+
+  reminderRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+reminderSub: { color: "#837E96", fontSize: 11, fontWeight: "600", marginTop: 2 },
+toggle: { width: 48, height: 28, borderRadius: 14, backgroundColor: "#E0D8F0", padding: 2, justifyContent: "center" },
+toggleOn: { backgroundColor: "#7548D8" },
+toggleThumb: { width: 24, height: 24, borderRadius: 12, backgroundColor: "#FFFFFF", shadowColor: "#000", shadowOpacity: 0.15, shadowRadius: 3, shadowOffset: { width: 0, height: 1 }, elevation: 2 },
+toggleThumbOn: { alignSelf: "flex-end" },
+reminderOptions: { marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: "#F0E8E2" },
+reminderLabel: { color: "#2B2463", fontSize: 12, fontWeight: "800", marginBottom: 8 },
+reminderChips: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+reminderChip: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20, backgroundColor: "#F0E2FF", borderWidth: 1.5, borderColor: "#E3D2F8" },
+reminderChipActive: { backgroundColor: "#7548D8", borderColor: "#7548D8" },
+reminderChipText: { color: "#7548D8", fontSize: 12, fontWeight: "700" },
+reminderChipTextActive: { color: "#FFFFFF" },
 });
 

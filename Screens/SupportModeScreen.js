@@ -99,27 +99,33 @@ const breath = StyleSheet.create({
 export default function SupportModeScreen({ navigation }) {
   const [selectedSituation, setSelectedSituation] = useState(null);
   const [supportContacts, setSupportContacts] = useState(null);
+  const [isPremium, setIsPremium] = useState(false);
   const scrollRef = useRef(null);
 
-  // Load support contacts
   useEffect(() => {
     const load = async () => {
       try {
         const saved = await AsyncStorage.getItem("bitzaSupportPerson");
         if (saved) setSupportContacts(JSON.parse(saved));
-      } catch (e) { console.log("Error loading contacts:", e); }
+
+        const premium = await AsyncStorage.getItem("bitzaIsPremium");
+        setIsPremium(premium === "true");
+      } catch (e) {
+        console.log("Error loading:", e);
+      }
     };
     load();
   }, []);
 
-  // Track Support Mode uses for Support Seeker badge
   useEffect(() => {
     const track = async () => {
       try {
         const current = await AsyncStorage.getItem("bitzaSupportModeUses");
         const count = current ? parseInt(current) : 0;
         await AsyncStorage.setItem("bitzaSupportModeUses", String(count + 1));
-      } catch (e) { console.log("Error tracking:", e); }
+      } catch (e) {
+        console.log("Error tracking:", e);
+      }
     };
     track();
   }, []);
@@ -129,15 +135,23 @@ export default function SupportModeScreen({ navigation }) {
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 200);
   };
 
-  const go = (screen) => navigation.navigate(screen);
+  const go = (screen) =>
+    navigation.getParent()?.navigate(screen) ??
+    navigation.navigate(screen);
 
   const callContact = (contact) => {
-    if (!contact?.phone?.trim()) { Alert.alert("No phone number", "Add a phone number in your Support Person settings."); return; }
+    if (!contact?.phone?.trim()) {
+      Alert.alert("No phone number", "Add a phone number in your Support Person settings.");
+      return;
+    }
     Linking.openURL(`tel:${contact.phone.replace(/\D/g, "")}`);
   };
 
   const textContact = (contact, message) => {
-    if (!contact?.phone?.trim()) { Alert.alert("No phone number", "Add a phone number in your Support Person settings."); return; }
+    if (!contact?.phone?.trim()) {
+      Alert.alert("No phone number", "Add a phone number in your Support Person settings.");
+      return;
+    }
     const phone = contact.phone.replace(/\D/g, "");
     const body = encodeURIComponent(message || "Hey, I'm having a hard moment and could use support. Can you check in with me?");
     Linking.openURL(`sms:${phone}${Platform.OS === "ios" ? "&" : "?"}body=${body}`);
@@ -197,7 +211,7 @@ export default function SupportModeScreen({ navigation }) {
 
         {/* No contacts nudge */}
         {(!supportContacts || (!supportContacts.contact1?.name?.trim() && !supportContacts.contact2?.name?.trim())) && (
-          <TouchableOpacity style={styles.addContactNudge} onPress={() => navigation.navigate("SupportPerson")} activeOpacity={0.88}>
+          <TouchableOpacity style={styles.addContactNudge} onPress={() => go("SupportPerson")} activeOpacity={0.88}>
             <Feather name="user-plus" size={16} color="#6F42D8" />
             <Text style={styles.addContactText}>Add a support person to reach out quickly</Text>
             <Feather name="chevron-right" size={14} color="#6F42D8" />
@@ -225,10 +239,19 @@ export default function SupportModeScreen({ navigation }) {
             {SITUATIONS.map((s) => {
               const isSelected = selectedSituation?.id === s.id;
               return (
-                <TouchableOpacity key={s.id} style={[styles.situationCard, { backgroundColor: s.bg }, isSelected && styles.situationCardSelected]} onPress={() => handleSituationSelect(s)} activeOpacity={0.85}>
+                <TouchableOpacity
+                  key={s.id}
+                  style={[styles.situationCard, { backgroundColor: s.bg }, isSelected && styles.situationCardSelected]}
+                  onPress={() => handleSituationSelect(s)}
+                  activeOpacity={0.85}
+                >
                   <Feather name={s.icon} size={20} color={s.color} />
                   <Text style={[styles.situationLabel, { color: s.color }]}>{s.label}</Text>
-                  {isSelected && <View style={styles.situationCheck}><Feather name="check" size={10} color="#FFFFFF" /></View>}
+                  {isSelected && (
+                    <View style={styles.situationCheck}>
+                      <Feather name="check" size={10} color="#FFFFFF" />
+                    </View>
+                  )}
                 </TouchableOpacity>
               );
             })}
@@ -243,7 +266,9 @@ export default function SupportModeScreen({ navigation }) {
               <Text style={styles.stepTitle}>Here's what might help</Text>
             </View>
             <View style={styles.hugiMessageCard}>
-              <View style={styles.hugiAvatarWrap}><Text style={styles.hugiEmoji}>🐰</Text></View>
+              <View style={styles.hugiAvatarWrap}>
+                <Text style={styles.hugiEmoji}>🐰</Text>
+              </View>
               <View style={styles.hugiTextWrap}>
                 <Text style={styles.hugiName}>Hugi</Text>
                 <Text style={styles.hugiMessage}>{selectedSituation.hugi}</Text>
@@ -252,18 +277,44 @@ export default function SupportModeScreen({ navigation }) {
             <Text style={styles.toolsLabel}>Recommended right now</Text>
             <View style={styles.toolsList}>
               {selectedSituation.tools.map((tool, i) => (
-                <TouchableOpacity key={tool.title} style={[styles.toolRow, i === selectedSituation.tools.length - 1 && styles.toolRowLast]} onPress={() => go(tool.screen)} activeOpacity={0.86}>
+                <TouchableOpacity
+                  key={tool.title}
+                  style={[styles.toolRow, i === selectedSituation.tools.length - 1 && styles.toolRowLast]}
+                  onPress={() => {
+                    if (tool.screen === "HugiChat" && !isPremium) {
+                      go("PremiumUpgrade");
+                    } else {
+                      go(tool.screen);
+                    }
+                  }}
+                  activeOpacity={0.86}
+                >
                   <View style={[styles.toolIconBubble, { backgroundColor: tool.bg }]}>
                     <Feather name={tool.icon} size={18} color={tool.color} />
                   </View>
                   <Text style={styles.toolTitle}>{tool.title}</Text>
+                  {tool.screen === "HugiChat" && !isPremium && (
+                    <View style={styles.toolPremiumBadge}>
+                      <Text style={styles.toolPremiumText}>✦ Premium</Text>
+                    </View>
+                  )}
                   <Feather name="chevron-right" size={16} color="#2B2463" />
                 </TouchableOpacity>
               ))}
             </View>
-            <TouchableOpacity style={styles.hugiButton} onPress={() => go("HugiChat")} activeOpacity={0.9}>
+
+            <TouchableOpacity
+              style={styles.hugiButton}
+              onPress={() => isPremium ? go("HugiChat") : go("PremiumUpgrade")}
+              activeOpacity={0.9}
+            >
               <Feather name="message-circle" size={18} color="#FFFFFF" />
               <Text style={styles.hugiButtonText}>Talk to Hugi for more support</Text>
+              {!isPremium && (
+                <View style={styles.hugiPremiumBadge}>
+                  <Text style={styles.hugiPremiumText}>✦ Premium</Text>
+                </View>
+              )}
             </TouchableOpacity>
           </View>
         )}
@@ -277,6 +328,7 @@ export default function SupportModeScreen({ navigation }) {
         <Text style={styles.footerText}>
           If there is immediate danger or a medical emergency, contact emergency services right away.
         </Text>
+
       </ScrollView>
     </SafeAreaView>
   );
@@ -334,9 +386,13 @@ const styles = StyleSheet.create({
   toolRowLast: { borderBottomWidth: 0 },
   toolIconBubble: { width: 34, height: 34, borderRadius: 10, alignItems: "center", justifyContent: "center" },
   toolTitle: { flex: 1, color: "#2B2463", fontSize: 13, fontWeight: "800" },
+  toolPremiumBadge: { backgroundColor: "#EFE1FF", borderRadius: 7, paddingHorizontal: 6, paddingVertical: 2 },
+  toolPremiumText: { color: "#7548D8", fontSize: 9, fontWeight: "800" },
 
   hugiButton: { height: 46, borderRadius: 14, backgroundColor: "#6F42D8", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 },
   hugiButtonText: { color: "#FFFFFF", fontSize: 14, fontWeight: "800" },
+  hugiPremiumBadge: { backgroundColor: "rgba(255,255,255,0.2)", borderRadius: 8, paddingHorizontal: 7, paddingVertical: 3 },
+  hugiPremiumText: { color: "#FFFFFF", fontSize: 9, fontWeight: "800" },
 
   reminderCard: { backgroundColor: "#FFFFFF", borderRadius: 16, borderWidth: 1, borderColor: "#EFE4DC", paddingHorizontal: 14, paddingVertical: 12, flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 10 },
   reminderText: { flex: 1, color: "#2B2463", fontSize: 13, fontWeight: "700" },
