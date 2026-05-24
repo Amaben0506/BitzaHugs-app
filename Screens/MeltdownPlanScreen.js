@@ -1,42 +1,52 @@
 import React, { useCallback, useState } from "react";
 import {
-  View, Text, StyleSheet, ScrollView,
-  TouchableOpacity, TextInput, Platform, Alert,
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+  Platform,
+  Alert,
+  StatusBar,
 } from "react-native";
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
+import * as Print from "expo-print";
+import * as Sharing from "expo-sharing";
+import * as FileSystem from "expo-file-system";
 
 const CHILD_PROFILE_KEY = "bitzaChildProfile";
 const PLAN_KEY = "bitzaMeltdownPlan";
 
 const DEFAULT_STEPS = [
-  { id: "1", title: "Check safety first", text: "Move anything unsafe out of reach. Lower the pressure. You do not have to fix everything right now.", icon: "shield", bg: "#FFE6E4", accent: "#EF8F7D" },
-  { id: "2", title: "Lower demands", text: "Pause instructions, questions, and corrections. Give space if space is safe.", icon: "pause-circle", bg: "#F0E2FF", accent: "#6F42D8" },
-  { id: "3", title: "Reduce sensory input", text: "Dim lights, lower noise, reduce crowding, and create a calmer space.", icon: "volume-x", bg: "#E7F4FF", accent: "#4C9ED9" },
-  { id: "4", title: "Use known calming supports", text: "Try a comfort item, quiet space, soft voice, or whatever usually helps them feel safe.", icon: "heart", bg: "#EEF7E8", accent: "#78A866" },
-  { id: "5", title: "Support recovery after", text: "Keep things gentle. Offer water, quiet time, comfort, and time to reconnect.", icon: "sunrise", bg: "#FFF0DF", accent: "#D99A3D" },
+  { id: "1", title: "Check safety first", text: "Move anything unsafe out of reach. Stay nearby if needed. Focus on safety before trying to solve the moment.", icon: "shield", bg: "#FFE6E4", accent: "#EF8F7D" },
+  { id: "2", title: "Lower demands", text: "Pause instructions, questions, corrections, and choices. Give fewer words and more space.", icon: "pause-circle", bg: "#F0E2FF", accent: "#6F42D8" },
+  { id: "3", title: "Reduce sensory input", text: "Dim lights, lower noise, reduce crowding, and create a calmer space if possible.", icon: "volume-x", bg: "#E7F4FF", accent: "#4C9ED9" },
+  { id: "4", title: "Use known calming supports", text: "Try a comfort item, quiet space, soft voice, deep pressure, calming sound, or whatever usually helps them feel safe.", icon: "heart", bg: "#EEF7E8", accent: "#78A866" },
+  { id: "5", title: "Support recovery after", text: "Keep things gentle afterward. Offer water, quiet time, comfort, and time to reconnect without shame.", icon: "sunrise", bg: "#FFF0DF", accent: "#D99A3D" },
 ];
 
 export default function MeltdownPlanScreen({ navigation }) {
   const [childProfile, setChildProfile] = useState(null);
   const [steps, setSteps] = useState(DEFAULT_STEPS);
-  const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(DEFAULT_STEPS);
+  const [editing, setEditing] = useState(false);
   const [savedMessage, setSavedMessage] = useState("");
   const [customNote, setCustomNote] = useState("");
   const [draftNote, setDraftNote] = useState("");
+  const [exporting, setExporting] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
-      const load = async () => {
+      const loadPlan = async () => {
         try {
-          const saved = await AsyncStorage.getItem(CHILD_PROFILE_KEY);
-          const child = saved ? JSON.parse(saved) : null;
+          const savedChild = await AsyncStorage.getItem(CHILD_PROFILE_KEY);
+          const child = savedChild ? JSON.parse(savedChild) : null;
           setChildProfile(child);
 
-          // Load saved plan or build from child profile
           const savedPlan = await AsyncStorage.getItem(PLAN_KEY);
           if (savedPlan) {
             const plan = JSON.parse(savedPlan);
@@ -44,25 +54,30 @@ export default function MeltdownPlanScreen({ navigation }) {
             setDraft(plan.steps || DEFAULT_STEPS);
             setCustomNote(plan.customNote || "");
             setDraftNote(plan.customNote || "");
-          } else if (child) {
-            // Pre-fill step 4 with child's calming strategies
-            const prefilled = DEFAULT_STEPS.map((s) =>
-              s.id === "4" && child.calmingStrategies?.trim()
-                ? { ...s, text: child.calmingStrategies.trim() }
-                : s
-            );
-            setSteps(prefilled);
-            setDraft(prefilled);
-            setCustomNote(child.meltdownNotes?.trim() || "");
-            setDraftNote(child.meltdownNotes?.trim() || "");
+            return;
           }
+
+          const startingSteps = buildDefaultPlan(child);
+          setSteps(startingSteps);
+          setDraft(startingSteps);
+          setCustomNote(child?.meltdownNotes?.trim() || "");
+          setDraftNote(child?.meltdownNotes?.trim() || "");
         } catch (e) {
           console.log("Error loading meltdown plan:", e);
         }
       };
-      load();
+      loadPlan();
     }, [])
   );
+
+  const buildDefaultPlan = (child) => {
+    return DEFAULT_STEPS.map((step) => {
+      if (step.id === "4" && child?.calmingStrategies?.trim()) {
+        return { ...step, text: child.calmingStrategies.trim() };
+      }
+      return step;
+    });
+  };
 
   const showStatus = (msg) => {
     setSavedMessage(msg);
@@ -71,7 +86,12 @@ export default function MeltdownPlanScreen({ navigation }) {
 
   const handleSave = async () => {
     try {
-      const plan = { steps: draft, customNote: draftNote, updatedAt: new Date().toISOString() };
+      const plan = {
+        childName,
+        steps: draft,
+        customNote: draftNote,
+        updatedAt: new Date().toISOString(),
+      };
       await AsyncStorage.setItem(PLAN_KEY, JSON.stringify(plan));
       setSteps(draft);
       setCustomNote(draftNote);
@@ -83,36 +103,91 @@ export default function MeltdownPlanScreen({ navigation }) {
   };
 
   const handleCancel = () => {
-    setDraft([...steps]);
+    setDraft(steps);
     setDraftNote(customNote);
     setEditing(false);
   };
 
-  const handleReset = async () => {
-    Alert.alert("Reset to defaults?", "This will restore the default meltdown plan steps.", [
-      { text: "Cancel", style: "cancel" },
-      { text: "Reset", style: "destructive", onPress: async () => {
-        const prefilled = DEFAULT_STEPS.map((s) =>
-          s.id === "4" && childProfile?.calmingStrategies?.trim()
-            ? { ...s, text: childProfile.calmingStrategies.trim() }
-            : s
-        );
-        setDraft(prefilled);
-        setDraftNote("");
-      }},
-    ]);
+  const handleReset = () => {
+    Alert.alert(
+      "Reset to defaults?",
+      "This will restore the default meltdown plan steps.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Reset",
+          style: "destructive",
+          onPress: () => {
+            const defaultPlan = buildDefaultPlan(childProfile);
+            setDraft(defaultPlan);
+            setDraftNote("");
+            showStatus("Default plan restored. Tap Save to keep it.");
+          },
+        },
+      ]
+    );
   };
 
   const updateDraftStep = (id, field, value) => {
-    setDraft((prev) => prev.map((s) => s.id === id ? { ...s, [field]: value } : s));
+    setDraft((prev) =>
+      prev.map((step) => step.id === id ? { ...step, [field]: value } : step)
+    );
+  };
+
+  const handleShare = async () => {
+    try {
+      setExporting(true);
+      const date = new Date().toLocaleDateString("en-US", {
+        month: "long", day: "numeric", year: "numeric",
+      });
+
+      const planText = `
+💜 BITZAHUGS — MELTDOWN SUPPORT PLAN
+For ${childName} · ${date}
+
+⚠️ This plan is a gentle support tool, not medical or emergency advice. If anyone is in danger, call emergency services immediately.
+
+${steps.map((step, index) => `STEP ${index + 1}: ${step.title.toUpperCase()}
+${step.text}`).join("\n\n")}
+
+${customNote ? `PERSONAL NOTES:\n${customNote}\n` : ""}
+———
+You are not failing. You are doing your best in a hard moment. That matters. 💜
+
+Created with BitzaHugs · A support app for caregivers
+      `.trim();
+
+      const fileUri = `${FileSystem.documentDirectory}meltdown-plan.txt`;
+      await FileSystem.writeAsStringAsync(fileUri, planText);
+
+      const canShare = await Sharing.isAvailableAsync();
+      if (canShare) {
+        await Sharing.shareAsync(fileUri, {
+          mimeType: "text/plain",
+          dialogTitle: `${childName}'s Meltdown Support Plan`,
+        });
+      } else {
+        Alert.alert("Not available", "Sharing is not available on this device.");
+      }
+    } catch (e) {
+      console.log("Share error:", e);
+      Alert.alert("Share failed", "Something went wrong sharing the plan.");
+    } finally {
+      setExporting(false);
+    }
   };
 
   const childName = childProfile?.childName?.trim() || "your child";
+  const visibleSteps = editing ? draft : steps;
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-
+      <StatusBar barStyle="dark-content" backgroundColor="#FFF9F2" />
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+      >
         {/* Header */}
         <View style={styles.topBar}>
           <TouchableOpacity style={styles.circleButton} onPress={() => navigation.goBack()} activeOpacity={0.85}>
@@ -149,16 +224,24 @@ export default function MeltdownPlanScreen({ navigation }) {
           </View>
         </View>
 
-        {/* Edit banner */}
+        {/* Safety Note */}
+        <View style={styles.safetyCard}>
+          <Ionicons name="information-circle-outline" size={18} color="#4C9ED9" />
+          <Text style={styles.safetyText}>
+            This plan is a gentle support tool, not medical or emergency advice. If anyone is in danger, follow your emergency plan or call local emergency services.
+          </Text>
+        </View>
+
+        {/* Edit Banner */}
         {editing && (
           <View style={styles.editBanner}>
             <Feather name="edit-2" size={14} color="#6F42D8" />
-            <Text style={styles.editBannerText}>Editing your meltdown plan — tap any step to customize it</Text>
+            <Text style={styles.editBannerText}>Editing your meltdown plan — customize any step for your child.</Text>
           </View>
         )}
 
         {/* Steps */}
-        {(editing ? draft : steps).map((step, index) => (
+        {visibleSteps.map((step, index) => (
           <View key={step.id} style={[styles.stepCard, { borderLeftColor: step.accent, borderLeftWidth: 3 }]}>
             <View style={styles.stepHeader}>
               <View style={[styles.stepIconBubble, { backgroundColor: step.bg }]}>
@@ -171,6 +254,7 @@ export default function MeltdownPlanScreen({ navigation }) {
                     style={styles.stepTitleInput}
                     value={step.title}
                     onChangeText={(v) => updateDraftStep(step.id, "title", v)}
+                    placeholder="Step title"
                     placeholderTextColor="#A8A0A5"
                   />
                 ) : (
@@ -185,6 +269,7 @@ export default function MeltdownPlanScreen({ navigation }) {
                 onChangeText={(v) => updateDraftStep(step.id, "text", v)}
                 multiline
                 textAlignVertical="top"
+                placeholder="Add what helps here..."
                 placeholderTextColor="#A8A0A5"
               />
             ) : (
@@ -193,7 +278,7 @@ export default function MeltdownPlanScreen({ navigation }) {
           </View>
         ))}
 
-        {/* Custom note */}
+        {/* Personal Notes */}
         <View style={[styles.stepCard, { borderLeftColor: "#6F42D8", borderLeftWidth: 3 }]}>
           <View style={styles.stepHeader}>
             <View style={[styles.stepIconBubble, { backgroundColor: "#F0E2FF" }]}>
@@ -211,7 +296,7 @@ export default function MeltdownPlanScreen({ navigation }) {
               onChangeText={setDraftNote}
               multiline
               textAlignVertical="top"
-              placeholder="Add anything personal — reminders to yourself, what works for your child..."
+              placeholder="Add anything personal — reminders to yourself, what works, what does not help..."
               placeholderTextColor="#A8A0A5"
             />
           ) : (
@@ -221,11 +306,13 @@ export default function MeltdownPlanScreen({ navigation }) {
           )}
         </View>
 
-        {/* Reminder card */}
+        {/* Reminder */}
         {!editing && (
           <View style={styles.reminderCard}>
             <Ionicons name="heart-outline" size={18} color="#6F42D8" />
-            <Text style={styles.reminderText}>You are not failing. You are doing your best in a hard moment. That matters.</Text>
+            <Text style={styles.reminderText}>
+              You are not failing. You are doing your best in a hard moment. That matters.
+            </Text>
           </View>
         )}
 
@@ -245,14 +332,30 @@ export default function MeltdownPlanScreen({ navigation }) {
             </TouchableOpacity>
           </>
         ) : (
-          <TouchableOpacity style={styles.editFullBtn} onPress={() => setEditing(true)} activeOpacity={0.88}>
-            <Feather name="edit-2" size={16} color="#6F42D8" />
-            <Text style={styles.editFullBtnText}>Edit Plan</Text>
-          </TouchableOpacity>
+          <>
+            <TouchableOpacity
+              style={styles.shareButton}
+              onPress={handleShare}
+              activeOpacity={0.88}
+              disabled={exporting}
+            >
+              <Feather name="share-2" size={16} color="#FFFFFF" />
+              <Text style={styles.shareButtonText}>
+                {exporting ? "Preparing..." : "Share Plan"}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.editFullBtn} onPress={() => setEditing(true)} activeOpacity={0.88}>
+              <Feather name="edit-2" size={16} color="#6F42D8" />
+              <Text style={styles.editFullBtnText}>Edit Plan</Text>
+            </TouchableOpacity>
+          </>
         )}
 
         <Text style={styles.footerText}>
-          {editing ? "Changes are saved locally on this device." : "Tap Edit Plan to customize each step for your child."}
+          {editing
+            ? "Changes are saved locally on this device."
+            : "Share this plan with teachers, therapists, or anyone supporting your child."}
         </Text>
       </ScrollView>
     </SafeAreaView>
@@ -267,14 +370,17 @@ const styles = StyleSheet.create({
   circleButton: { width: 38, height: 38, borderRadius: 19, backgroundColor: "#F0E2FF", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "#E3D2F8" },
   topTitle: { color: "#2B2463", fontSize: 17, fontWeight: "800" },
 
-  statusBanner: { height: 40, borderRadius: 13, backgroundColor: "#F0E2FF", borderWidth: 1, borderColor: "#E3D2F8", flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 12, marginBottom: 10 },
+  statusBanner: { minHeight: 40, borderRadius: 13, backgroundColor: "#F0E2FF", borderWidth: 1, borderColor: "#E3D2F8", flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 12, marginBottom: 10 },
   statusText: { color: "#6F42D8", fontSize: 13, fontWeight: "800" },
 
-  heroCard: { backgroundColor: "#FFFFFF", borderRadius: 18, borderWidth: 1, borderColor: "#EFE4DC", paddingHorizontal: 13, paddingVertical: 12, flexDirection: "row", alignItems: "center", marginBottom: 12, gap: 12, shadowColor: "#BFA99D", shadowOpacity: 0.06, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 2 },
+  heroCard: { backgroundColor: "#FFFFFF", borderRadius: 18, borderWidth: 1, borderColor: "#EFE4DC", paddingHorizontal: 13, paddingVertical: 12, flexDirection: "row", alignItems: "center", marginBottom: 10, gap: 12, shadowColor: "#BFA99D", shadowOpacity: 0.06, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 2 },
   heroIconWrap: { width: 44, height: 44, borderRadius: 14, backgroundColor: "#FFE6E4", alignItems: "center", justifyContent: "center" },
   heroTextWrap: { flex: 1 },
   heroTitle: { color: "#2B2463", fontSize: 14, fontWeight: "800", marginBottom: 3 },
   heroText: { color: "#5B5672", fontSize: 11, lineHeight: 16, fontWeight: "600" },
+
+  safetyCard: { backgroundColor: "#E7F4FF", borderRadius: 14, borderWidth: 1, borderColor: "#C8E3F5", paddingHorizontal: 12, paddingVertical: 10, flexDirection: "row", alignItems: "flex-start", gap: 9, marginBottom: 10 },
+  safetyText: { flex: 1, color: "#5B5672", fontSize: 11, lineHeight: 16, fontWeight: "600" },
 
   editBanner: { flexDirection: "row", alignItems: "center", gap: 7, backgroundColor: "#F0E2FF", borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8, marginBottom: 10, borderWidth: 1, borderColor: "#E3D2F8" },
   editBannerText: { flex: 1, color: "#6F42D8", fontSize: 11, fontWeight: "700" },
@@ -291,6 +397,9 @@ const styles = StyleSheet.create({
 
   reminderCard: { backgroundColor: "#F6ECFF", borderRadius: 16, borderWidth: 1, borderColor: "#E3D2F8", paddingHorizontal: 14, paddingVertical: 12, flexDirection: "row", alignItems: "flex-start", gap: 10, marginBottom: 12 },
   reminderText: { flex: 1, color: "#2B2463", fontSize: 13, lineHeight: 19, fontWeight: "700" },
+
+  shareButton: { height: 50, borderRadius: 16, backgroundColor: "#4A9E5C", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 10 },
+  shareButtonText: { color: "#FFFFFF", fontSize: 15, fontWeight: "800" },
 
   editFullBtn: { height: 50, borderRadius: 16, backgroundColor: "#F0E2FF", borderWidth: 1, borderColor: "#E3D2F8", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 12 },
   editFullBtnText: { color: "#6F42D8", fontSize: 14, fontWeight: "800" },

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import {
   StyleSheet,
   StatusBar,
@@ -10,21 +10,30 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 const splashScreen = require("../assets/icons/splash-background.png");
 
 export default function SplashScreen({ navigation }) {
+  const hasNavigated = useRef(false);
+
+  const goToNextScreen = async () => {
+    if (hasNavigated.current) return;
+
+    hasNavigated.current = true;
+
+    try {
+      const complete = await AsyncStorage.getItem("bitzaOnboardingComplete");
+
+      navigation.replace(complete === "true" ? "MainTabs" : "Welcome");
+    } catch (e) {
+      console.log("Error checking onboarding:", e);
+      navigation.replace("Welcome");
+    }
+  };
+
   useEffect(() => {
     const timer = setTimeout(() => {
-      const routeNext = async () => {
-        try {
-          const complete = await AsyncStorage.getItem("bitzaOnboardingComplete");
-          navigation.replace(complete === "true" ? "MainTabs" : "Welcome");
-        } catch (e) {
-          navigation.replace("Welcome");
-        }
-      };
-      routeNext();
+      goToNextScreen();
     }, 2200);
 
     return () => clearTimeout(timer);
-  }, [navigation]);
+  }, []);
 
   return (
     <ImageBackground
@@ -38,11 +47,10 @@ export default function SplashScreen({ navigation }) {
         barStyle="dark-content"
       />
 
-      {/* Optional: lets you tap anywhere to skip to welcome */}
       <TouchableOpacity
         style={styles.tapArea}
         activeOpacity={1}
-        onPress={() => navigation.replace("Welcome")}
+        onPress={goToNextScreen}
       />
     </ImageBackground>
   );

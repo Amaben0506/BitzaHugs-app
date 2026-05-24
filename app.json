@@ -6,11 +6,6 @@
     "orientation": "portrait",
     "icon": "./assets/icons/Bitzahugs-App-Icon.png",
     "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/icons/splash-background.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#FFF9F2"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.amandabenavidez.bitzahugs"
@@ -42,7 +37,12 @@
             "kotlinVersion": "1.9.25"
           }
         }
-      ]
+      ],
+      "expo-asset",
+      "expo-font",
+      "expo-status-bar",
+      "expo-audio",
+      "expo-sharing"
     ],
     "extra": {
       "eas": {

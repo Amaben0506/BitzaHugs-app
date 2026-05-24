@@ -208,9 +208,17 @@ export default function SupportScreen({ navigation }) {
             onPress={() => nav("GroundingSteps")}
           />
           <ToolCard
+            title="Water Reset"
+            subtitle="A tiny body reset for hard moments"
+            icon="droplet"
+            bg="#E7F4FF"
+            accent="#4C9ED9"
+            onPress={() => nav("WaterReminder")}
+          />
+          <ToolCard
             title="Sensory Support"
             subtitle="Tools for your child's sensory needs"
-            icon="hand-left-outline"
+            icon="activity"
             bg="#F6ECFF"
             accent="#7548D8"
             onPress={() => nav("SensorySupports")}

@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from "@expo/vector-icons";
-import { Audio } from "expo-av";
+import { createAudioPlayer, setAudioModeAsync } from "expo-audio";
 
 const sounds = [
   { id: 1, title: "Soft Rain", icon: "rainy-outline", color: "#60A5FA", bg: "#E7F4FF", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" },
@@ -40,11 +40,15 @@ export default function SoundsScreen({ navigation }) {
 
   useEffect(() => {
     const setupAudio = async () => {
-      await Audio.setAudioModeAsync({
-        playsInSilentModeIOS: true,
-        staysActiveInBackground: false,
-        shouldDuckAndroid: true,
-      });
+      try {
+        await setAudioModeAsync({
+          playsInSilentMode: true,
+          shouldPlayInBackground: false,
+          interruptionMode: "duckOthers",
+        });
+      } catch (e) {
+        console.log('Audio mode setup failed:', e);
+      }
     };
     setupAudio();
     return () => { stopSound(); };
@@ -52,8 +56,12 @@ export default function SoundsScreen({ navigation }) {
 
   const stopSound = async () => {
     if (soundRef.current) {
-      await soundRef.current.stopAsync();
-      await soundRef.current.unloadAsync();
+      try {
+        soundRef.current.pause();
+        soundRef.current.remove();
+      } catch (e) {
+        console.log('Error unloading sound:', e);
+      }
       soundRef.current = null;
     }
     setIsPlaying(false);
@@ -64,11 +72,11 @@ export default function SoundsScreen({ navigation }) {
     try {
       await stopSound();
       const chosen = sounds.find((s) => s.id === selectedSound);
-      const { sound } = await Audio.Sound.createAsync(
-        { uri: chosen.url },
-        { shouldPlay: true, isLooping: true }
-      );
-      soundRef.current = sound;
+      if (!chosen) return;
+      const player = createAudioPlayer({ uri: chosen.url });
+      player.loop = true;
+      player.play();
+      soundRef.current = player;
       setIsPlaying(true);
     } catch (e) {
       console.log("Error playing sound:", e);
@@ -81,6 +89,7 @@ export default function SoundsScreen({ navigation }) {
   };
 
   const handleSelect = (id) => {
+    // stop current sound before switching selection
     stopSound();
     setSelectedSound(id);
   };

@@ -1,69 +1,111 @@
 // ─── BitzaHugs Notification Service ──────────────────────────────────────────
-// notifications.js — place this in your Screens/ folder or a utils/ folder
-// Usage: import { registerForNotifications, scheduleDailyAffirmation, cancelAllNotifications } from "../utils/notifications";
+// Safe for Expo Go on Android.
+// In Expo Go Android, notifications are disabled gracefully instead of crashing.
 
-import * as Notifications from "expo-notifications";
-import * as Device from "expo-device";
 import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Constants, { ExecutionEnvironment } from "expo-constants";
 
-// ─── Affirmations List ────────────────────────────────────────────────────────
+const NOTIFICATION_CATEGORY = "bitzahugs-reminders";
+const NOTIFICATION_PREFS_KEY = "bitzaNotificationPreferences";
+
+const isExpoGoAndroid =
+  Platform.OS === "android" &&
+  Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+
 const AFFIRMATIONS = [
-  { title: "You are doing better than you think. 💜", body: "Caring this much already says everything." },
-  { title: "Hard moments don't last forever.", body: "You've made it through every difficult day so far." },
-  { title: "You are not failing. 🌱", body: "You're learning, growing, and showing up every day." },
-  { title: "Rest is not giving up.", body: "Taking care of yourself helps you show up for your child." },
-  { title: "You are exactly the caregiver your child needs.", body: "Not perfect — just present. That's everything." },
-  { title: "One small step still counts. 💜", body: "Progress doesn't have to be big to be real." },
-  { title: "It's okay to ask for help.", body: "Strength looks like reaching out, not going it alone." },
-  { title: "Your child is lucky to have you.", body: "The fact that you care this deeply matters more than you know." },
-  { title: "You survived yesterday. 🌟", body: "That means you can get through today too." },
-  { title: "Breathe. You've got this.", body: "One moment, one breath, one step at a time." },
-  { title: "Your love is your child's safe place.", body: "Even on hard days, your presence is their comfort." },
-  { title: "Imperfect days are still good days.", body: "You don't have to do everything right to do something right." },
-  { title: "You matter too. 💜", body: "Your needs, your feelings, your wellbeing — they all count." },
-  { title: "This is hard. You're doing it anyway.", body: "That's not just strength — that's extraordinary." },
-  { title: "You are not alone in this. 🤍", body: "There are others who understand exactly what you're carrying." },
-  { title: "Every routine you build is an act of love.", body: "Structure feels like safety to a child who needs it." },
-  { title: "Be gentle with yourself today.", body: "You'd show grace to others — you deserve it too." },
-  { title: "Something good is coming. 🌅", body: "Even the hardest seasons have moments of light." },
-  { title: "You noticed what your child needed.", body: "That kind of awareness is a superpower." },
-  { title: "Today you showed up. That's enough. 💜", body: "Showing up, even imperfectly, is everything." },
+  {
+    title: "You are doing better than you think. 💜",
+    body: "Caring this much already says everything.",
+  },
+  {
+    title: "Hard moments don't last forever.",
+    body: "You've made it through every difficult day so far.",
+  },
+  {
+    title: "You are not failing. 🌱",
+    body: "You're learning, growing, and showing up every day.",
+  },
+  {
+    title: "Rest is not giving up.",
+    body: "Taking care of yourself helps you show up for your child.",
+  },
+  {
+    title: "You matter too. 💜",
+    body: "Your needs, your feelings, your wellbeing — they all count.",
+  },
 ];
 
-// ─── Configure how notifications appear when app is foregrounded ──────────────
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: false,
-    shouldSetBadge: false,
-  }),
-});
+const CAREGIVER_MESSAGES = [
+  {
+    title: "Caregiver encouragement 🤍",
+    body: "You matter too. Pause for a second and soften your shoulders.",
+  },
+  {
+    title: "A little reminder for you",
+    body: "You do not have to do everything perfectly to be doing enough.",
+  },
+  {
+    title: "BitzaHugs is checking in 💜",
+    body: "Take one breath. You are allowed to need support too.",
+  },
+];
 
-// ─── Request permission ───────────────────────────────────────────────────────
-export async function registerForNotifications() {
-  if (!Device.isDevice) {
-    console.log("Notifications only work on physical devices.");
-    return false;
+const CALM_CHECKINS = [
+  {
+    title: "Calm check-in",
+    body: "Need a reset? Open BitzaHugs for a calming tool or support moment.",
+  },
+  {
+    title: "Tiny reset moment",
+    body: "Unclench your jaw, drop your shoulders, and take one slow breath.",
+  },
+];
+
+const JOURNAL_PROMPTS = [
+  {
+    title: "Journal reflection",
+    body: "What helped today, even a little?",
+  },
+  {
+    title: "A gentle journal prompt",
+    body: "What is one thing you handled today?",
+  },
+];
+
+function pickRandom(list) {
+  return list[Math.floor(Math.random() * list.length)];
+}
+
+async function getNotificationsModule() {
+  if (isExpoGoAndroid) {
+    return null;
   }
 
-  const { status: existingStatus } = await Notifications.getPermissionsAsync();
-  let finalStatus = existingStatus;
+  const Notifications = await import("expo-notifications");
 
-  if (existingStatus !== "granted") {
-    const { status } = await Notifications.requestPermissionsAsync();
-    finalStatus = status;
-  }
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowBanner: true,
+      shouldShowList: true,
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+    }),
+  });
 
-  if (finalStatus !== "granted") {
-    console.log("Notification permission not granted.");
-    return false;
-  }
+  return Notifications;
+}
+
+export async function setupNotificationChannel() {
+  const Notifications = await getNotificationsModule();
+
+  if (!Notifications) return false;
 
   if (Platform.OS === "android") {
-    await Notifications.setNotificationChannelAsync("bitzahugs-daily", {
-      name: "Daily Affirmations",
+    await Notifications.setNotificationChannelAsync("bitzahugs-reminders", {
+      name: "BitzaHugs Reminders",
       importance: Notifications.AndroidImportance.DEFAULT,
+      sound: "default",
       vibrationPattern: [0, 250, 250, 250],
       lightColor: "#7548D8",
     });
@@ -72,102 +114,307 @@ export async function registerForNotifications() {
   return true;
 }
 
-// ─── Schedule daily affirmation ───────────────────────────────────────────────
-export async function scheduleDailyAffirmation(hour = 8, minute = 0) {
+export async function requestNotificationPermission() {
+  const Notifications = await getNotificationsModule();
+
+  if (!Notifications) {
+    return false;
+  }
+
+  await setupNotificationChannel();
+
+  const existing = await Notifications.getPermissionsAsync();
+
+  if (existing.status === "granted") {
+    return true;
+  }
+
+  const requested = await Notifications.requestPermissionsAsync();
+
+  return requested.status === "granted";
+}
+
+async function scheduleDailyReminder({ id, title, body, hour, minute }) {
+  const Notifications = await getNotificationsModule();
+
+  if (!Notifications) return null;
+
+  const notificationId = await Notifications.scheduleNotificationAsync({
+    content: {
+      title,
+      body,
+      sound: "default",
+      data: {
+        id,
+        category: NOTIFICATION_CATEGORY,
+      },
+    },
+    trigger: {
+      channelId: Platform.OS === "android" ? "bitzahugs-reminders" : undefined,
+      hour,
+      minute,
+      repeats: true,
+    },
+  });
+
+  return notificationId;
+}
+
+export async function cancelBitzaHugsNotifications() {
   try {
-    // Cancel any existing affirmation notifications
-    await cancelDailyAffirmation();
+    const Notifications = await getNotificationsModule();
 
-    const granted = await registerForNotifications();
-    if (!granted) return false;
+    if (!Notifications) {
+      await AsyncStorage.removeItem("bitzaScheduledNotificationIds");
+      return true;
+    }
 
-    // Pick a random affirmation
-    const affirmation = AFFIRMATIONS[Math.floor(Math.random() * AFFIRMATIONS.length)];
+    const scheduled = await Notifications.getAllScheduledNotificationsAsync();
 
-    // Schedule repeating daily notification
-    const id = await Notifications.scheduleNotificationAsync({
+    const bitzaNotifications = scheduled.filter(
+      (notification) =>
+        notification.content?.data?.category === NOTIFICATION_CATEGORY
+    );
+
+    await Promise.all(
+      bitzaNotifications.map((notification) =>
+        Notifications.cancelScheduledNotificationAsync(notification.identifier)
+      )
+    );
+
+    await AsyncStorage.removeItem("bitzaScheduledNotificationIds");
+
+    return true;
+  } catch (error) {
+    console.log("Error cancelling BitzaHugs notifications:", error);
+    return false;
+  }
+}
+
+export async function scheduleBitzaHugsNotifications(preferences) {
+  try {
+    await AsyncStorage.setItem(
+      NOTIFICATION_PREFS_KEY,
+      JSON.stringify(preferences)
+    );
+
+    if (isExpoGoAndroid) {
+      return {
+        success: false,
+        message:
+          "Preferences saved. Notifications need a development build on Android.",
+      };
+    }
+
+    const allowed = await requestNotificationPermission();
+
+    if (!allowed) {
+      return {
+        success: false,
+        message: "Preferences saved. Notifications were not enabled.",
+      };
+    }
+
+    await cancelBitzaHugsNotifications();
+
+    const jobs = [];
+
+    if (preferences["daily-affirmation"]) {
+      const affirmation = pickRandom(AFFIRMATIONS);
+
+      jobs.push(
+        scheduleDailyReminder({
+          id: "daily-affirmation",
+          title: affirmation.title,
+          body: affirmation.body,
+          hour: 9,
+          minute: 0,
+        })
+      );
+    }
+
+    if (preferences["caregiver-support"]) {
+      const message = pickRandom(CAREGIVER_MESSAGES);
+
+      jobs.push(
+        scheduleDailyReminder({
+          id: "caregiver-support",
+          title: message.title,
+          body: message.body,
+          hour: 14,
+          minute: 0,
+        })
+      );
+    }
+
+    if (preferences["calm-checkin"]) {
+      const checkin = pickRandom(CALM_CHECKINS);
+
+      jobs.push(
+        scheduleDailyReminder({
+          id: "calm-checkin",
+          title: checkin.title,
+          body: checkin.body,
+          hour: 19,
+          minute: 0,
+        })
+      );
+    }
+
+    if (preferences["journal-reflection"]) {
+      const journalPrompt = pickRandom(JOURNAL_PROMPTS);
+
+      jobs.push(
+        scheduleDailyReminder({
+          id: "journal-reflection",
+          title: journalPrompt.title,
+          body: journalPrompt.body,
+          hour: 20,
+          minute: 30,
+        })
+      );
+    }
+
+    const notificationIds = await Promise.all(jobs);
+
+    await AsyncStorage.setItem(
+      "bitzaScheduledNotificationIds",
+      JSON.stringify(notificationIds.filter(Boolean))
+    );
+
+    return {
+      success: true,
+      message: `${jobs.length} reminder${jobs.length === 1 ? "" : "s"} scheduled.`,
+    };
+  } catch (error) {
+    console.log("Error scheduling BitzaHugs notifications:", error);
+
+    return {
+      success: false,
+      message: "Something went wrong scheduling reminders.",
+    };
+  }
+}
+
+export async function getScheduledBitzaHugsNotifications() {
+  try {
+    const Notifications = await getNotificationsModule();
+
+    if (!Notifications) return [];
+
+    const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+
+    return scheduled.filter(
+      (notification) =>
+        notification.content?.data?.category === NOTIFICATION_CATEGORY
+    );
+  } catch (error) {
+    console.log("Error getting scheduled notifications:", error);
+    return [];
+  }
+}
+
+export async function sendTestNotification() {
+  try {
+    if (isExpoGoAndroid) {
+      console.log(
+        "Test notifications need a development build on Android Expo Go."
+      );
+      return false;
+    }
+
+    const Notifications = await getNotificationsModule();
+
+    if (!Notifications) return false;
+
+    const allowed = await requestNotificationPermission();
+
+    if (!allowed) {
+      return false;
+    }
+
+    const affirmation = pickRandom(AFFIRMATIONS);
+
+    await Notifications.scheduleNotificationAsync({
       content: {
         title: affirmation.title,
         body: affirmation.body,
-        sound: false,
-        data: { type: "daily_affirmation" },
+        sound: "default",
+        data: {
+          id: "test-notification",
+          category: NOTIFICATION_CATEGORY,
+        },
       },
       trigger: {
-        hour,
-        minute,
-        repeats: true,
-        channelId: Platform.OS === "android" ? "bitzahugs-daily" : undefined,
+        seconds: 3,
       },
     });
 
-    // Save the notification ID and time so we can cancel/update it
-    await AsyncStorage.setItem("bitzaDailyNotifId", id);
-    await AsyncStorage.setItem("bitzaDailyNotifTime", JSON.stringify({ hour, minute }));
-    await AsyncStorage.setItem("bitzaNotificationsEnabled", "true");
-
-    console.log("Daily affirmation scheduled at", `${hour}:${minute < 10 ? "0" + minute : minute}`);
     return true;
-  } catch (e) {
-    console.log("Error scheduling notification:", e);
+  } catch (error) {
+    console.log("Error sending test notification:", error);
     return false;
   }
 }
 
-// ─── Cancel daily affirmation ─────────────────────────────────────────────────
+// ─── Backward-compatible old function names ───────────────────────────────────
+
+export async function registerForNotifications() {
+  return requestNotificationPermission();
+}
+
+export async function scheduleDailyAffirmation(hour = 9, minute = 0) {
+  const preferences = {
+    "daily-affirmation": true,
+    "routine-reminder": false,
+    "calm-checkin": false,
+    "caregiver-support": false,
+    "journal-reflection": false,
+  };
+
+  return scheduleBitzaHugsNotifications(preferences, hour, minute);
+}
+
 export async function cancelDailyAffirmation() {
-  try {
-    const savedId = await AsyncStorage.getItem("bitzaDailyNotifId");
-    if (savedId) {
-      await Notifications.cancelScheduledNotificationAsync(savedId);
-      await AsyncStorage.removeItem("bitzaDailyNotifId");
-    }
-    await AsyncStorage.setItem("bitzaNotificationsEnabled", "false");
-    return true;
-  } catch (e) {
-    console.log("Error cancelling notification:", e);
-    return false;
-  }
+  return cancelBitzaHugsNotifications();
 }
 
-// ─── Cancel all notifications ─────────────────────────────────────────────────
 export async function cancelAllNotifications() {
-  await Notifications.cancelAllScheduledNotificationsAsync();
-  await AsyncStorage.removeItem("bitzaDailyNotifId");
-  await AsyncStorage.setItem("bitzaNotificationsEnabled", "false");
+  return cancelBitzaHugsNotifications();
 }
 
-// ─── Get current notification status ─────────────────────────────────────────
 export async function getNotificationStatus() {
   try {
-    const enabled = await AsyncStorage.getItem("bitzaNotificationsEnabled");
-    const time = await AsyncStorage.getItem("bitzaDailyNotifTime");
-    const { status } = await Notifications.getPermissionsAsync();
+    const preferences = await AsyncStorage.getItem(NOTIFICATION_PREFS_KEY);
+    const scheduled = await getScheduledBitzaHugsNotifications();
+
+    if (isExpoGoAndroid) {
+      return {
+        enabled: false,
+        permissionGranted: false,
+        preferences: preferences ? JSON.parse(preferences) : null,
+        scheduledCount: 0,
+        expoGoAndroid: true,
+      };
+    }
+
+    const Notifications = await getNotificationsModule();
+    const permissions = await Notifications.getPermissionsAsync();
+
     return {
-      enabled: enabled === "true",
-      permissionGranted: status === "granted",
-      time: time ? JSON.parse(time) : { hour: 8, minute: 0 },
+      enabled: scheduled.length > 0,
+      permissionGranted: permissions.status === "granted",
+      preferences: preferences ? JSON.parse(preferences) : null,
+      scheduledCount: scheduled.length,
+      expoGoAndroid: false,
     };
-  } catch (e) {
-    return { enabled: false, permissionGranted: false, time: { hour: 8, minute: 0 } };
+  } catch (error) {
+    return {
+      enabled: false,
+      permissionGranted: false,
+      preferences: null,
+      scheduledCount: 0,
+      expoGoAndroid: isExpoGoAndroid,
+    };
   }
-}
-
-// ─── Send an immediate test notification ─────────────────────────────────────
-export async function sendTestNotification() {
-  const granted = await registerForNotifications();
-  if (!granted) return false;
-
-  const affirmation = AFFIRMATIONS[Math.floor(Math.random() * AFFIRMATIONS.length)];
-
-  await Notifications.scheduleNotificationAsync({
-    content: {
-      title: affirmation.title,
-      body: affirmation.body,
-      sound: false,
-      data: { type: "test" },
-    },
-    trigger: { seconds: 3 },
-  });
-
-  return true;
 }
