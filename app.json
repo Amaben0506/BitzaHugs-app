@@ -2,21 +2,31 @@
   "expo": {
     "name": "BitzaHugs",
     "slug": "bitzahugs-app",
-    "version": "1.0.0",
+    "version": "1.1.8",
     "orientation": "portrait",
     "icon": "./assets/icons/Bitzahugs-App-Icon.png",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.amandabenavidez.bitzahugs"
+      "supportsTablet": false,
+      "bundleIdentifier": "com.bitzahugs.app",
+      "buildNumber": "18",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
-      "package": "com.amandabenavidez.bitzahugs",
-      "versionCode": 1,
+      "package": "com.bitzahugs.app",
+      "versionCode": 30,
       "adaptiveIcon": {
         "foregroundImage": "./assets/icons/Bitzahugs-App-Icon.png",
         "backgroundColor": "#FFF9F2"
-      }
+      },
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
+      ]
     },
     "web": {
       "favicon": "./assets/icons/Bitzahugs-App-Icon.png"
