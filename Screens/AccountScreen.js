@@ -1,329 +1,1882 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, ActivityIndicator, Platform, KeyboardAvoidingView } from "react-native";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
+  TextInput,
+  Platform,
+  KeyboardAvoidingView,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Feather, Ionicons } from "@expo/vector-icons";
-import { createAccount, signInWithEmail, signOutUser, resetPassword, subscribeToAuthState, getCurrentUser } from "../src/lib/firebase";
-import { useTheme } from "../src/ThemeContext";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect } from "@react-navigation/native";
+
+import {
+  auth,
+  signOutUser,
+  createAccount,
+  signInWithEmail,
+  resetPassword,
+} from "../src/lib/firebase";
+
+const COLORS = {
+  background: "#FFF9F3",
+  surface: "#FFFFFF",
+  text: "#2B2463",
+  textSoft: "#625D78",
+  textMuted: "#928CA5",
+
+  purple: "#7548D8",
+  purpleDark: "#6034BF",
+  purpleSoft: "#F1E7FF",
+  purpleLight: "#F8F2FF",
+  purpleBorder: "#E4D4F8",
+
+  green: "#4C9B63",
+  greenSoft: "#EDF8EF",
+  greenBorder: "#CBE6D0",
+
+  blue: "#4C94C9",
+  blueSoft: "#EAF5FD",
+  blueBorder: "#C8E3F6",
+
+  coral: "#D96D61",
+  coralSoft: "#FFF1ED",
+  coralBorder: "#F7CDC5",
+
+  peach: "#FFE9D8",
+  border: "#EFE5DE",
+  divider: "#F2EBE6",
+};
 
 export default function AccountScreen({ navigation }) {
-  const theme = useTheme();
-  const [tab, setTab] = useState("sign_in");
+  const [user, setUser] = useState(auth.currentUser);
+  const [mode, setMode] = useState("main");
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+
   const [showPassword, setShowPassword] = useState(false);
-  const [user, setUser] = useState(getCurrentUser());
-  const [statusMessage, setStatusMessage] = useState("");
-  const [isError, setIsError] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [statusMsg, setStatusMsg] = useState("");
+
+  const statusTimerRef = useRef(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      setUser(auth.currentUser);
+
+      const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+        setUser(currentUser);
+      });
+
+      return unsubscribe;
+    }, [])
+  );
 
   useEffect(() => {
-    const unsubscribe = subscribeToAuthState((firebaseUser) => setUser(firebaseUser));
-    return unsubscribe;
+    return () => {
+      if (statusTimerRef.current) {
+        clearTimeout(statusTimerRef.current);
+      }
+    };
   }, []);
 
-  const showStatus = (msg, error = false) => {
-    setStatusMessage(msg); setIsError(error);
-    setTimeout(() => setStatusMessage(""), 3000);
+  const showStatus = (message) => {
+    if (statusTimerRef.current) {
+      clearTimeout(statusTimerRef.current);
+    }
+
+    setStatusMsg(message);
+
+    statusTimerRef.current = setTimeout(() => {
+      setStatusMsg("");
+    }, 3500);
+  };
+
+  const changeMode = (nextMode) => {
+    setMode(nextMode);
+    setPassword("");
+    setShowPassword(false);
+    setStatusMsg("");
   };
 
   const handleSignIn = async () => {
-    if (!email.trim() || !password.trim()) { showStatus("Please enter your email and password.", true); return; }
-    setLoading(true);
-    const { error } = await signInWithEmail(email.trim(), password);
-    setLoading(false);
-    if (error) { showStatus(error, true); return; }
-    showStatus("Welcome back! 💜");
+    const cleanEmail = email.trim();
+
+    if (!cleanEmail || !password.trim()) {
+      Alert.alert(
+        "Missing information",
+        "Please enter your email address and password."
+      );
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const { user: signedInUser, error } = await signInWithEmail(
+        cleanEmail,
+        password
+      );
+
+      if (error) {
+        Alert.alert("Unable to sign in", error);
+        return;
+      }
+
+      await AsyncStorage.setItem("bitzaAccountCreated", "true");
+      await AsyncStorage.setItem("bitzaAccountPromptSeen", "true");
+
+      setUser(signedInUser);
+      setPassword("");
+      setMode("main");
+
+      showStatus("Welcome back! You’re signed in. 💜");
+    } catch (error) {
+      console.error("Sign-in error:", error);
+
+      Alert.alert(
+        "Unable to sign in",
+        "Something went wrong. Please try again."
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleCreateAccount = async () => {
-    if (!name.trim()) { showStatus("Please enter your name.", true); return; }
-    if (!email.trim()) { showStatus("Please enter your email.", true); return; }
-    if (password.length < 6) { showStatus("Password must be at least 6 characters.", true); return; }
-    if (password !== confirmPassword) { showStatus("Passwords do not match.", true); return; }
-    setLoading(true);
-    const { error } = await createAccount(email.trim(), password, name.trim());
-    setLoading(false);
-    if (error) { showStatus(error, true); return; }
-    showStatus("Account created! 💜");
+  const handleSignUp = async () => {
+    const cleanEmail = email.trim();
+    const cleanName = name.trim();
+
+    if (!cleanEmail || !password.trim()) {
+      Alert.alert(
+        "Missing information",
+        "Please enter your email address and create a password."
+      );
+      return;
+    }
+
+    if (password.length < 6) {
+      Alert.alert(
+        "Password too short",
+        "Your password must contain at least 6 characters."
+      );
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const { user: createdUser, error } = await createAccount(
+        cleanEmail,
+        password,
+        cleanName
+      );
+
+      if (error) {
+        Alert.alert("Unable to create account", error);
+        return;
+      }
+
+      await AsyncStorage.setItem("bitzaAccountCreated", "true");
+      await AsyncStorage.setItem("bitzaAccountPromptSeen", "true");
+
+      setUser(createdUser);
+      setPassword("");
+      setMode("main");
+
+      showStatus("Your BitzaHugs account is ready! 💜");
+    } catch (error) {
+      console.error("Sign-up error:", error);
+
+      Alert.alert(
+        "Unable to create account",
+        "Something went wrong. Please try again."
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleResetPassword = async () => {
-    if (!email.trim()) { showStatus("Enter your email above first.", true); return; }
-    setLoading(true);
-    const { error } = await resetPassword(email.trim());
-    setLoading(false);
-    if (error) { showStatus(error, true); return; }
-    showStatus("Reset email sent! Check your inbox.");
+    const cleanEmail = email.trim();
+
+    if (!cleanEmail) {
+      Alert.alert(
+        "Enter your email",
+        "Please enter the email address connected to your account."
+      );
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const { error } = await resetPassword(cleanEmail);
+
+      if (error) {
+        Alert.alert("Reset failed", error);
+        return;
+      }
+
+      Alert.alert(
+        "Check your inbox 💜",
+        "We sent you a link to reset your password."
+      );
+
+      setMode("signin");
+    } catch (error) {
+      console.error("Password reset error:", error);
+
+      Alert.alert(
+        "Reset failed",
+        "Something went wrong. Please try again."
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSignOut = () => {
-    Alert.alert("Sign Out", "Are you sure? Your data will remain on this device.", [
-      { text: "Cancel", style: "cancel" },
-      { text: "Sign Out", style: "destructive", onPress: async () => { await signOutUser(); showStatus("Signed out."); } },
-    ]);
+    Alert.alert(
+      "Sign out of BitzaHugs?",
+      "Your locally saved information will remain on this device.",
+      [
+        {
+          text: "Stay Signed In",
+          style: "cancel",
+        },
+        {
+          text: "Sign Out",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await signOutUser();
+
+              await AsyncStorage.multiRemove([
+                "bitzaIsPremium",
+                "bitzaAccountCreated",
+                "bitzaAccountPromptSeen",
+              ]);
+
+              setUser(null);
+              setMode("main");
+              setEmail("");
+              setPassword("");
+              setName("");
+
+              showStatus("You’ve been signed out.");
+            } catch (error) {
+              console.error("Sign-out error:", error);
+
+              Alert.alert(
+                "Unable to sign out",
+                "Something went wrong. Please try again."
+              );
+            }
+          },
+        },
+      ]
+    );
   };
 
-  const s = makeStyles(theme);
+  const memberSince = user?.metadata?.creationTime
+    ? new Date(user.metadata.creationTime).toLocaleDateString("en-US", {
+        month: "long",
+        year: "numeric",
+      })
+    : "Recently";
 
-  if (user && !user.isAnonymous) {
+  const displayName =
+    user?.displayName?.trim() ||
+    user?.email?.split("@")?.[0] ||
+    "BitzaHugs Caregiver";
+
+  const avatarInitial = displayName.slice(0, 1).toUpperCase();
+
+  const screenTitle =
+    mode === "signin"
+      ? "Welcome Back"
+      : mode === "signup"
+      ? "Create Account"
+      : mode === "reset"
+      ? "Reset Password"
+      : "Your Account";
+
+  const formDescription =
+    mode === "signin"
+      ? "Sign in to continue your BitzaHugs journey."
+      : mode === "signup"
+      ? "Create a free account to keep your supports connected."
+      : "Enter your email and we’ll send you a reset link.";
+
+  const handleBackPress = () => {
+    if (mode === "main") {
+      navigation.goBack();
+      return;
+    }
+
+    changeMode("main");
+  };
+
+  const renderHeader = () => (
+    <View style={styles.header}>
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={handleBackPress}
+        activeOpacity={0.8}
+        accessibilityRole="button"
+        accessibilityLabel="Go back"
+      >
+        <Feather name="chevron-left" size={22} color={COLORS.purple} />
+      </TouchableOpacity>
+
+      <View style={styles.headerCenter}>
+        <Text style={styles.headerEyebrow}>BITZAHUGS</Text>
+        <Text style={styles.headerTitle}>{screenTitle}</Text>
+      </View>
+
+      <View style={styles.headerSpacer} />
+    </View>
+  );
+
+  const renderStatusBanner = () => {
+    if (!statusMsg) {
+      return null;
+    }
+
     return (
-      <SafeAreaView style={s.safeArea}>
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={s.content}>
-          <View style={s.header}>
-            <TouchableOpacity style={s.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.85}>
-              <Feather name="chevron-left" size={20} color={theme.textPrimary} />
-            </TouchableOpacity>
-            <Text style={s.headerTitle}>Account</Text>
-            <View style={s.headerSpacer} />
-          </View>
+      <View style={styles.statusBanner}>
+        <View style={styles.statusIcon}>
+          <Feather name="check" size={14} color="#FFFFFF" />
+        </View>
 
-          <View style={s.loggedInHero}>
-            <View style={s.avatarCircle}>
-              <Text style={s.avatarInitial}>{(user.displayName || user.email || "U").charAt(0).toUpperCase()}</Text>
-            </View>
-            <Text style={s.loggedInName}>{user.displayName || "BitzaHugs Member"}</Text>
-            <Text style={s.loggedInEmail}>{user.email}</Text>
-            <View style={s.activeBadge}>
-              <Ionicons name="checkmark-circle" size={14} color="#78A866" />
-              <Text style={s.activeBadgeText}>Account Active</Text>
-            </View>
-          </View>
+        <Text style={styles.statusText}>{statusMsg}</Text>
+      </View>
+    );
+  };
 
-          <View style={s.syncCard}>
-            <View style={s.syncCardHeader}>
-              <View style={[s.iconBubble, { backgroundColor: theme.accentLight }]}>
-                <Feather name="smartphone" size={15} color={theme.accent} />
+  // ─────────────────────────────────────────────────────────────────────────────
+  // SIGNED-IN VIEW
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  if (user?.uid && !user.isAnonymous) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.backgroundDecorationOne} />
+        <View style={styles.backgroundDecorationTwo} />
+
+        <ScrollView
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
+          {renderHeader()}
+          {renderStatusBanner()}
+
+          <View style={styles.profileHero}>
+            <View style={styles.heroGlowLarge} />
+            <View style={styles.heroGlowSmall} />
+
+            <View style={styles.avatarOuter}>
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>{avatarInitial}</Text>
               </View>
-              <Text style={s.syncCardTitle}>Save Across Devices</Text>
-              <View style={[s.syncBadge, { backgroundColor: theme.isDark ? "#1A2D18" : "#EEF7E8" }]}>
-                <Text style={[s.syncBadgeText, { color: "#78A866" }]}>Active</Text>
-              </View>
-            </View>
-            <Text style={s.syncCardBody}>Your routines, child profile, Support Snapshot, and mood history are being backed up securely. Access BitzaHugs from your phone or computer anytime.</Text>
-          </View>
 
-          <View style={s.card}>
-            <View style={s.cardHeader}>
-              <View style={[s.iconBubble, { backgroundColor: theme.accentLight }]}>
-                <Feather name="user" size={15} color={theme.accent} />
+              <View style={styles.onlineIndicator}>
+                <Feather name="check" size={11} color="#FFFFFF" />
               </View>
-              <Text style={s.cardTitle}>Account Details</Text>
             </View>
-            <View style={s.detailRow}><Text style={s.detailLabel}>Name</Text><Text style={s.detailValue}>{user.displayName || "Not set"}</Text></View>
-            <View style={s.detailRow}><Text style={s.detailLabel}>Email</Text><Text style={s.detailValue}>{user.email}</Text></View>
-            <View style={[s.detailRow, { borderBottomWidth: 0 }]}>
-              <Text style={s.detailLabel}>Member Since</Text>
-              <Text style={s.detailValue}>{user.metadata?.creationTime ? new Date(user.metadata.creationTime).toLocaleDateString("en-US", { month: "long", year: "numeric" }) : "—"}</Text>
+
+            <Text style={styles.welcomeLabel}>Welcome back</Text>
+            <Text style={styles.displayName}>{displayName}</Text>
+            <Text style={styles.emailText}>{user.email}</Text>
+
+            <View style={styles.accountActiveBadge}>
+              <View style={styles.accountActiveDot} />
+              <Text style={styles.accountActiveText}>Account active</Text>
             </View>
           </View>
 
-          <TouchableOpacity style={s.desktopCard} activeOpacity={0.88} onPress={() => Alert.alert("Desktop Portal", "Log into bitzahugs.com/login on your computer to access your Child Support Snapshot, PDF export, and printable resources from a full keyboard and screen.")}>
-            <View style={[s.iconBubble, { backgroundColor: theme.blueLight }]}>
-              <Feather name="monitor" size={15} color={theme.blue} />
+          <View style={styles.syncCard}>
+            <View style={styles.syncIconWrap}>
+              <Feather name="cloud" size={21} color={COLORS.green} />
             </View>
-            <View style={{ flex: 1 }}>
-              <Text style={s.desktopTitle}>Access on Desktop</Text>
-              <Text style={s.desktopSub}>Log in at bitzahugs.com/login to edit your Support Snapshot, export PDFs, and print resources.</Text>
+
+            <View style={styles.cardTextContainer}>
+              <View style={styles.cardTitleRow}>
+                <Text style={styles.cardTitle}>Connected Care</Text>
+
+                <View style={styles.activePill}>
+                  <Text style={styles.activePillText}>Active</Text>
+                </View>
+              </View>
+
+              <Text style={styles.cardDescription}>
+                Keep your routines, child supports, mood history, and caregiver
+                tools connected to your BitzaHugs account.
+              </Text>
             </View>
-            <Feather name="chevron-right" size={16} color={theme.blue} />
+          </View>
+
+          <Text style={styles.sectionLabel}>ACCOUNT INFORMATION</Text>
+
+          <View style={styles.detailsCard}>
+            <View style={styles.detailsHeading}>
+              <View style={styles.detailsHeadingIcon}>
+                <Feather name="user" size={18} color={COLORS.purple} />
+              </View>
+
+              <View style={styles.cardTextContainer}>
+                <Text style={styles.detailsTitle}>Account Details</Text>
+                <Text style={styles.detailsSubtitle}>
+                  Your basic BitzaHugs profile information
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.detailDivider} />
+
+            <DetailRow
+              icon="smile"
+              label="Name"
+              value={user.displayName || "Not set"}
+            />
+
+            <DetailRow
+              icon="mail"
+              label="Email"
+              value={user.email || "Not available"}
+            />
+
+            <DetailRow
+              icon="calendar"
+              label="Member since"
+              value={memberSince}
+              isLast
+            />
+          </View>
+
+          <Text style={styles.sectionLabel}>YOUR BITZAHUGS ACCESS</Text>
+
+          <TouchableOpacity
+            style={styles.desktopCard}
+            activeOpacity={0.86}
+            onPress={() =>
+              Alert.alert(
+                "Caregiver Portal 💜",
+                "Visit bitzahugs.com/login from any browser to access your caregiver portal."
+              )
+            }
+          >
+            <View style={styles.desktopIconWrap}>
+              <Feather name="monitor" size={22} color={COLORS.blue} />
+            </View>
+
+            <View style={styles.cardTextContainer}>
+              <Text style={styles.desktopTitle}>Open the Caregiver Portal</Text>
+
+              <Text style={styles.desktopDescription}>
+                Visit bitzahugs.com/login to manage supports, export
+                information, and print family resources.
+              </Text>
+
+              <View style={styles.desktopLinkRow}>
+                <Text style={styles.desktopLink}>bitzahugs.com/login</Text>
+                <Feather
+                  name="arrow-up-right"
+                  size={14}
+                  color={COLORS.blue}
+                />
+              </View>
+            </View>
+
+            <View style={styles.chevronCircle}>
+              <Feather name="chevron-right" size={17} color={COLORS.blue} />
+            </View>
           </TouchableOpacity>
 
-          {statusMessage ? (
-            <View style={[s.statusBanner, { backgroundColor: isError ? theme.isDark ? "#2D1510" : "#FFE6E4" : theme.accentLight, borderColor: isError ? "#D86A5B" : theme.accentBorder }]}>
-              <Feather name={isError ? "alert-circle" : "check-circle"} size={15} color={isError ? "#D86A5B" : theme.accent} />
-              <Text style={[s.statusText, { color: isError ? "#D86A5B" : theme.accent }]}>{statusMessage}</Text>
+          <View style={styles.privacyNote}>
+            <View style={styles.privacyNoteIcon}>
+              <Feather name="heart" size={16} color={COLORS.purple} />
             </View>
-          ) : null}
 
-          <TouchableOpacity style={s.signOutBtn} onPress={handleSignOut} activeOpacity={0.85}>
-            <Feather name="log-out" size={16} color="#D86A5B" />
-            <Text style={s.signOutText}>Sign Out</Text>
+            <Text style={styles.privacyNoteText}>
+              Your family information is treated with care and is never sold.
+            </Text>
+          </View>
+
+          <TouchableOpacity
+            style={styles.signOutButton}
+            onPress={handleSignOut}
+            activeOpacity={0.85}
+          >
+            <Feather name="log-out" size={18} color={COLORS.coral} />
+            <Text style={styles.signOutText}>Sign Out</Text>
           </TouchableOpacity>
-          <Text style={s.footerNote}>Your data stays on your device even after signing out.</Text>
+
+          <Text style={styles.footerText}>
+            Your locally saved information remains on this device after signing
+            out.
+          </Text>
         </ScrollView>
       </SafeAreaView>
     );
   }
 
+  // ─────────────────────────────────────────────────────────────────────────────
+  // SIGNED-OUT VIEW
+  // ─────────────────────────────────────────────────────────────────────────────
+
   return (
-    <SafeAreaView style={s.safeArea}>
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={s.content} keyboardShouldPersistTaps="handled">
-          <View style={s.header}>
-            <TouchableOpacity style={s.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.85}>
-              <Feather name="chevron-left" size={20} color={theme.textPrimary} />
-            </TouchableOpacity>
-            <Text style={s.headerTitle}>Save Across Devices</Text>
-            <View style={s.headerSpacer} />
-          </View>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.backgroundDecorationOne} />
+      <View style={styles.backgroundDecorationTwo} />
 
-          <View style={s.heroCard}>
-            <View style={s.heroIconCircle}>
-              <Feather name="smartphone" size={26} color={theme.accent} />
-            </View>
-            <Text style={s.heroTitle}>Access BitzaHugs anywhere.</Text>
-            <Text style={s.heroSub}>Create a free account to safely back up your routines, child profile, Support Snapshot, and mood history — and access them from your phone or computer.</Text>
-          </View>
+      <KeyboardAvoidingView
+        style={styles.keyboardContainer}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <ScrollView
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {renderHeader()}
+          {renderStatusBanner()}
 
-          <View style={s.card}>
-            <View style={s.cardHeader}>
-              <View style={[s.iconBubble, { backgroundColor: theme.accentLight }]}>
-                <Feather name="save" size={14} color={theme.accent} />
-              </View>
-              <Text style={s.cardTitle}>What gets backed up</Text>
-            </View>
-            {[
-              { icon: "user", label: "Child profile & Support Snapshot", bg: theme.accentLight, color: theme.accent },
-              { icon: "calendar", label: "Routines and progress", bg: theme.blueLight, color: theme.blue },
-              { icon: "heart", label: "Mood history and check-ins", bg: "#FFE6E4", color: "#EF8F7D" },
-              { icon: "book-open", label: "Journal entries (with your consent)", bg: theme.isDark ? "#1A2D18" : "#EEF7E8", color: "#78A866" },
-              { icon: "calendar", label: "Appointments", bg: theme.isDark ? "#1A3D38" : "#E7F7F4", color: "#40A99B" },
-            ].map((item, i) => (
-              <View key={i} style={s.saveRow}>
-                <View style={[s.saveIcon, { backgroundColor: item.bg }]}>
-                  <Feather name={item.icon} size={13} color={item.color} />
+          {mode === "main" && (
+            <>
+              <View style={styles.signedOutHero}>
+                <View style={styles.heroArtwork}>
+                  <View style={styles.heroArtworkGlow} />
+
+                  <View style={styles.personIconCircle}>
+                    <Ionicons
+                      name="person-outline"
+                      size={43}
+                      color={COLORS.purple}
+                    />
+                  </View>
+
+                  <View style={styles.heroCloudBadge}>
+                    <Feather name="cloud" size={15} color={COLORS.green} />
+                  </View>
+
+                  <View style={styles.heroHeartBadge}>
+                    <Feather name="heart" size={14} color={COLORS.coral} />
+                  </View>
                 </View>
-                <Text style={s.saveLabel}>{item.label}</Text>
+
+                <Text style={styles.signedOutHeadline}>
+                  Keep your supports close
+                </Text>
+
+                <Text style={styles.signedOutSubtext}>
+                  Create a free account to connect your BitzaHugs experience
+                  across devices and keep Premium access linked to you.
+                </Text>
               </View>
-            ))}
-          </View>
 
-          <View style={s.consentCard}>
-            <Feather name="lock" size={14} color={theme.blue} />
-            <Text style={s.consentText}>By creating an account and turning on Backup & Sync, your saved BitzaHugs information may be stored securely in the cloud so you can access it across devices. You can choose what you share and delete your information at any time.</Text>
-          </View>
+              <View style={styles.benefitsCard}>
+                <BenefitRow
+                  icon="cloud"
+                  title="Stay connected"
+                  description="Access your family supports across your devices."
+                />
 
-          <View style={s.tabRow}>
-            {[{ key: "sign_in", label: "Sign In" }, { key: "create_account", label: "Create Account" }].map((t) => (
-              <TouchableOpacity key={t.key} style={[s.tab, tab === t.key && s.tabActive]} onPress={() => { setTab(t.key); setStatusMessage(""); }} activeOpacity={0.85}>
-                <Text style={[s.tabText, tab === t.key && s.tabTextActive]}>{t.label}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+                <BenefitRow
+                  icon="shield"
+                  title="Protect Premium access"
+                  description="Keep your subscription connected to your account."
+                />
 
-          <View style={s.formCard}>
-            {tab === "create_account" && (
-              <>
-                <Text style={s.inputLabel}>Your name</Text>
-                <TextInput style={s.input} value={name} onChangeText={setName} placeholder="First name" placeholderTextColor={theme.textPlaceholder} autoCapitalize="words" />
-              </>
-            )}
-            <Text style={s.inputLabel}>Email address</Text>
-            <TextInput style={s.input} value={email} onChangeText={setEmail} placeholder="you@email.com" placeholderTextColor={theme.textPlaceholder} keyboardType="email-address" autoCapitalize="none" />
-            <Text style={s.inputLabel}>Password</Text>
-            <View style={s.passwordWrap}>
-              <TextInput style={[s.input, { flex: 1, marginBottom: 0 }]} value={password} onChangeText={setPassword} placeholder={tab === "create_account" ? "At least 6 characters" : "Your password"} placeholderTextColor={theme.textPlaceholder} secureTextEntry={!showPassword} />
-              <TouchableOpacity style={s.eyeBtn} onPress={() => setShowPassword(!showPassword)} activeOpacity={0.7}>
-                <Feather name={showPassword ? "eye-off" : "eye"} size={16} color={theme.textMuted} />
-              </TouchableOpacity>
-            </View>
-            {tab === "create_account" && (
-              <>
-                <Text style={s.inputLabel}>Confirm password</Text>
-                <TextInput style={s.input} value={confirmPassword} onChangeText={setConfirmPassword} placeholder="Repeat your password" placeholderTextColor={theme.textPlaceholder} secureTextEntry={!showPassword} />
-              </>
-            )}
+                <BenefitRow
+                  icon="monitor"
+                  title="Use the caregiver portal"
+                  description="Sign in from your phone or computer."
+                />
 
-            {statusMessage ? (
-              <View style={[s.statusBanner, { backgroundColor: isError ? theme.isDark ? "#2D1510" : "#FFE6E4" : theme.accentLight, borderColor: isError ? "#D86A5B" : theme.accentBorder }]}>
-                <Feather name={isError ? "alert-circle" : "check-circle"} size={15} color={isError ? "#D86A5B" : theme.accent} />
-                <Text style={[s.statusText, { color: isError ? "#D86A5B" : theme.accent }]}>{statusMessage}</Text>
+                <BenefitRow
+                  icon="lock"
+                  title="Private by design"
+                  description="Your information is never sold."
+                  isLast
+                />
               </View>
-            ) : null}
 
-            <TouchableOpacity style={[s.primaryBtn, loading && { opacity: 0.7 }]} onPress={tab === "sign_in" ? handleSignIn : handleCreateAccount} activeOpacity={0.88} disabled={loading}>
-              {loading ? <ActivityIndicator size="small" color="#FFFFFF" /> : <Feather name={tab === "sign_in" ? "log-in" : "user-plus"} size={17} color="#FFFFFF" />}
-              <Text style={s.primaryBtnText}>{loading ? "Please wait..." : tab === "sign_in" ? "Sign In" : "Create Account"}</Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.primaryButton}
+                onPress={() => changeMode("signup")}
+                activeOpacity={0.88}
+              >
+                <View style={styles.primaryButtonIcon}>
+                  <Feather name="user-plus" size={17} color="#FFFFFF" />
+                </View>
 
-            {tab === "sign_in" && (
-              <TouchableOpacity style={s.forgotBtn} onPress={handleResetPassword} activeOpacity={0.7} disabled={loading}>
-                <Text style={s.forgotText}>Forgot password?</Text>
+                <Text style={styles.primaryButtonText}>
+                  Create Free Account
+                </Text>
+
+                <Feather name="arrow-right" size={18} color="#FFFFFF" />
               </TouchableOpacity>
-            )}
 
-            <View style={s.dividerRow}>
-              <View style={s.dividerLine} />
-              <Text style={s.dividerText}>or</Text>
-              <View style={s.dividerLine} />
-            </View>
+              <TouchableOpacity
+                style={styles.secondaryButton}
+                onPress={() => changeMode("signin")}
+                activeOpacity={0.86}
+              >
+                <Feather name="log-in" size={18} color={COLORS.purple} />
+                <Text style={styles.secondaryButtonText}>
+                  I Already Have an Account
+                </Text>
+              </TouchableOpacity>
 
-            <TouchableOpacity style={s.skipBtn} onPress={() => navigation.goBack()} activeOpacity={0.85}>
-              <Text style={s.skipText}>Maybe later — keep data local only</Text>
-            </TouchableOpacity>
+              <View style={styles.gentleNote}>
+                <Feather name="heart" size={15} color={COLORS.coral} />
+
+                <Text style={styles.gentleNoteText}>
+                  Your support tools can still be used without creating an
+                  account.
+                </Text>
+              </View>
+            </>
+          )}
+
+          {(mode === "signin" ||
+            mode === "signup" ||
+            mode === "reset") && (
+            <>
+              <View style={styles.formIntro}>
+                <View style={styles.formIntroIcon}>
+                  <Feather
+                    name={
+                      mode === "signin"
+                        ? "log-in"
+                        : mode === "signup"
+                        ? "user-plus"
+                        : "key"
+                    }
+                    size={25}
+                    color={COLORS.purple}
+                  />
+                </View>
+
+                <Text style={styles.formHeadline}>{screenTitle}</Text>
+                <Text style={styles.formDescription}>{formDescription}</Text>
+              </View>
+
+              <View style={styles.formCard}>
+                {mode === "signup" && (
+                  <FormField
+                    label="Your name"
+                    helper="Optional"
+                    icon="user"
+                  >
+                    <TextInput
+                      style={styles.input}
+                      value={name}
+                      onChangeText={setName}
+                      placeholder="What should we call you?"
+                      placeholderTextColor="#ACA5BD"
+                      autoCapitalize="words"
+                      autoCorrect={false}
+                      returnKeyType="next"
+                    />
+                  </FormField>
+                )}
+
+                <FormField label="Email address" icon="mail">
+                  <TextInput
+                    style={styles.input}
+                    value={email}
+                    onChangeText={setEmail}
+                    placeholder="your@email.com"
+                    placeholderTextColor="#ACA5BD"
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    textContentType="emailAddress"
+                    autoComplete="email"
+                    returnKeyType={mode === "reset" ? "done" : "next"}
+                    onSubmitEditing={
+                      mode === "reset" ? handleResetPassword : undefined
+                    }
+                  />
+                </FormField>
+
+                {mode !== "reset" && (
+                  <FormField
+                    label="Password"
+                    helper={
+                      mode === "signup" ? "At least 6 characters" : undefined
+                    }
+                    icon="lock"
+                    isLast
+                  >
+                    <View style={styles.passwordContainer}>
+                      <TextInput
+                        style={styles.passwordInput}
+                        value={password}
+                        onChangeText={setPassword}
+                        placeholder={
+                          mode === "signup"
+                            ? "Create a password"
+                            : "Enter your password"
+                        }
+                        placeholderTextColor="#ACA5BD"
+                        secureTextEntry={!showPassword}
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        textContentType="password"
+                        autoComplete="password"
+                        returnKeyType="done"
+                        onSubmitEditing={
+                          mode === "signin" ? handleSignIn : handleSignUp
+                        }
+                      />
+
+                      <TouchableOpacity
+                        style={styles.eyeButton}
+                        onPress={() => setShowPassword((current) => !current)}
+                        activeOpacity={0.7}
+                        accessibilityRole="button"
+                        accessibilityLabel={
+                          showPassword ? "Hide password" : "Show password"
+                        }
+                      >
+                        <Feather
+                          name={showPassword ? "eye-off" : "eye"}
+                          size={19}
+                          color={COLORS.textMuted}
+                        />
+                      </TouchableOpacity>
+                    </View>
+                  </FormField>
+                )}
+
+                <TouchableOpacity
+                  style={[
+                    styles.primaryButton,
+                    styles.formSubmitButton,
+                    isLoading && styles.buttonDisabled,
+                  ]}
+                  onPress={
+                    mode === "signin"
+                      ? handleSignIn
+                      : mode === "signup"
+                      ? handleSignUp
+                      : handleResetPassword
+                  }
+                  disabled={isLoading}
+                  activeOpacity={0.88}
+                >
+                  {isLoading ? (
+                    <ActivityIndicator color="#FFFFFF" size="small" />
+                  ) : (
+                    <>
+                      <Text style={styles.primaryButtonText}>
+                        {mode === "signin"
+                          ? "Sign In"
+                          : mode === "signup"
+                          ? "Create My Account"
+                          : "Send Reset Email"}
+                      </Text>
+
+                      <Feather
+                        name={
+                          mode === "reset" ? "send" : "arrow-right"
+                        }
+                        size={18}
+                        color="#FFFFFF"
+                      />
+                    </>
+                  )}
+                </TouchableOpacity>
+
+                {mode === "signin" && (
+                  <TouchableOpacity
+                    style={styles.forgotPasswordButton}
+                    onPress={() => changeMode("reset")}
+                    activeOpacity={0.75}
+                  >
+                    <Feather
+                      name="key"
+                      size={14}
+                      color={COLORS.purple}
+                    />
+
+                    <Text style={styles.forgotPasswordText}>
+                      Forgot your password?
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              <View style={styles.accountSwitchCard}>
+                <Text style={styles.accountSwitchText}>
+                  {mode === "signin"
+                    ? "New to BitzaHugs?"
+                    : mode === "signup"
+                    ? "Already have an account?"
+                    : "Remembered your password?"}
+                </Text>
+
+                <TouchableOpacity
+                  onPress={() =>
+                    changeMode(mode === "signin" ? "signup" : "signin")
+                  }
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.accountSwitchLink}>
+                    {mode === "signin"
+                      ? "Create a free account"
+                      : "Sign in instead"}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
+
+          <View style={styles.footerPrivacyRow}>
+            <Feather name="lock" size={12} color={COLORS.textMuted} />
+            <Text style={styles.footerPrivacyText}>
+              Private, gentle, and made with care for families.
+            </Text>
           </View>
-          <Text style={s.footerNote}>No account required. BitzaHugs works fully without one.</Text>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
-function makeStyles(theme) {
-  return StyleSheet.create({
-    safeArea: { flex: 1, backgroundColor: theme.background },
-    content: { paddingHorizontal: 16, paddingTop: Platform.OS === "ios" ? 6 : 16, paddingBottom: 100 },
-    header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 14 },
-    backBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: theme.accentLight, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: theme.accentBorder },
-    headerTitle: { color: theme.textPrimary, fontSize: 17, fontWeight: "800" },
-    headerSpacer: { width: 38 },
-    heroCard: { backgroundColor: theme.accentLight, borderRadius: 20, borderWidth: 1, borderColor: theme.accentBorder, padding: 20, alignItems: "center", marginBottom: 12 },
-    heroIconCircle: { width: 60, height: 60, borderRadius: 30, backgroundColor: theme.card, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: theme.accentBorder, marginBottom: 14 },
-    heroTitle: { color: theme.textPrimary, fontSize: 18, fontWeight: "800", marginBottom: 8, textAlign: "center" },
-    heroSub: { color: theme.textSecondary, fontSize: 12, lineHeight: 18, textAlign: "center", fontWeight: "500" },
-    card: { backgroundColor: theme.card, borderRadius: 18, borderWidth: 1, borderColor: theme.border, padding: 14, marginBottom: 10, shadowColor: theme.cardShadowColor, shadowOpacity: theme.cardShadowOpacity, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 2 },
-    cardHeader: { flexDirection: "row", alignItems: "center", marginBottom: 10, gap: 10 },
-    iconBubble: { width: 30, height: 30, borderRadius: 9, alignItems: "center", justifyContent: "center" },
-    cardTitle: { flex: 1, color: theme.textPrimary, fontSize: 13, fontWeight: "800" },
-    saveRow: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 8 },
-    saveIcon: { width: 26, height: 26, borderRadius: 8, alignItems: "center", justifyContent: "center" },
-    saveLabel: { flex: 1, color: theme.textSecondary, fontSize: 12, fontWeight: "500" },
-    consentCard: { backgroundColor: theme.blueLight, borderRadius: 12, padding: 12, flexDirection: "row", alignItems: "flex-start", gap: 8, marginBottom: 16, borderWidth: 1, borderColor: theme.isDark ? "#1A2D3D" : "#B8D9F0" },
-    consentText: { flex: 1, color: theme.blue, fontSize: 11, fontWeight: "600", lineHeight: 16 },
-    tabRow: { flexDirection: "row", backgroundColor: theme.isDark ? "#1A1428" : "#F0EBF8", borderRadius: 14, padding: 4, marginBottom: 12 },
-    tab: { flex: 1, paddingVertical: 10, borderRadius: 11, alignItems: "center" },
-    tabActive: { backgroundColor: theme.card, shadowColor: "#000", shadowOpacity: 0.08, shadowRadius: 4, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
-    tabText: { color: theme.textMuted, fontSize: 13, fontWeight: "600" },
-    tabTextActive: { color: theme.textPrimary, fontWeight: "800" },
-    formCard: { backgroundColor: theme.card, borderRadius: 18, borderWidth: 1, borderColor: theme.border, padding: 16, marginBottom: 12 },
-    inputLabel: { color: theme.textPrimary, fontSize: 12, fontWeight: "700", marginBottom: 6, marginTop: 4 },
-    input: { height: 46, borderRadius: 12, backgroundColor: theme.inputBg, borderWidth: 1, borderColor: theme.inputBorder, paddingHorizontal: 14, color: theme.textPrimary, fontSize: 14, fontWeight: "500", marginBottom: 10 },
-    passwordWrap: { flexDirection: "row", alignItems: "center", marginBottom: 10, gap: 8 },
-    eyeBtn: { width: 46, height: 46, borderRadius: 12, backgroundColor: theme.inputBg, borderWidth: 1, borderColor: theme.inputBorder, alignItems: "center", justifyContent: "center" },
-    statusBanner: { borderRadius: 12, padding: 10, flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 10, borderWidth: 1 },
-    statusText: { flex: 1, fontSize: 12, fontWeight: "700" },
-    primaryBtn: { height: 50, borderRadius: 14, backgroundColor: theme.accent, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 8, shadowColor: theme.accent, shadowOpacity: 0.3, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 4 },
-    primaryBtnText: { color: "#FFFFFF", fontSize: 15, fontWeight: "800" },
-    forgotBtn: { alignItems: "center", paddingVertical: 8 },
-    forgotText: { color: theme.accent, fontSize: 13, fontWeight: "600" },
-    dividerRow: { flexDirection: "row", alignItems: "center", gap: 10, marginVertical: 12 },
-    dividerLine: { flex: 1, height: 1, backgroundColor: theme.border },
-    dividerText: { color: theme.textMuted, fontSize: 12, fontWeight: "600" },
-    skipBtn: { height: 46, borderRadius: 12, borderWidth: 1, borderColor: theme.border, alignItems: "center", justifyContent: "center" },
-    skipText: { color: theme.textMuted, fontSize: 13, fontWeight: "600" },
-    loggedInHero: { backgroundColor: theme.accentLight, borderRadius: 20, borderWidth: 1, borderColor: theme.accentBorder, padding: 24, alignItems: "center", marginBottom: 12 },
-    avatarCircle: { width: 72, height: 72, borderRadius: 36, backgroundColor: theme.accent, alignItems: "center", justifyContent: "center", marginBottom: 12 },
-    avatarInitial: { color: "#FFFFFF", fontSize: 30, fontWeight: "800" },
-    loggedInName: { color: theme.textPrimary, fontSize: 20, fontWeight: "800", marginBottom: 4 },
-    loggedInEmail: { color: theme.textMuted, fontSize: 13, fontWeight: "600", marginBottom: 10 },
-    activeBadge: { flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: theme.isDark ? "#1A2D18" : "#EEF7E8", borderRadius: 10, paddingHorizontal: 10, paddingVertical: 5 },
-    activeBadgeText: { color: "#78A866", fontSize: 12, fontWeight: "700" },
-    syncCard: { backgroundColor: theme.isDark ? "#1A2D18" : "#EEF7E8", borderRadius: 16, borderWidth: 1, borderColor: theme.isDark ? "#2A4A28" : "#C8E8B8", padding: 14, marginBottom: 10 },
-    syncCardHeader: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 8 },
-    syncCardTitle: { flex: 1, color: theme.textPrimary, fontSize: 13, fontWeight: "800" },
-    syncBadge: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
-    syncBadgeText: { fontSize: 10, fontWeight: "700" },
-    syncCardBody: { color: theme.textSecondary, fontSize: 12, lineHeight: 17, fontWeight: "500" },
-    detailRow: { flexDirection: "row", alignItems: "center", paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: theme.border },
-    detailLabel: { width: 110, color: theme.textMuted, fontSize: 12, fontWeight: "600" },
-    detailValue: { flex: 1, color: theme.textPrimary, fontSize: 12, fontWeight: "700" },
-    desktopCard: { backgroundColor: theme.blueLight, borderRadius: 16, borderWidth: 1, borderColor: theme.isDark ? "#1A2D3D" : "#B8D9F0", padding: 14, flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 12 },
-    desktopTitle: { color: theme.textPrimary, fontSize: 13, fontWeight: "800", marginBottom: 3 },
-    desktopSub: { color: theme.textSecondary, fontSize: 11, lineHeight: 16, fontWeight: "500" },
-    signOutBtn: { height: 48, borderRadius: 13, backgroundColor: theme.isDark ? "#2D1510" : "#FFF0EE", borderWidth: 1, borderColor: theme.isDark ? "#5A2820" : "#FFD0C0", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 10 },
-    signOutText: { color: "#D86A5B", fontSize: 14, fontWeight: "800" },
-    footerNote: { color: theme.textMuted, fontSize: 11, fontWeight: "600", textAlign: "center", marginTop: 4 },
-  });
+function DetailRow({ icon, label, value, isLast = false }) {
+  return (
+    <View style={[styles.detailRow, isLast && styles.detailRowLast]}>
+      <View style={styles.detailLabelGroup}>
+        <View style={styles.detailIcon}>
+          <Feather name={icon} size={14} color={COLORS.purple} />
+        </View>
+
+        <Text style={styles.detailLabel}>{label}</Text>
+      </View>
+
+      <Text style={styles.detailValue} numberOfLines={1}>
+        {value}
+      </Text>
+    </View>
+  );
 }
+
+function BenefitRow({ icon, title, description, isLast = false }) {
+  return (
+    <View style={[styles.benefitRow, isLast && styles.benefitRowLast]}>
+      <View style={styles.benefitIcon}>
+        <Feather name={icon} size={18} color={COLORS.purple} />
+      </View>
+
+      <View style={styles.cardTextContainer}>
+        <Text style={styles.benefitTitle}>{title}</Text>
+        <Text style={styles.benefitDescription}>{description}</Text>
+      </View>
+
+      <Feather name="check-circle" size={17} color={COLORS.green} />
+    </View>
+  );
+}
+
+function FormField({
+  label,
+  helper,
+  icon,
+  children,
+  isLast = false,
+}) {
+  return (
+    <View style={[styles.fieldGroup, isLast && styles.fieldGroupLast]}>
+      <View style={styles.fieldLabelRow}>
+        <View style={styles.fieldLabelLeft}>
+          <Feather name={icon} size={14} color={COLORS.purple} />
+          <Text style={styles.inputLabel}>{label}</Text>
+        </View>
+
+        {helper ? <Text style={styles.inputHelper}>{helper}</Text> : null}
+      </View>
+
+      {children}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
+
+  keyboardContainer: {
+    flex: 1,
+  },
+
+  backgroundDecorationOne: {
+    position: "absolute",
+    top: -95,
+    right: -80,
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    backgroundColor: "#F2E4FF",
+    opacity: 0.72,
+  },
+
+  backgroundDecorationTwo: {
+    position: "absolute",
+    bottom: 50,
+    left: -95,
+    width: 190,
+    height: 190,
+    borderRadius: 95,
+    backgroundColor: "#FFEBD9",
+    opacity: 0.45,
+  },
+
+  content: {
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === "ios" ? 8 : 16,
+    paddingBottom: 70,
+  },
+
+  cardTextContainer: {
+    flex: 1,
+  },
+
+  // Header
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 22,
+  },
+
+  backButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 15,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.purpleBorder,
+    alignItems: "center",
+    justifyContent: "center",
+
+    shadowColor: "#5B398F",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+
+  headerCenter: {
+    flex: 1,
+    alignItems: "center",
+  },
+
+  headerEyebrow: {
+    color: COLORS.purple,
+    fontSize: 9,
+    fontWeight: "900",
+    letterSpacing: 1.7,
+    marginBottom: 2,
+  },
+
+  headerTitle: {
+    color: COLORS.text,
+    fontSize: 17,
+    fontWeight: "900",
+  },
+
+  headerSpacer: {
+    width: 42,
+  },
+
+  // Status
+  statusBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: COLORS.purpleSoft,
+    borderRadius: 15,
+    paddingHorizontal: 13,
+    paddingVertical: 11,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: COLORS.purpleBorder,
+  },
+
+  statusIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: COLORS.purple,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 9,
+  },
+
+  statusText: {
+    flex: 1,
+    color: COLORS.purpleDark,
+    fontSize: 13,
+    fontWeight: "700",
+    lineHeight: 18,
+  },
+
+  // Signed-in profile hero
+  profileHero: {
+    overflow: "hidden",
+    alignItems: "center",
+    backgroundColor: COLORS.purpleSoft,
+    borderRadius: 28,
+    borderWidth: 1,
+    borderColor: COLORS.purpleBorder,
+    paddingHorizontal: 20,
+    paddingTop: 26,
+    paddingBottom: 24,
+    marginBottom: 15,
+
+    shadowColor: "#6841A6",
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 18,
+    elevation: 4,
+  },
+
+  heroGlowLarge: {
+    position: "absolute",
+    top: -60,
+    right: -30,
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    backgroundColor: "#E6D1FF",
+    opacity: 0.8,
+  },
+
+  heroGlowSmall: {
+    position: "absolute",
+    bottom: -45,
+    left: -30,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: COLORS.peach,
+    opacity: 0.65,
+  },
+
+  avatarOuter: {
+    position: "relative",
+    marginBottom: 13,
+  },
+
+  avatar: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    backgroundColor: COLORS.purple,
+    borderWidth: 5,
+    borderColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+
+    shadowColor: "#4A267F",
+    shadowOffset: {
+      width: 0,
+      height: 6,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+
+  avatarText: {
+    color: "#FFFFFF",
+    fontSize: 34,
+    fontWeight: "900",
+  },
+
+  onlineIndicator: {
+    position: "absolute",
+    right: 1,
+    bottom: 5,
+    width: 25,
+    height: 25,
+    borderRadius: 13,
+    backgroundColor: COLORS.green,
+    borderWidth: 3,
+    borderColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  welcomeLabel: {
+    color: COLORS.purple,
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
+    marginBottom: 3,
+  },
+
+  displayName: {
+    color: COLORS.text,
+    fontSize: 23,
+    fontWeight: "900",
+    textAlign: "center",
+    marginBottom: 4,
+  },
+
+  emailText: {
+    color: COLORS.textSoft,
+    fontSize: 13,
+    fontWeight: "600",
+    textAlign: "center",
+    marginBottom: 13,
+  },
+
+  accountActiveBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.86)",
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: COLORS.greenBorder,
+  },
+
+  accountActiveDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: COLORS.green,
+    marginRight: 7,
+  },
+
+  accountActiveText: {
+    color: COLORS.green,
+    fontSize: 11,
+    fontWeight: "900",
+  },
+
+  // Sync card
+  syncCard: {
+    flexDirection: "row",
+    backgroundColor: COLORS.greenSoft,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: COLORS.greenBorder,
+    padding: 15,
+    marginBottom: 22,
+  },
+
+  syncIconWrap: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+
+    shadowColor: "#487B55",
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 1,
+  },
+
+  cardTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 5,
+  },
+
+  cardTitle: {
+    flex: 1,
+    color: COLORS.text,
+    fontSize: 14,
+    fontWeight: "900",
+  },
+
+  activePill: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: COLORS.greenBorder,
+  },
+
+  activePillText: {
+    color: COLORS.green,
+    fontSize: 10,
+    fontWeight: "900",
+  },
+
+  cardDescription: {
+    color: COLORS.textSoft,
+    fontSize: 12,
+    lineHeight: 18,
+    fontWeight: "500",
+  },
+
+  sectionLabel: {
+    color: COLORS.textMuted,
+    fontSize: 10,
+    fontWeight: "900",
+    letterSpacing: 1.2,
+    marginLeft: 3,
+    marginBottom: 9,
+  },
+
+  // Details
+  detailsCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: 21,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: 15,
+    marginBottom: 22,
+
+    shadowColor: "#4B3A56",
+    shadowOffset: {
+      width: 0,
+      height: 5,
+    },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 2,
+  },
+
+  detailsHeading: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  detailsHeadingIcon: {
+    width: 39,
+    height: 39,
+    borderRadius: 13,
+    backgroundColor: COLORS.purpleSoft,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 11,
+  },
+
+  detailsTitle: {
+    color: COLORS.text,
+    fontSize: 14,
+    fontWeight: "900",
+    marginBottom: 2,
+  },
+
+  detailsSubtitle: {
+    color: COLORS.textMuted,
+    fontSize: 11,
+    fontWeight: "500",
+  },
+
+  detailDivider: {
+    height: 1,
+    backgroundColor: COLORS.divider,
+    marginTop: 14,
+  },
+
+  detailRow: {
+    minHeight: 53,
+    flexDirection: "row",
+    alignItems: "center",
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.divider,
+  },
+
+  detailRowLast: {
+    borderBottomWidth: 0,
+  },
+
+  detailLabelGroup: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+
+  detailIcon: {
+    width: 27,
+    height: 27,
+    borderRadius: 9,
+    backgroundColor: COLORS.purpleLight,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 9,
+  },
+
+  detailLabel: {
+    color: COLORS.textSoft,
+    fontSize: 12,
+    fontWeight: "600",
+  },
+
+  detailValue: {
+    maxWidth: "55%",
+    color: COLORS.text,
+    fontSize: 12,
+    fontWeight: "800",
+    textAlign: "right",
+  },
+
+  // Desktop card
+  desktopCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: COLORS.surface,
+    borderRadius: 21,
+    borderWidth: 1,
+    borderColor: COLORS.blueBorder,
+    padding: 15,
+    marginBottom: 13,
+
+    shadowColor: "#3978A6",
+    shadowOffset: {
+      width: 0,
+      height: 5,
+    },
+    shadowOpacity: 0.07,
+    shadowRadius: 12,
+    elevation: 2,
+  },
+
+  desktopIconWrap: {
+    width: 45,
+    height: 45,
+    borderRadius: 15,
+    backgroundColor: COLORS.blueSoft,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
+
+  desktopTitle: {
+    color: COLORS.text,
+    fontSize: 14,
+    fontWeight: "900",
+    marginBottom: 4,
+  },
+
+  desktopDescription: {
+    color: COLORS.textSoft,
+    fontSize: 11,
+    lineHeight: 16,
+    fontWeight: "500",
+    marginBottom: 7,
+  },
+
+  desktopLinkRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  desktopLink: {
+    color: COLORS.blue,
+    fontSize: 11,
+    fontWeight: "800",
+    marginRight: 4,
+  },
+
+  chevronCircle: {
+    width: 29,
+    height: 29,
+    borderRadius: 10,
+    backgroundColor: COLORS.blueSoft,
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: 8,
+  },
+
+  privacyNote: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: COLORS.purpleLight,
+    borderRadius: 16,
+    padding: 12,
+    marginBottom: 17,
+  },
+
+  privacyNoteIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: 10,
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 10,
+  },
+
+  privacyNoteText: {
+    flex: 1,
+    color: COLORS.textSoft,
+    fontSize: 11,
+    lineHeight: 16,
+    fontWeight: "600",
+  },
+
+  signOutButton: {
+    height: 52,
+    borderRadius: 17,
+    backgroundColor: COLORS.coralSoft,
+    borderWidth: 1,
+    borderColor: COLORS.coralBorder,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 11,
+  },
+
+  signOutText: {
+    color: COLORS.coral,
+    fontSize: 14,
+    fontWeight: "900",
+    marginLeft: 9,
+  },
+
+  footerText: {
+    color: COLORS.textMuted,
+    fontSize: 10,
+    lineHeight: 15,
+    fontWeight: "500",
+    textAlign: "center",
+    paddingHorizontal: 20,
+  },
+
+  // Signed-out hero
+  signedOutHero: {
+    alignItems: "center",
+    marginBottom: 21,
+  },
+
+  heroArtwork: {
+    width: 116,
+    height: 116,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16,
+  },
+
+  heroArtworkGlow: {
+    position: "absolute",
+    width: 116,
+    height: 116,
+    borderRadius: 58,
+    backgroundColor: COLORS.purpleSoft,
+    borderWidth: 1,
+    borderColor: COLORS.purpleBorder,
+  },
+
+  personIconCircle: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+
+    shadowColor: "#5E3B91",
+    shadowOffset: {
+      width: 0,
+      height: 7,
+    },
+    shadowOpacity: 0.12,
+    shadowRadius: 13,
+    elevation: 4,
+  },
+
+  heroCloudBadge: {
+    position: "absolute",
+    top: 7,
+    right: 3,
+    width: 34,
+    height: 34,
+    borderRadius: 12,
+    backgroundColor: COLORS.greenSoft,
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  heroHeartBadge: {
+    position: "absolute",
+    bottom: 5,
+    left: 6,
+    width: 32,
+    height: 32,
+    borderRadius: 11,
+    backgroundColor: COLORS.coralSoft,
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  signedOutHeadline: {
+    color: COLORS.text,
+    fontSize: 27,
+    lineHeight: 33,
+    fontWeight: "900",
+    textAlign: "center",
+    marginBottom: 9,
+  },
+
+  signedOutSubtext: {
+    maxWidth: 330,
+    color: COLORS.textSoft,
+    fontSize: 13,
+    lineHeight: 20,
+    fontWeight: "500",
+    textAlign: "center",
+  },
+
+  benefitsCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    paddingHorizontal: 14,
+    marginBottom: 19,
+
+    shadowColor: "#4B3A56",
+    shadowOffset: {
+      width: 0,
+      height: 6,
+    },
+    shadowOpacity: 0.06,
+    shadowRadius: 14,
+    elevation: 2,
+  },
+
+  benefitRow: {
+    minHeight: 70,
+    flexDirection: "row",
+    alignItems: "center",
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.divider,
+    paddingVertical: 10,
+  },
+
+  benefitRowLast: {
+    borderBottomWidth: 0,
+  },
+
+  benefitIcon: {
+    width: 39,
+    height: 39,
+    borderRadius: 13,
+    backgroundColor: COLORS.purpleLight,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 11,
+  },
+
+  benefitTitle: {
+    color: COLORS.text,
+    fontSize: 13,
+    fontWeight: "900",
+    marginBottom: 3,
+  },
+
+  benefitDescription: {
+    color: COLORS.textSoft,
+    fontSize: 11,
+    lineHeight: 16,
+    fontWeight: "500",
+    paddingRight: 8,
+  },
+
+  primaryButton: {
+    minHeight: 54,
+    borderRadius: 17,
+    backgroundColor: COLORS.purple,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 18,
+    marginBottom: 11,
+
+    shadowColor: COLORS.purpleDark,
+    shadowOffset: {
+      width: 0,
+      height: 7,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+
+  primaryButtonIcon: {
+    width: 29,
+    height: 29,
+    borderRadius: 10,
+    backgroundColor: "rgba(255,255,255,0.16)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 10,
+  },
+
+  primaryButtonText: {
+    flexShrink: 1,
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "900",
+    textAlign: "center",
+    marginRight: 10,
+  },
+
+  secondaryButton: {
+    minHeight: 53,
+    borderRadius: 17,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1.5,
+    borderColor: COLORS.purpleBorder,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 16,
+    marginBottom: 13,
+  },
+
+  secondaryButtonText: {
+    color: COLORS.purple,
+    fontSize: 14,
+    fontWeight: "900",
+    marginLeft: 9,
+  },
+
+  gentleNote: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 15,
+    marginTop: 1,
+  },
+
+  gentleNoteText: {
+    flexShrink: 1,
+    color: COLORS.textMuted,
+    fontSize: 10,
+    lineHeight: 15,
+    fontWeight: "600",
+    textAlign: "center",
+    marginLeft: 7,
+  },
+
+  // Form
+  formIntro: {
+    alignItems: "center",
+    marginBottom: 19,
+  },
+
+  formIntroIcon: {
+    width: 59,
+    height: 59,
+    borderRadius: 20,
+    backgroundColor: COLORS.purpleSoft,
+    borderWidth: 1,
+    borderColor: COLORS.purpleBorder,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 12,
+  },
+
+  formHeadline: {
+    color: COLORS.text,
+    fontSize: 25,
+    fontWeight: "900",
+    textAlign: "center",
+    marginBottom: 6,
+  },
+
+  formDescription: {
+    maxWidth: 300,
+    color: COLORS.textSoft,
+    fontSize: 12,
+    lineHeight: 18,
+    fontWeight: "500",
+    textAlign: "center",
+  },
+
+  formCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: 23,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: 17,
+    marginBottom: 13,
+
+    shadowColor: "#4B3A56",
+    shadowOffset: {
+      width: 0,
+      height: 7,
+    },
+    shadowOpacity: 0.07,
+    shadowRadius: 16,
+    elevation: 3,
+  },
+
+  fieldGroup: {
+    marginBottom: 16,
+  },
+
+  fieldGroupLast: {
+    marginBottom: 6,
+  },
+
+  fieldLabelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 7,
+  },
+
+  fieldLabelLeft: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  inputLabel: {
+    color: COLORS.text,
+    fontSize: 12,
+    fontWeight: "900",
+    marginLeft: 7,
+  },
+
+  inputHelper: {
+    color: COLORS.textMuted,
+    fontSize: 10,
+    fontWeight: "600",
+  },
+
+  input: {
+    height: 52,
+    backgroundColor: COLORS.purpleLight,
+    borderRadius: 15,
+    borderWidth: 1.5,
+    borderColor: COLORS.purpleBorder,
+    paddingHorizontal: 14,
+    color: COLORS.text,
+    fontSize: 14,
+    fontWeight: "600",
+  },
+
+  passwordContainer: {
+    height: 52,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: COLORS.purpleLight,
+    borderRadius: 15,
+    borderWidth: 1.5,
+    borderColor: COLORS.purpleBorder,
+  },
+
+  passwordInput: {
+    flex: 1,
+    height: "100%",
+    paddingLeft: 14,
+    color: COLORS.text,
+    fontSize: 14,
+    fontWeight: "600",
+  },
+
+  eyeButton: {
+    height: "100%",
+    paddingHorizontal: 15,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  formSubmitButton: {
+    marginTop: 13,
+    marginBottom: 8,
+  },
+
+  buttonDisabled: {
+    opacity: 0.62,
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+
+  forgotPasswordButton: {
+    minHeight: 40,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  forgotPasswordText: {
+    color: COLORS.purple,
+    fontSize: 12,
+    fontWeight: "800",
+    marginLeft: 6,
+  },
+
+  accountSwitchCard: {
+    backgroundColor: COLORS.purpleLight,
+    borderRadius: 17,
+    borderWidth: 1,
+    borderColor: COLORS.purpleBorder,
+    paddingHorizontal: 15,
+    paddingVertical: 13,
+    alignItems: "center",
+    marginBottom: 8,
+  },
+
+  accountSwitchText: {
+    color: COLORS.textSoft,
+    fontSize: 11,
+    fontWeight: "600",
+    marginBottom: 3,
+  },
+
+  accountSwitchLink: {
+    color: COLORS.purple,
+    fontSize: 12,
+    fontWeight: "900",
+  },
+
+  footerPrivacyRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 15,
+    paddingHorizontal: 15,
+  },
+
+  footerPrivacyText: {
+    color: COLORS.textMuted,
+    fontSize: 10,
+    lineHeight: 15,
+    fontWeight: "600",
+    textAlign: "center",
+    marginLeft: 6,
+  },
+});

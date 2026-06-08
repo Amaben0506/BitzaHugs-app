@@ -224,28 +224,30 @@ export default function SettingsScreen({ navigation }) {
 
   const accountRows = [
     {
-      title: "Prototype Mode",
-      subtitle: "No account required while testing",
+      title: "Account Settings",
+      subtitle: "Sign in, create account, or manage your profile",
       icon: "user",
       bg: "#F0E2FF",
       accent: "#6F42D8",
-      pill: "Local",
-    },
-    {
-      title: "Sign In / Create Account",
-      subtitle: "Coming soon for cloud sync",
-      icon: "log-in",
-      bg: "#E7F4FF",
-      accent: "#4C9ED9",
-      soon: true,
+      onPress: () => nav("Account"),
     },
     {
       title: "Log Out",
-      subtitle: "Placeholder until accounts are added",
+      subtitle: "Sign out of your account",
       icon: "log-out",
       bg: "#FFE7E1",
       accent: "#D86A5B",
-      onPress: () => showStatus("Logout coming when accounts are added"),
+      onPress: async () => {
+        const { signOutUser } = require("../src/lib/firebase");
+        Alert.alert("Log Out", "Are you sure you want to log out?", [
+          { text: "Cancel", style: "cancel" },
+          { text: "Log Out", style: "destructive", onPress: async () => {
+            await signOutUser();
+            await AsyncStorage.multiRemove(["bitzaIsPremium", "bitzaAccountCreated", "bitzaAccountPromptSeen"]);
+            showStatus("Logged out successfully");
+          }},
+        ]);
+      },
     },
   ];
 
@@ -375,7 +377,7 @@ export default function SettingsScreen({ navigation }) {
         </View>
 
         {/* Account */}
-        <SectionHeader title="Account" caption="Prototype mode — no account required yet." />
+        <SectionHeader title="Account" caption="Create an account to sync your data across devices." />
         <View style={styles.card}>
           {accountRows.map((row, i) => (
             <SettingsRow key={row.title} row={row} last={i === accountRows.length - 1} onPremiumPress={goToPremium} isPremium={isPremium} />
@@ -412,7 +414,7 @@ export default function SettingsScreen({ navigation }) {
         </TouchableOpacity>
 
         <Text style={styles.footerText}>
-          For launch, this screen will include account, privacy policy, terms, and notification settings.
+          BitzaHugs Premium — $6.99/mo or $49.99/yr. Cancel anytime.
         </Text>
 
       </ScrollView>

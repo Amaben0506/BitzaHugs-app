@@ -1,1165 +1,676 @@
-import React, { useMemo, useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  StatusBar,
-  TextInput,
-  Image,
-  Platform,
-  Modal,
-  ScrollView,
-  Alert,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity,
+  TextInput, Alert, Platform, KeyboardAvoidingView,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Feather, Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
 
 const CHILD_PROFILE_KEY = "bitzaChildProfile";
-const EXTRA_CHILD_PROFILES_KEY = "bitzaChildProfiles";
 
-const childHeader = require("../assets/icons/child-profile-header-illustration.png");
-
-const months = [
-  { label: "January", value: "01" },
-  { label: "February", value: "02" },
-  { label: "March", value: "03" },
-  { label: "April", value: "04" },
-  { label: "May", value: "05" },
-  { label: "June", value: "06" },
-  { label: "July", value: "07" },
-  { label: "August", value: "08" },
-  { label: "September", value: "09" },
-  { label: "October", value: "10" },
-  { label: "November", value: "11" },
-  { label: "December", value: "12" },
+const PRONOUNS_OPTIONS = ["He / Him", "She / Her", "They / Them", "He / They", "She / They", "Prefer not to say"];
+const COMMUNICATION_OPTIONS = [
+  "Verbal", "Verbal with support", "Mostly verbal", "Uses short phrases",
+  "Minimally speaking", "Nonverbal", "Uses gestures", "Uses pointing",
+  "Uses PECS / picture cards", "Uses AAC device", "Uses sign language",
+  "Uses sounds / vocalizations", "Mixed communication style", "Other",
 ];
-
-const communicationOptions = [
-  "Verbal",
-  "Mostly verbal",
-  "Uses short phrases",
-  "Minimally speaking",
-  "Nonverbal",
-  "Uses gestures",
-  "Uses pointing",
-  "Uses PECS / picture cards",
-  "Uses AAC device",
-  "Uses sign language",
-  "Uses sounds / vocalizations",
-  "Uses behavior to communicate needs",
-  "Mixed communication style",
-  "Other / Custom",
-  "Prefer not to add yet",
+const GRADE_OPTIONS = [
+  "Not in school yet", "Early intervention", "Pre-K", "Kindergarten",
+  "1st grade", "2nd grade", "3rd grade", "4th grade", "5th grade",
+  "6th grade", "7th grade", "8th grade", "9th grade", "10th grade",
+  "11th grade", "12th grade", "Homeschooled", "Post-secondary",
 ];
+const AVATAR_OPTIONS = ["🦕", "🐰", "🦋", "🐻", "🦊", "🐼", "🐸", "🦁", "🐳", "🌟", "🌈", "💜"];
 
-function calculateAgeFromDob(dob) {
-  if (!dob) return "";
+// ── Tag Input Component ────────────────────────────────────────────────────────
+function TagInput({ tags, onAdd, onRemove, placeholder, color = "#7548D8", bg = "#F0E2FF" }) {
+  const [inputValue, setInputValue] = useState("");
 
-  const birthDate = new Date(dob);
-  const today = new Date();
-
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const monthDifference = today.getMonth() - birthDate.getMonth();
-
-  if (
-    monthDifference < 0 ||
-    (monthDifference === 0 && today.getDate() < birthDate.getDate())
-  ) {
-    age -= 1;
-  }
-
-  return age >= 0 ? String(age) : "";
-}
-
-export default function ChildProfileSetupScreen({ navigation, route }) {
-  const childIndex = route?.params?.childIndex || 0;
-  const isAddingExtraChild = childIndex > 0;
-
-  const [childName, setChildName] = useState("");
-  const [dob, setDob] = useState("");
-  const [communicationStyle, setCommunicationStyle] = useState("");
-  const [customCommunication, setCustomCommunication] = useState("");
-
-  const [isCustomCommunicationOpen, setIsCustomCommunicationOpen] =
-    useState(false);
-
-  const [dobModalVisible, setDobModalVisible] = useState(false);
-  const [communicationModalVisible, setCommunicationModalVisible] =
-    useState(false);
-
-  const [selectedMonth, setSelectedMonth] = useState("");
-  const [selectedDay, setSelectedDay] = useState("");
-  const [selectedYear, setSelectedYear] = useState("");
-
-  const years = useMemo(() => {
-    const currentYear = new Date().getFullYear();
-    const list = [];
-
-    for (let year = currentYear; year >= currentYear - 25; year -= 1) {
-      list.push(String(year));
-    }
-
-    return list;
-  }, []);
-
-  const days = useMemo(() => {
-    const list = [];
-
-    for (let day = 1; day <= 31; day += 1) {
-      list.push(String(day).padStart(2, "0"));
-    }
-
-    return list;
-  }, []);
-
-  const dobDisplay = useMemo(() => {
-    if (!dob) return "";
-
-    const [year, month, day] = dob.split("-");
-    const monthName = months.find((item) => item.value === month)?.label;
-
-    return `${monthName} ${Number(day)}, ${year}`;
-  }, [dob]);
-
-  const calculatedAge = useMemo(() => calculateAgeFromDob(dob), [dob]);
-
-  const saveDob = () => {
-    if (!selectedMonth || !selectedDay || !selectedYear) {
-      Alert.alert("Almost there", "Please choose a month, day, and year.");
-      return;
-    }
-
-    const selectedDate = new Date(
-      Number(selectedYear),
-      Number(selectedMonth) - 1,
-      Number(selectedDay)
-    );
-
-    const isValidDate =
-      selectedDate.getFullYear() === Number(selectedYear) &&
-      selectedDate.getMonth() === Number(selectedMonth) - 1 &&
-      selectedDate.getDate() === Number(selectedDay);
-
-    if (!isValidDate) {
-      Alert.alert("Check the date", "That date doesn’t look quite right.");
-      return;
-    }
-
-    const today = new Date();
-
-    if (selectedDate > today) {
-      Alert.alert("Check the date", "Birthdate cannot be in the future.");
-      return;
-    }
-
-    setDob(`${selectedYear}-${selectedMonth}-${selectedDay}`);
-    setDobModalVisible(false);
-  };
-
-  const clearDob = () => {
-    setDob("");
-    setSelectedMonth("");
-    setSelectedDay("");
-    setSelectedYear("");
-    setDobModalVisible(false);
-  };
-
-  const openCommunicationModal = () => {
-    setCommunicationModalVisible(true);
-
-    if (
-      communicationStyle &&
-      !communicationOptions.includes(communicationStyle)
-    ) {
-      setIsCustomCommunicationOpen(true);
-      setCustomCommunication(communicationStyle);
-    }
-  };
-
-  const chooseCommunication = (option) => {
-    if (option === "Other / Custom") {
-      setCommunicationStyle("Other / Custom");
-      setIsCustomCommunicationOpen(true);
-      return;
-    }
-
-    setCommunicationStyle(option);
-    setCustomCommunication("");
-    setIsCustomCommunicationOpen(false);
-    setCommunicationModalVisible(false);
-  };
-
-  const saveCustomCommunication = () => {
-    const trimmed = customCommunication.trim();
-
-    if (!trimmed) {
-      Alert.alert("Add a custom style", "Type how your child communicates.");
-      return;
-    }
-
-    setCommunicationStyle(trimmed);
-    setIsCustomCommunicationOpen(false);
-    setCommunicationModalVisible(false);
-  };
-
-  const closeCommunicationModal = () => {
-    if (communicationStyle === "Other / Custom") {
-      setCommunicationStyle("");
-    }
-
-    setIsCustomCommunicationOpen(false);
-    setCommunicationModalVisible(false);
-  };
-
-  const buildChildProfile = () => {
-    const finalCommunication =
-      communicationStyle === "Prefer not to add yet" ||
-      communicationStyle === "Other / Custom" ||
-      !communicationStyle
-        ? "Not added yet"
-        : communicationStyle;
-
-    return {
-      childName: childName.trim() || "Child 1",
-      age: calculatedAge || "",
-      dob: dob || "",
-      communicationStyle: finalCommunication,
-      avatar: "01",
-      supportNeeds: [],
-      notes: "",
-      updatedAt: new Date().toISOString(),
-    };
-  };
-
-  const saveExtraChildProfile = async (childProfile) => {
-    const savedExtras = await AsyncStorage.getItem(EXTRA_CHILD_PROFILES_KEY);
-    const extras = savedExtras ? JSON.parse(savedExtras) : [];
-
-    extras[childIndex - 1] = childProfile;
-
-    await AsyncStorage.setItem(
-      EXTRA_CHILD_PROFILES_KEY,
-      JSON.stringify(extras.filter(Boolean))
-    );
-  };
-
-  const handleContinue = async () => {
-    const childProfile = buildChildProfile();
-
-    try {
-      if (isAddingExtraChild) {
-        await saveExtraChildProfile(childProfile);
-        navigation.navigate("ChildrenList");
-        return;
-      }
-
-      await AsyncStorage.setItem(
-        CHILD_PROFILE_KEY,
-        JSON.stringify(childProfile)
-      );
-
-      navigation.navigate("SensorySupport");
-    } catch (error) {
-      console.log("Error saving child profile:", error);
-      Alert.alert("Oops", "Something went wrong. Please try again.");
-    }
-  };
-
-  const handleSkip = async () => {
-    const childProfile = {
-      childName: "Child 1",
-      age: "",
-      dob: "",
-      communicationStyle: "Not added yet",
-      avatar: "01",
-      supportNeeds: [],
-      notes: "",
-      updatedAt: new Date().toISOString(),
-    };
-
-    try {
-      if (isAddingExtraChild) {
-        navigation.navigate("ChildrenList");
-        return;
-      }
-
-      await AsyncStorage.setItem(
-        CHILD_PROFILE_KEY,
-        JSON.stringify(childProfile)
-      );
-
-      navigation.navigate("SensorySupport");
-    } catch (error) {
-      console.log("Error skipping child profile:", error);
-      navigation.navigate("SensorySupport");
-    }
+  const handleAdd = () => {
+    const trimmed = inputValue.trim();
+    if (!trimmed) return;
+    if (tags.includes(trimmed)) { setInputValue(""); return; }
+    onAdd(trimmed);
+    setInputValue("");
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFF9F3" />
-
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.container}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="always"
-      >
-        {/* Top Row */}
-        <View style={styles.topRow}>
-          <TouchableOpacity
-            style={styles.backButton}
-            activeOpacity={0.8}
-            onPress={() => navigation.goBack()}
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-          >
-            <Ionicons name="arrow-back" size={22} color="#2D2357" />
-          </TouchableOpacity>
-
-          <View style={styles.brandRow}>
-            <Ionicons name="heart" size={24} color="#8C35F6" />
-            <Text style={styles.brandText}>
-              Bitza<Text style={styles.brandAccent}>Hugs</Text>
-            </Text>
-          </View>
-
-          <View style={styles.topSpacer} />
-        </View>
-
-        {/* Progress */}
-        <View style={styles.progressRow}>
-          <View style={[styles.progressDot, styles.progressActive]} />
-          <View style={styles.progressDot} />
-          <View style={styles.progressDot} />
-          <View style={styles.progressDot} />
-        </View>
-
-        <Text style={styles.stepLabel}>Step 1 of 4</Text>
-
-        <Text style={styles.title}>Let's get to know{"\n"}your child</Text>
-
-        <Text style={styles.subtitle}>
-          This helps us personalize their experience with care.
-        </Text>
-
-        {/* Header illustration */}
-        <View style={styles.headerCard}>
-          <Image
-            source={childHeader}
-            style={styles.headerIllustration}
-            resizeMode="cover"
-          />
-        </View>
-
-        {/* Child Name */}
-        <View style={styles.formCard}>
-          <View style={styles.fieldIconBox}>
-            <Ionicons name="person-outline" size={22} color="#8C55F6" />
-          </View>
-
-          <View style={styles.fieldContent}>
-            <Text style={styles.fieldLabel}>Child's Name</Text>
-
-            <TextInput
-              value={childName}
-              onChangeText={setChildName}
-              placeholder="Enter name"
-              placeholderTextColor="#A99BB8"
-              style={styles.input}
-              returnKeyType="done"
-              accessibilityLabel="Child name"
-            />
-          </View>
-        </View>
-
-        {/* Date of Birth */}
-        <TouchableOpacity
-          style={styles.formCard}
-          activeOpacity={0.85}
-          onPress={() => setDobModalVisible(true)}
-          accessibilityRole="button"
-          accessibilityLabel="Date of birth"
-          accessibilityHint="Opens date of birth picker"
-        >
-          <View style={styles.fieldIconBox}>
-            <Ionicons name="calendar-outline" size={22} color="#8C55F6" />
-          </View>
-
-          <View style={styles.fieldContent}>
-            <Text style={styles.fieldLabel}>Date of Birth</Text>
-
-            <View style={styles.fakeInputRow}>
-              <Text
-                style={[
-                  styles.fakeInputText,
-                  dob && styles.selectedInputText,
-                ]}
-                numberOfLines={1}
-              >
-                {dobDisplay || "You can add this later"}
-              </Text>
-
-              <Ionicons name="chevron-down" size={18} color="#2D2357" />
-            </View>
-          </View>
-        </TouchableOpacity>
-
-        {/* Communication Style */}
-        <TouchableOpacity
-          style={styles.formCard}
-          activeOpacity={0.85}
-          onPress={openCommunicationModal}
-          accessibilityRole="button"
-          accessibilityLabel="Communication style"
-          accessibilityHint="Opens communication style options"
-        >
-          <View style={styles.fieldIconBox}>
-            <Ionicons
-              name="chatbubble-ellipses-outline"
-              size={22}
-              color="#8C55F6"
-            />
-          </View>
-
-          <View style={styles.fieldContent}>
-            <Text style={styles.fieldLabel}>Communication Style</Text>
-
-            <View style={styles.fakeInputRow}>
-              <Text
-                style={[
-                  styles.fakeInputText,
-                  communicationStyle &&
-                    communicationStyle !== "Other / Custom" &&
-                    styles.selectedInputText,
-                ]}
-                numberOfLines={1}
-              >
-                {communicationStyle && communicationStyle !== "Other / Custom"
-                  ? communicationStyle
-                  : "You can add this later"}
-              </Text>
-
-              <Ionicons name="chevron-down" size={18} color="#2D2357" />
-            </View>
-          </View>
-        </TouchableOpacity>
-
-        {/* Note */}
-        <View style={styles.noteCard}>
-          <Ionicons name="heart-outline" size={20} color="#8C55F6" />
-
-          <Text style={styles.noteText}>
-            You can always edit this later in settings.
-          </Text>
-        </View>
-
-        {/* Continue */}
-        <TouchableOpacity
-          style={styles.button}
-          activeOpacity={0.86}
-          onPress={handleContinue}
-          accessibilityRole="button"
-          accessibilityLabel="Continue"
-          accessibilityHint="Saves child profile and continues setup"
-        >
-          <Text style={styles.buttonText}>Continue</Text>
-          <Ionicons name="arrow-forward" size={22} color="#FFFFFF" />
-        </TouchableOpacity>
-
-        {/* Skip */}
-        <TouchableOpacity
-          style={styles.skipButton}
-          activeOpacity={0.75}
-          onPress={handleSkip}
-          accessibilityRole="button"
-          accessibilityLabel="Skip for now"
-        >
-          <Text style={styles.skipText}>Skip for now</Text>
-        </TouchableOpacity>
-      </ScrollView>
-
-      {/* DOB Modal */}
-      <Modal
-        visible={dobModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setDobModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Date of Birth</Text>
-
-            <Text style={styles.modalSubtitle}>
-              Choose your child's birth month, day, and year.
-            </Text>
-
-            <View style={styles.pickerColumns}>
-              <View style={styles.pickerColumn}>
-                <Text style={styles.pickerLabel}>Month</Text>
-
-                <ScrollView
-                  style={styles.pickerScroll}
-                  keyboardShouldPersistTaps="always"
-                >
-                  {months.map((month) => (
-                    <TouchableOpacity
-                      key={month.value}
-                      style={[
-                        styles.pickerOption,
-                        selectedMonth === month.value &&
-                          styles.pickerOptionSelected,
-                      ]}
-                      onPress={() => setSelectedMonth(month.value)}
-                    >
-                      <Text
-                        style={[
-                          styles.pickerOptionText,
-                          selectedMonth === month.value &&
-                            styles.pickerOptionTextSelected,
-                        ]}
-                      >
-                        {month.label}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
-
-              <View style={styles.pickerColumnSmall}>
-                <Text style={styles.pickerLabel}>Day</Text>
-
-                <ScrollView
-                  style={styles.pickerScroll}
-                  keyboardShouldPersistTaps="always"
-                >
-                  {days.map((day) => (
-                    <TouchableOpacity
-                      key={day}
-                      style={[
-                        styles.pickerOption,
-                        selectedDay === day && styles.pickerOptionSelected,
-                      ]}
-                      onPress={() => setSelectedDay(day)}
-                    >
-                      <Text
-                        style={[
-                          styles.pickerOptionText,
-                          selectedDay === day &&
-                            styles.pickerOptionTextSelected,
-                        ]}
-                      >
-                        {Number(day)}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
-
-              <View style={styles.pickerColumnSmall}>
-                <Text style={styles.pickerLabel}>Year</Text>
-
-                <ScrollView
-                  style={styles.pickerScroll}
-                  keyboardShouldPersistTaps="always"
-                >
-                  {years.map((year) => (
-                    <TouchableOpacity
-                      key={year}
-                      style={[
-                        styles.pickerOption,
-                        selectedYear === year && styles.pickerOptionSelected,
-                      ]}
-                      onPress={() => setSelectedYear(year)}
-                    >
-                      <Text
-                        style={[
-                          styles.pickerOptionText,
-                          selectedYear === year &&
-                            styles.pickerOptionTextSelected,
-                        ]}
-                      >
-                        {year}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
-            </View>
-
-            <View style={styles.modalButtonRow}>
-              <TouchableOpacity
-                style={styles.modalSecondaryButton}
-                onPress={clearDob}
-              >
-                <Text style={styles.modalSecondaryText}>Add Later</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.modalPrimaryButton}
-                onPress={saveDob}
-              >
-                <Text style={styles.modalPrimaryText}>Save</Text>
-              </TouchableOpacity>
-            </View>
-
-            <TouchableOpacity
-              style={styles.modalCancelButton}
-              onPress={() => setDobModalVisible(false)}
-            >
-              <Text style={styles.modalCancelText}>Cancel</Text>
+    <View style={tagStyles.wrap}>
+      <View style={tagStyles.tagsRow}>
+        {tags.map((tag) => (
+          <View key={tag} style={[tagStyles.tag, { backgroundColor: bg, borderColor: color + "40" }]}>
+            <Text style={[tagStyles.tagText, { color }]}>{tag}</Text>
+            <TouchableOpacity onPress={() => onRemove(tag)} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}>
+              <Feather name="x" size={11} color={color} />
             </TouchableOpacity>
           </View>
-        </View>
-      </Modal>
+        ))}
+        <TextInput
+          style={tagStyles.input}
+          value={inputValue}
+          onChangeText={setInputValue}
+          onSubmitEditing={handleAdd}
+          onEndEditing={handleAdd}
+          placeholder={placeholder}
+          placeholderTextColor="#B0A8C8"
+          returnKeyType="done"
+          blurOnSubmit={false}
+        />
+      </View>
+      <Text style={tagStyles.hint}>Press Enter or comma to add</Text>
+    </View>
+  );
+}
 
-      {/* Communication Modal */}
-      <Modal
-        visible={communicationModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={closeCommunicationModal}
+const tagStyles = StyleSheet.create({
+  wrap: { marginTop: 4 },
+  tagsRow: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 6, minHeight: 36 },
+  tag: { flexDirection: "row", alignItems: "center", gap: 5, borderRadius: 20, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 5 },
+  tagText: { fontSize: 12, fontWeight: "700" },
+  input: { minWidth: 120, fontSize: 12, color: "#2B2463", fontWeight: "600", paddingVertical: 4 },
+  hint: { color: "#B0A8C8", fontSize: 10, fontWeight: "600", marginTop: 4 },
+});
+
+// ── Dropdown Component ────────────────────────────────────────────────────────
+function Dropdown({ value, options, onSelect, placeholder }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <View>
+      <TouchableOpacity
+        style={dropStyles.btn}
+        onPress={() => setOpen(!open)}
+        activeOpacity={0.85}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Communication Style</Text>
+        <Text style={[dropStyles.btnText, !value && { color: "#B0A8C8" }]}>
+          {value || placeholder}
+        </Text>
+        <Feather name={open ? "chevron-up" : "chevron-down"} size={16} color="#7548D8" />
+      </TouchableOpacity>
+      {open && (
+        <View style={dropStyles.menu}>
+          <ScrollView style={{ maxHeight: 200 }} nestedScrollEnabled>
+            {options.map((opt) => (
+              <TouchableOpacity
+                key={opt}
+                style={[dropStyles.option, value === opt && dropStyles.optionSelected]}
+                onPress={() => { onSelect(opt); setOpen(false); }}
+                activeOpacity={0.85}
+              >
+                <Text style={[dropStyles.optionText, value === opt && dropStyles.optionTextSelected]}>{opt}</Text>
+                {value === opt && <Feather name="check" size={14} color="#7548D8" />}
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      )}
+    </View>
+  );
+}
 
-            <Text style={styles.modalSubtitle}>
-              Choose what fits best right now.
-            </Text>
+const dropStyles = StyleSheet.create({
+  btn: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: "#F6ECFF", borderRadius: 12, borderWidth: 1.5, borderColor: "#E3D2F8", paddingHorizontal: 12, paddingVertical: 10 },
+  btnText: { fontSize: 14, fontWeight: "700", color: "#2B2463", flex: 1 },
+  menu: { backgroundColor: "#FFFFFF", borderRadius: 12, borderWidth: 1, borderColor: "#E3D2F8", marginTop: 4, zIndex: 999, elevation: 10, shadowColor: "#7548D8", shadowOpacity: 0.1, shadowRadius: 8, shadowOffset: { width: 0, height: 4 } },
+  option: { paddingHorizontal: 14, paddingVertical: 10, flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderBottomWidth: 0.5, borderBottomColor: "#F0E8E2" },
+  optionSelected: { backgroundColor: "#F0E2FF" },
+  optionText: { fontSize: 13, fontWeight: "600", color: "#2B2463" },
+  optionTextSelected: { fontWeight: "800", color: "#7548D8" },
+});
 
-            {isCustomCommunicationOpen && (
-              <View style={styles.customBoxTop}>
-                <Text style={styles.customLabel}>
-                  Custom communication style
-                </Text>
+// ── Section Header Component ──────────────────────────────────────────────────
+function SectionCard({ emoji, title, subtitle, color = "#F0E2FF", children }) {
+  return (
+    <View style={secStyles.card}>
+      <View style={secStyles.header}>
+        <View style={[secStyles.iconWrap, { backgroundColor: color }]}>
+          <Text style={secStyles.emoji}>{emoji}</Text>
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={secStyles.title}>{title}</Text>
+          <Text style={secStyles.subtitle}>{subtitle}</Text>
+        </View>
+      </View>
+      <View style={secStyles.body}>{children}</View>
+    </View>
+  );
+}
 
-                <TextInput
-                  value={customCommunication}
-                  onChangeText={setCustomCommunication}
-                  placeholder="Type how your child communicates"
-                  placeholderTextColor="#A99BB8"
-                  style={styles.customInput}
-                  autoFocus
-                />
+const secStyles = StyleSheet.create({
+  card: { backgroundColor: "#FFFFFF", borderRadius: 20, borderWidth: 1, borderColor: "#EFE4DC", marginBottom: 14, shadowColor: "#BFA99D", shadowOpacity: 0.06, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 2 },
+  header: { flexDirection: "row", alignItems: "center", gap: 12, padding: 16, borderBottomWidth: 1, borderBottomColor: "#F5F0F8" },
+  iconWrap: { width: 42, height: 42, borderRadius: 14, alignItems: "center", justifyContent: "center" },
+  emoji: { fontSize: 22 },
+  title: { color: "#2B2463", fontSize: 15, fontWeight: "900" },
+  subtitle: { color: "#837E96", fontSize: 11, fontWeight: "600", marginTop: 1 },
+  body: { padding: 16, gap: 14 },
+});
 
-                <TouchableOpacity
-                  style={styles.customSaveButton}
-                  onPress={saveCustomCommunication}
-                >
-                  <Text style={styles.customSaveText}>
-                    Save Custom Style
-                  </Text>
-                </TouchableOpacity>
+// ── Field Label ───────────────────────────────────────────────────────────────
+function FieldLabel({ label }) {
+  return <Text style={{ color: "#2B2463", fontSize: 11, fontWeight: "900", letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 6 }}>{label}</Text>;
+}
+
+// ── Text Area ─────────────────────────────────────────────────────────────────
+function TextArea({ value, onChangeText, placeholder, rows = 3 }) {
+  return (
+    <TextInput
+      style={[{ backgroundColor: "#F6ECFF", borderRadius: 12, borderWidth: 1.5, borderColor: "#E3D2F8", paddingHorizontal: 12, paddingVertical: 10, fontSize: 13, color: "#2B2463", fontWeight: "600", minHeight: rows * 22, textAlignVertical: "top" }]}
+      value={value}
+      onChangeText={onChangeText}
+      placeholder={placeholder}
+      placeholderTextColor="#B0A8C8"
+      multiline
+      numberOfLines={rows}
+    />
+  );
+}
+
+// ── Field Input ───────────────────────────────────────────────────────────────
+function FieldInput({ value, onChangeText, placeholder, keyboardType = "default" }) {
+  return (
+    <TextInput
+      style={{ backgroundColor: "#F6ECFF", borderRadius: 12, borderWidth: 1.5, borderColor: "#E3D2F8", paddingHorizontal: 12, paddingVertical: 10, fontSize: 13, color: "#2B2463", fontWeight: "600" }}
+      value={value}
+      onChangeText={onChangeText}
+      placeholder={placeholder}
+      placeholderTextColor="#B0A8C8"
+      keyboardType={keyboardType}
+    />
+  );
+}
+
+// ── Two Column Layout ─────────────────────────────────────────────────────────
+function TwoCol({ children }) {
+  return <View style={{ flexDirection: "row", gap: 12 }}>{children}</View>;
+}
+
+function Col({ children, flex = 1 }) {
+  return <View style={{ flex }}>{children}</View>;
+}
+
+// ── Main Screen ───────────────────────────────────────────────────────────────
+export default function ChildProfileScreen({ navigation }) {
+  const [isSaving, setIsSaving] = useState(false);
+  const [savedMsg, setSavedMsg] = useState("");
+
+  // Basic Info
+  const [avatar, setAvatar] = useState("🦕");
+  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
+  const [childName, setChildName] = useState("");
+  const [nickname, setNickname] = useState("");
+  const [age, setAge] = useState("");
+  const [dob, setDob] = useState("");
+  const [pronouns, setPronouns] = useState("");
+  const [grade, setGrade] = useState("");
+
+  // Diagnosis
+  const [diagnosis, setDiagnosis] = useState("");
+  const [additionalSupport, setAdditionalSupport] = useState("");
+  const [supportSummary, setSupportSummary] = useState("");
+
+  // Communication
+  const [commStyle, setCommStyle] = useState("");
+  const [commMethod, setCommMethod] = useState("");
+  const [helpfulPhrases, setHelpfulPhrases] = useState([]);
+  const [whatNotToDo, setWhatNotToDo] = useState([]);
+
+  // Sensory
+  const [sensoryNeeds, setSensoryNeeds] = useState("");
+  const [sensorySensitivities, setSensorySensitivities] = useState("");
+  const [comfortItems, setComfortItems] = useState([]);
+  const [favoriteReinforcers, setFavoriteReinforcers] = useState([]);
+  const [whatHelpsRegulate, setWhatHelpsRegulate] = useState([]);
+
+  // Triggers
+  const [knownTriggers, setKnownTriggers] = useState([]);
+  const [earlyWarningSigns, setEarlyWarningSigns] = useState([]);
+  const [whatMakesWorse, setWhatMakesWorse] = useState("");
+  const [meltdownRecoveryNotes, setMeltdownRecoveryNotes] = useState("");
+
+  // Calming
+  const [whatHelps, setWhatHelps] = useState("");
+  const [calmCornerTools, setCalmCornerTools] = useState("");
+  const [transitionTips, setTransitionTips] = useState("");
+  const [meltdownRecoveryPlan, setMeltdownRecoveryPlan] = useState("");
+
+  // Strengths
+  const [strengths, setStrengths] = useState([]);
+  const [thingsTheyLove, setThingsTheyLove] = useState([]);
+  const [encouragementNotes, setEncouragementNotes] = useState([]);
+  const [caregiverNotes, setCaregiverNotes] = useState("");
+
+  // ── Load ──────────────────────────────────────────────────────────────────
+  useFocusEffect(useCallback(() => {
+    const load = async () => {
+      try {
+        const raw = await AsyncStorage.getItem(CHILD_PROFILE_KEY);
+        if (!raw) return;
+        const p = JSON.parse(raw);
+        if (p.avatar) setAvatar(p.avatar);
+        if (p.childName) setChildName(p.childName);
+        if (p.nickname) setNickname(p.nickname);
+        if (p.age) setAge(String(p.age));
+        if (p.dob) setDob(p.dob);
+        if (p.pronouns) setPronouns(p.pronouns);
+        if (p.grade) setGrade(p.grade);
+        if (p.diagnosis) setDiagnosis(p.diagnosis);
+        if (p.additionalSupport) setAdditionalSupport(p.additionalSupport);
+        if (p.supportSummary) setSupportSummary(p.supportSummary);
+        if (p.communicationStyle) setCommStyle(p.communicationStyle);
+        if (p.commMethod) setCommMethod(p.commMethod);
+        if (p.helpfulPhrases) setHelpfulPhrases(p.helpfulPhrases);
+        if (p.whatNotToDo) setWhatNotToDo(p.whatNotToDo);
+        if (p.sensoryNeeds) setSensoryNeeds(p.sensoryNeeds);
+        if (p.sensorySensitivities) setSensorySensitivities(p.sensorySensitivities);
+        if (p.comfortItems) setComfortItems(p.comfortItems);
+        if (p.favoriteReinforcers) setFavoriteReinforcers(p.favoriteReinforcers);
+        if (p.whatHelpsRegulate) setWhatHelpsRegulate(p.whatHelpsRegulate);
+        if (p.knownTriggers) setKnownTriggers(p.knownTriggers);
+        if (p.earlyWarningSigns) setEarlyWarningSigns(p.earlyWarningSigns);
+        if (p.whatMakesWorse) setWhatMakesWorse(p.whatMakesWorse);
+        if (p.meltdownRecoveryNotes) setMeltdownRecoveryNotes(p.meltdownRecoveryNotes);
+        if (p.whatHelps) setWhatHelps(p.whatHelps);
+        if (p.calmCornerTools) setCalmCornerTools(p.calmCornerTools);
+        if (p.transitionTips) setTransitionTips(p.transitionTips);
+        if (p.meltdownRecoveryPlan) setMeltdownRecoveryPlan(p.meltdownRecoveryPlan);
+        if (p.strengths) setStrengths(p.strengths);
+        if (p.thingsTheyLove) setThingsTheyLove(p.thingsTheyLove);
+        if (p.encouragementNotes) setEncouragementNotes(p.encouragementNotes);
+        if (p.caregiverNotes) setCaregiverNotes(p.caregiverNotes);
+      } catch (e) {
+        console.log("Error loading child profile:", e);
+      }
+    };
+    load();
+  }, []));
+
+  // ── Save ──────────────────────────────────────────────────────────────────
+  const handleSave = async () => {
+    if (!childName.trim()) {
+      Alert.alert("Child's name required", "Please enter your child's name before saving.");
+      return;
+    }
+    setIsSaving(true);
+    try {
+      const profile = {
+        avatar, childName: childName.trim(), nickname: nickname.trim(),
+        age: age.trim(), dob: dob.trim(), pronouns, grade,
+        diagnosis: diagnosis.trim(), additionalSupport: additionalSupport.trim(),
+        supportSummary: supportSummary.trim(),
+        communicationStyle: commStyle, commMethod: commMethod.trim(),
+        helpfulPhrases, whatNotToDo,
+        sensoryNeeds: sensoryNeeds.trim(), sensorySensitivities: sensorySensitivities.trim(),
+        comfortItems, favoriteReinforcers, whatHelpsRegulate,
+        knownTriggers, earlyWarningSigns,
+        whatMakesWorse: whatMakesWorse.trim(), meltdownRecoveryNotes: meltdownRecoveryNotes.trim(),
+        whatHelps: whatHelps.trim(), calmCornerTools: calmCornerTools.trim(),
+        transitionTips: transitionTips.trim(), meltdownRecoveryPlan: meltdownRecoveryPlan.trim(),
+        strengths, thingsTheyLove, encouragementNotes,
+        caregiverNotes: caregiverNotes.trim(),
+        updatedAt: new Date().toISOString(),
+      };
+      await AsyncStorage.setItem(CHILD_PROFILE_KEY, JSON.stringify(profile));
+      setSavedMsg("Profile saved! 💜");
+      setTimeout(() => setSavedMsg(""), 3000);
+    } catch (e) {
+      Alert.alert("Error", "Couldn't save profile. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const addTag = (setter) => (tag) => setter(prev => [...prev, tag]);
+  const removeTag = (setter) => (tag) => setter(prev => prev.filter(t => t !== tag));
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+        <ScrollView
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+
+          {/* Header */}
+          <View style={styles.header}>
+            <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.85}>
+              <Feather name="chevron-left" size={22} color="#7548D8" />
+            </TouchableOpacity>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.title}>Child Profile</Text>
+              <Text style={styles.subtitle}>Edit your child's details, preferences, and support needs.</Text>
+            </View>
+          </View>
+
+          {savedMsg ? (
+            <View style={styles.savedBanner}>
+              <Feather name="check-circle" size={16} color="#4A9E5C" />
+              <Text style={styles.savedText}>{savedMsg}</Text>
+            </View>
+          ) : null}
+
+          {/* ── SECTION 1: BASIC INFO ─────────────────────────────────── */}
+          <SectionCard emoji="👤" title="Basic Information" subtitle="Your child's name, age, and identity." color="#F0E2FF">
+
+            {/* Avatar */}
+            <View style={styles.avatarRow}>
+              <TouchableOpacity
+                style={styles.avatarBtn}
+                onPress={() => setShowAvatarPicker(!showAvatarPicker)}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.avatarEmoji}>{avatar}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setShowAvatarPicker(!showAvatarPicker)} activeOpacity={0.75}>
+                <Text style={styles.changeAvatarText}>✏️ Change avatar</Text>
+              </TouchableOpacity>
+            </View>
+
+            {showAvatarPicker && (
+              <View style={styles.avatarPicker}>
+                {AVATAR_OPTIONS.map((a) => (
+                  <TouchableOpacity
+                    key={a}
+                    style={[styles.avatarOption, avatar === a && styles.avatarOptionSelected]}
+                    onPress={() => { setAvatar(a); setShowAvatarPicker(false); }}
+                  >
+                    <Text style={{ fontSize: 24 }}>{a}</Text>
+                  </TouchableOpacity>
+                ))}
               </View>
             )}
 
-            <ScrollView
-              style={styles.communicationScroll}
-              keyboardShouldPersistTaps="always"
-            >
-              {communicationOptions.map((option) => {
-                const selected =
-                  communicationStyle === option ||
-                  (option === "Other / Custom" &&
-                    isCustomCommunicationOpen);
+            <TwoCol>
+              <Col flex={2}>
+                <FieldLabel label="Child's Name" />
+                <FieldInput value={childName} onChangeText={setChildName} placeholder="Full name" />
+              </Col>
+              <Col flex={1.5}>
+                <FieldLabel label="Preferred / Nickname" />
+                <FieldInput value={nickname} onChangeText={setNickname} placeholder="Nickname" />
+              </Col>
+              <Col flex={0.8}>
+                <FieldLabel label="Age" />
+                <FieldInput value={age} onChangeText={setAge} placeholder="5" keyboardType="number-pad" />
+              </Col>
+            </TwoCol>
 
-                return (
-                  <TouchableOpacity
-                    key={option}
-                    style={[
-                      styles.communicationOption,
-                      selected && styles.communicationOptionSelected,
-                    ]}
-                    onPress={() => chooseCommunication(option)}
-                  >
-                    <Text
-                      style={[
-                        styles.communicationOptionText,
-                        selected && styles.communicationOptionTextSelected,
-                      ]}
-                    >
-                      {option}
-                    </Text>
+            <TwoCol>
+              <Col>
+                <FieldLabel label="Date of Birth" />
+                <FieldInput value={dob} onChangeText={setDob} placeholder="MM/DD/YYYY" />
+              </Col>
+              <Col>
+                <FieldLabel label="Pronouns" />
+                <Dropdown value={pronouns} options={PRONOUNS_OPTIONS} onSelect={setPronouns} placeholder="Select..." />
+              </Col>
+            </TwoCol>
 
-                    {selected && (
-                      <Ionicons
-                        name="checkmark"
-                        size={18}
-                        color="#8C35F6"
-                      />
-                    )}
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
+            <View>
+              <FieldLabel label="Grade / School Level" />
+              <Dropdown value={grade} options={GRADE_OPTIONS} onSelect={setGrade} placeholder="Select grade..." />
+            </View>
+          </SectionCard>
 
-            <TouchableOpacity
-              style={styles.modalCancelButton}
-              onPress={closeCommunicationModal}
-            >
-              <Text style={styles.modalCancelText}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+          {/* ── SECTION 2: DIAGNOSIS ──────────────────────────────────── */}
+          <SectionCard emoji="📋" title="Diagnosis & Support Notes" subtitle="For your reference — only shared when you choose." color="#E7F4FF">
+            <View>
+              <FieldLabel label="Primary Diagnosis / Support Area" />
+              <FieldInput value={diagnosis} onChangeText={setDiagnosis} placeholder="e.g. Autism Spectrum Disorder (ASD)" />
+            </View>
+            <View>
+              <FieldLabel label="Additional Support Notes" />
+              <FieldInput value={additionalSupport} onChangeText={setAdditionalSupport} placeholder="e.g. ADHD, Sensory Processing" />
+            </View>
+            <View>
+              <FieldLabel label="Support Summary for Care Team" />
+              <TextArea value={supportSummary} onChangeText={setSupportSummary} placeholder="Describe what your child needs and how they do best..." rows={4} />
+            </View>
+            <View style={styles.privacyNote}>
+              <Feather name="lock" size={13} color="#4C9ED9" />
+              <Text style={styles.privacyNoteText}>This profile is private by default. It can later power your Support Snapshot, PDF exports, and care-team sharing.</Text>
+            </View>
+          </SectionCard>
+
+          {/* ── SECTION 3: COMMUNICATION ──────────────────────────────── */}
+          <SectionCard emoji="💬" title="Communication" subtitle="How your child communicates and what helps." color="#EEF7E9">
+            <TwoCol>
+              <Col>
+                <FieldLabel label="Communication Style" />
+                <Dropdown value={commStyle} options={COMMUNICATION_OPTIONS} onSelect={setCommStyle} placeholder="Select..." />
+              </Col>
+              <Col>
+                <FieldLabel label="Preferred Communication Method" />
+                <FieldInput value={commMethod} onChangeText={setCommMethod} placeholder="e.g. Visual schedule" />
+              </Col>
+            </TwoCol>
+            <View>
+              <FieldLabel label="Helpful Phrases & Approaches" />
+              <TagInput
+                tags={helpfulPhrases}
+                onAdd={addTag(setHelpfulPhrases)}
+                onRemove={removeTag(setHelpfulPhrases)}
+                placeholder="Type and press Enter..."
+                color="#4A9E5C"
+                bg="#EEF7E9"
+              />
+            </View>
+            <View>
+              <FieldLabel label="What NOT to Do During Hard Moments" />
+              <TagInput
+                tags={whatNotToDo}
+                onAdd={addTag(setWhatNotToDo)}
+                onRemove={removeTag(setWhatNotToDo)}
+                placeholder="Type and press Enter..."
+                color="#EF8F7D"
+                bg="#FFE6E4"
+              />
+            </View>
+          </SectionCard>
+
+          {/* ── SECTION 4: SENSORY ────────────────────────────────────── */}
+          <SectionCard emoji="🌿" title="Sensory Profile" subtitle="What helps your child feel safe and regulated." color="#EEF7E9">
+            <TwoCol>
+              <Col>
+                <FieldLabel label="Sensory Needs" />
+                <TextArea value={sensoryNeeds} onChangeText={setSensoryNeeds} placeholder="e.g. Deep pressure, movement breaks..." rows={3} />
+              </Col>
+              <Col>
+                <FieldLabel label="Sensory Sensitivities" />
+                <TextArea value={sensorySensitivities} onChangeText={setSensorySensitivities} placeholder="e.g. Loud noises, bright lights..." rows={3} />
+              </Col>
+            </TwoCol>
+            <View>
+              <FieldLabel label="Comfort Items" />
+              <TagInput
+                tags={comfortItems}
+                onAdd={addTag(setComfortItems)}
+                onRemove={removeTag(setComfortItems)}
+                placeholder="Type and press Enter..."
+                color="#7548D8"
+                bg="#F0E2FF"
+              />
+            </View>
+            <View>
+              <FieldLabel label="Favorite Reinforcers" />
+              <TagInput
+                tags={favoriteReinforcers}
+                onAdd={addTag(setFavoriteReinforcers)}
+                onRemove={removeTag(setFavoriteReinforcers)}
+                placeholder="Type and press Enter..."
+                color="#D99A3D"
+                bg="#FFF0DF"
+              />
+            </View>
+            <View>
+              <FieldLabel label="What Helps Regulate" />
+              <TagInput
+                tags={whatHelpsRegulate}
+                onAdd={addTag(setWhatHelpsRegulate)}
+                onRemove={removeTag(setWhatHelpsRegulate)}
+                placeholder="Type and press Enter..."
+                color="#4C9ED9"
+                bg="#E7F4FF"
+              />
+            </View>
+          </SectionCard>
+
+          {/* ── SECTION 5: TRIGGERS ───────────────────────────────────── */}
+          <SectionCard emoji="⚠️" title="Triggers & Hard Moments" subtitle="What to watch for and how to help." color="#FFF0DF">
+            <View>
+              <FieldLabel label="Known Triggers" />
+              <TagInput
+                tags={knownTriggers}
+                onAdd={addTag(setKnownTriggers)}
+                onRemove={removeTag(setKnownTriggers)}
+                placeholder="Type and press Enter..."
+                color="#D86A5B"
+                bg="#FFE6E4"
+              />
+            </View>
+            <View>
+              <FieldLabel label="Early Warning Signs" />
+              <TagInput
+                tags={earlyWarningSigns}
+                onAdd={addTag(setEarlyWarningSigns)}
+                onRemove={removeTag(setEarlyWarningSigns)}
+                placeholder="Type and press Enter..."
+                color="#D99A3D"
+                bg="#FFF0DF"
+              />
+            </View>
+            <TwoCol>
+              <Col>
+                <FieldLabel label="What Makes Hard Moments Worse" />
+                <TextArea value={whatMakesWorse} onChangeText={setWhatMakesWorse} placeholder="e.g. Rushing, raised voices..." rows={3} />
+              </Col>
+              <Col>
+                <FieldLabel label="Meltdown / Recovery Notes" />
+                <TextArea value={meltdownRecoveryNotes} onChangeText={setMeltdownRecoveryNotes} placeholder="e.g. Needs 5-10 min alone..." rows={3} />
+              </Col>
+            </TwoCol>
+          </SectionCard>
+
+          {/* ── SECTION 6: CALMING ────────────────────────────────────── */}
+          <SectionCard emoji="🧘" title="Calming Strategies" subtitle="What works when things get hard." color="#E7F4FF">
+            <TwoCol>
+              <Col>
+                <FieldLabel label="What Helps" />
+                <TextArea value={whatHelps} onChangeText={setWhatHelps} placeholder="e.g. Offer blanket, gentle touch..." rows={3} />
+              </Col>
+              <Col>
+                <FieldLabel label="Calm Corner / Tools" />
+                <TextArea value={calmCornerTools} onChangeText={setCalmCornerTools} placeholder="e.g. Blanket, toy, iPad..." rows={3} />
+              </Col>
+            </TwoCol>
+            <TwoCol>
+              <Col>
+                <FieldLabel label="Transition Tips" />
+                <TextArea value={transitionTips} onChangeText={setTransitionTips} placeholder="e.g. 10 and 5 min warnings..." rows={3} />
+              </Col>
+              <Col>
+                <FieldLabel label="Meltdown Recovery Plan" />
+                <TextArea value={meltdownRecoveryPlan} onChangeText={setMeltdownRecoveryPlan} placeholder="Step 1: Create safety..." rows={3} />
+              </Col>
+            </TwoCol>
+          </SectionCard>
+
+          {/* ── SECTION 7: STRENGTHS ──────────────────────────────────── */}
+          <SectionCard emoji="⭐" title="Strengths & What They Love" subtitle="The things that make your child uniquely them." color="#FFF0DF">
+            <View>
+              <FieldLabel label="Strengths" />
+              <TagInput
+                tags={strengths}
+                onAdd={addTag(setStrengths)}
+                onRemove={removeTag(setStrengths)}
+                placeholder="Type and press Enter..."
+                color="#7548D8"
+                bg="#F0E2FF"
+              />
+            </View>
+            <View>
+              <FieldLabel label="Things They Love" />
+              <TagInput
+                tags={thingsTheyLove}
+                onAdd={addTag(setThingsTheyLove)}
+                onRemove={removeTag(setThingsTheyLove)}
+                placeholder="Type and press Enter..."
+                color="#D99A3D"
+                bg="#FFF0DF"
+              />
+            </View>
+            <View>
+              <FieldLabel label="Encouragement Notes" />
+              <TagInput
+                tags={encouragementNotes}
+                onAdd={addTag(setEncouragementNotes)}
+                onRemove={removeTag(setEncouragementNotes)}
+                placeholder="Type and press Enter..."
+                color="#4A9E5C"
+                bg="#EEF7E9"
+              />
+            </View>
+            <View>
+              <FieldLabel label="Caregiver Notes Visible on Snapshot" />
+              <TextArea value={caregiverNotes} onChangeText={setCaregiverNotes} placeholder="What do you want teachers and therapists to know about your child?" rows={4} />
+            </View>
+          </SectionCard>
+
+          {/* Save Button */}
+          <TouchableOpacity
+            style={[styles.saveBtn, isSaving && { opacity: 0.7 }]}
+            onPress={handleSave}
+            disabled={isSaving}
+            activeOpacity={0.88}
+          >
+            {isSaving ? (
+              <ActivityIndicator color="#FFFFFF" size="small" />
+            ) : (
+              <>
+                <Feather name="check-circle" size={20} color="#FFFFFF" />
+                <Text style={styles.saveBtnText}>Save Child Profile</Text>
+              </>
+            )}
+          </TouchableOpacity>
+
+          <Text style={styles.footerText}>
+            This profile powers your Support Snapshot, Hugi AI responses, and care team sharing. 💜
+          </Text>
+
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: "#FFF9F3",
-  },
+  safeArea: { flex: 1, backgroundColor: "#FFF9F2" },
+  content: { paddingHorizontal: 16, paddingTop: Platform.OS === "ios" ? 6 : 16, paddingBottom: 100 },
 
-  scroll: {
-    flex: 1,
-  },
+  header: { flexDirection: "row", alignItems: "flex-start", gap: 12, marginBottom: 16 },
+  backBtn: { width: 38, height: 38, borderRadius: 13, backgroundColor: "#F0E2FF", alignItems: "center", justifyContent: "center", marginTop: 2 },
+  title: { color: "#2B2463", fontSize: 22, fontWeight: "900" },
+  subtitle: { color: "#837E96", fontSize: 12, fontWeight: "600", marginTop: 2 },
 
-  container: {
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 40,
-  },
+  savedBanner: { flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: "#EEF7E9", borderRadius: 12, padding: 12, marginBottom: 14, borderWidth: 1, borderColor: "#C5E3C8" },
+  savedText: { color: "#4A9E5C", fontSize: 13, fontWeight: "700" },
 
-  topRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 10,
-  },
+  avatarRow: { flexDirection: "row", alignItems: "center", gap: 14, marginBottom: 4 },
+  avatarBtn: { width: 72, height: 72, borderRadius: 22, backgroundColor: "#F0E2FF", alignItems: "center", justifyContent: "center", borderWidth: 2, borderColor: "#E3D2F8" },
+  avatarEmoji: { fontSize: 40 },
+  changeAvatarText: { color: "#7548D8", fontSize: 13, fontWeight: "700" },
+  avatarPicker: { flexDirection: "row", flexWrap: "wrap", gap: 10, backgroundColor: "#F6ECFF", borderRadius: 16, padding: 12, marginBottom: 8 },
+  avatarOption: { width: 48, height: 48, borderRadius: 14, backgroundColor: "#FFFFFF", alignItems: "center", justifyContent: "center", borderWidth: 1.5, borderColor: "#E3D2F8" },
+  avatarOptionSelected: { borderColor: "#7548D8", backgroundColor: "#F0E2FF" },
 
-  backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "#F1E5FF",
-    alignItems: "center",
-    justifyContent: "center",
-  },
+  privacyNote: { flexDirection: "row", alignItems: "flex-start", gap: 8, backgroundColor: "#E7F4FF", borderRadius: 12, padding: 10, borderWidth: 1, borderColor: "#A8D4F5" },
+  privacyNoteText: { flex: 1, color: "#4C9ED9", fontSize: 11, fontWeight: "600", lineHeight: 16 },
 
-  brandRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-
-  brandText: {
-    fontSize: 22,
-    fontWeight: "900",
-    color: "#20204F",
-  },
-
-  brandAccent: {
-    color: "#F1768E",
-  },
-
-  topSpacer: {
-    width: 44,
-  },
-
-  progressRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 8,
-    marginBottom: 4,
-  },
-
-  progressDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: "#D9D4D0",
-  },
-
-  progressActive: {
-    backgroundColor: "#8C55F6",
-    width: 24,
-  },
-
-  stepLabel: {
-    textAlign: "center",
-    color: "#837E96",
-    fontSize: 11,
-    fontWeight: "700",
-    marginBottom: 12,
-  },
-
-  title: {
-    fontSize: 28,
-    lineHeight: 34,
-    fontWeight: "900",
-    color: "#111A4D",
-    textAlign: "center",
-    letterSpacing: -0.5,
-    marginBottom: 6,
-  },
-
-  subtitle: {
-    fontSize: 14,
-    lineHeight: 20,
-    color: "#3C365F",
-    textAlign: "center",
-    fontWeight: "600",
-    marginBottom: 14,
-  },
-
-  headerCard: {
-    width: "100%",
-    height: 110,
-    borderRadius: 22,
-    overflow: "hidden",
-    backgroundColor: "#F1E5FF",
-    marginBottom: 14,
-  },
-
-  headerIllustration: {
-    width: "100%",
-    height: "100%",
-  },
-
-  formCard: {
-    minHeight: 70,
-    borderRadius: 18,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#F1E7DF",
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 12,
-    marginBottom: 10,
-    shadowColor: "#D8C6B8",
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 2,
-  },
-
-  fieldIconBox: {
-    width: 42,
-    height: 42,
-    borderRadius: 13,
-    backgroundColor: "#F3EAFE",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 11,
-  },
-
-  fieldContent: {
-    flex: 1,
-    paddingVertical: 10,
-  },
-
-  fieldLabel: {
-    fontSize: 12,
-    fontWeight: "900",
-    color: "#111A4D",
-    marginBottom: 6,
-  },
-
-  input: {
-    height: 34,
-    borderRadius: 11,
-    borderWidth: 1,
-    borderColor: "#E4D9F0",
-    backgroundColor: "#FFF9F3",
-    paddingHorizontal: 11,
-    fontSize: 14,
-    color: "#2D2357",
-    fontWeight: "600",
-  },
-
-  fakeInputRow: {
-    height: 34,
-    borderRadius: 11,
-    borderWidth: 1,
-    borderColor: "#E4D9F0",
-    backgroundColor: "#FFF9F3",
-    paddingHorizontal: 11,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-
-  fakeInputText: {
-    flex: 1,
-    fontSize: 14,
-    color: "#A99BB8",
-    fontWeight: "600",
-    marginRight: 6,
-  },
-
-  selectedInputText: {
-    color: "#2D2357",
-  },
-
-  noteCard: {
-    borderRadius: 16,
-    backgroundColor: "#F5E9FF",
-    borderWidth: 1,
-    borderColor: "#E4CFFF",
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    marginBottom: 14,
-    gap: 10,
-  },
-
-  noteText: {
-    flex: 1,
-    fontSize: 13,
-    color: "#3C365F",
-    fontWeight: "600",
-  },
-
-  button: {
-    width: "100%",
-    height: 58,
-    borderRadius: 22,
-    backgroundColor: "#8C35F6",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
-    shadowColor: "#8C55F6",
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 6,
-    marginBottom: 12,
-  },
-
-  buttonText: {
-    color: "#FFFFFF",
-    fontSize: 18,
-    fontWeight: "900",
-  },
-
-  skipButton: {
-    alignItems: "center",
-    paddingVertical: 8,
-  },
-
-  skipText: {
-    color: "#837E96",
-    fontSize: 13,
-    fontWeight: "700",
-  },
-
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(45,35,87,0.35)",
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 20,
-  },
-
-  modalCard: {
-    width: "100%",
-    maxHeight: "84%",
-    borderRadius: 28,
-    backgroundColor: "#FFF9F3",
-    padding: 18,
-    borderWidth: 1,
-    borderColor: "#E4CFFF",
-  },
-
-  modalTitle: {
-    fontSize: 22,
-    fontWeight: "900",
-    color: "#111A4D",
-    marginBottom: 4,
-  },
-
-  modalSubtitle: {
-    fontSize: 13,
-    color: "#6C6284",
-    fontWeight: "600",
-    marginBottom: 14,
-  },
-
-  pickerColumns: {
-    flexDirection: "row",
-    gap: 8,
-  },
-
-  pickerColumn: {
-    flex: 1.35,
-  },
-
-  pickerColumnSmall: {
-    flex: 1,
-  },
-
-  pickerLabel: {
-    fontSize: 12,
-    fontWeight: "900",
-    color: "#4F3B68",
-    marginBottom: 6,
-    textAlign: "center",
-  },
-
-  pickerScroll: {
-    height: 220,
-  },
-
-  pickerOption: {
-    minHeight: 40,
-    borderRadius: 13,
-    backgroundColor: "#F3EAFE",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 6,
-    paddingHorizontal: 6,
-  },
-
-  pickerOptionSelected: {
-    backgroundColor: "#8C35F6",
-  },
-
-  pickerOptionText: {
-    fontSize: 13,
-    fontWeight: "800",
-    color: "#4F3B68",
-    textAlign: "center",
-  },
-
-  pickerOptionTextSelected: {
-    color: "#FFFFFF",
-  },
-
-  modalButtonRow: {
-    flexDirection: "row",
-    gap: 10,
-    marginTop: 14,
-  },
-
-  modalSecondaryButton: {
-    flex: 1,
-    height: 48,
-    borderRadius: 16,
-    backgroundColor: "#F3EAFE",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  modalSecondaryText: {
-    fontSize: 15,
-    fontWeight: "900",
-    color: "#6F4BCB",
-  },
-
-  modalPrimaryButton: {
-    flex: 1,
-    height: 48,
-    borderRadius: 16,
-    backgroundColor: "#8C35F6",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  modalPrimaryText: {
-    fontSize: 15,
-    fontWeight: "900",
-    color: "#FFFFFF",
-  },
-
-  modalCancelButton: {
-    height: 46,
-    borderRadius: 16,
-    backgroundColor: "#FFFFFF",
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 8,
-    borderWidth: 1,
-    borderColor: "#E4D9F0",
-  },
-
-  modalCancelText: {
-    fontSize: 15,
-    fontWeight: "900",
-    color: "#4F3B68",
-  },
-
-  communicationScroll: {
-    maxHeight: 340,
-  },
-
-  communicationOption: {
-    minHeight: 50,
-    borderRadius: 16,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#F1E7DF",
-    paddingHorizontal: 14,
-    marginBottom: 8,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-
-  communicationOptionSelected: {
-    backgroundColor: "#F3EAFE",
-    borderColor: "#B99AE8",
-  },
-
-  communicationOptionText: {
-    flex: 1,
-    fontSize: 14,
-    fontWeight: "800",
-    color: "#4F3B68",
-    marginRight: 8,
-  },
-
-  communicationOptionTextSelected: {
-    color: "#2D2357",
-    fontWeight: "900",
-  },
-
-  customBoxTop: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 18,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: "#E4D9F0",
-    marginBottom: 10,
-  },
-
-  customLabel: {
-    fontSize: 13,
-    fontWeight: "900",
-    color: "#111A4D",
-    marginBottom: 7,
-  },
-
-  customInput: {
-    height: 42,
-    borderRadius: 13,
-    borderWidth: 1,
-    borderColor: "#E4D9F0",
-    backgroundColor: "#FFF9F3",
-    paddingHorizontal: 12,
-    fontSize: 14,
-    color: "#2D2357",
-    fontWeight: "600",
-    marginBottom: 8,
-  },
-
-  customSaveButton: {
-    height: 44,
-    borderRadius: 14,
-    backgroundColor: "#8C35F6",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  customSaveText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "900",
-  },
+  saveBtn: { height: 56, borderRadius: 18, backgroundColor: "#7548D8", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 12, shadowColor: "#7548D8", shadowOpacity: 0.3, shadowOffset: { width: 0, height: 6 }, shadowRadius: 12, elevation: 6 },
+  saveBtnText: { color: "#FFFFFF", fontSize: 16, fontWeight: "900" },
+  footerText: { color: "#A0A0C0", fontSize: 11, textAlign: "center", lineHeight: 17 },
 });

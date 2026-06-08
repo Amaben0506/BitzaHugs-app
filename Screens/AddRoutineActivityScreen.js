@@ -19,46 +19,6 @@ import { Feather } from "@expo/vector-icons";
 const HOURS = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, "0"));
 const MINUTES = ["00", "05", "10", "15", "20", "25", "30", "35", "40", "45", "50", "55"];
 const PERIODS = ["AM", "PM"];
-const [reminderEnabled, setReminderEnabled] = useState(false);
-const [reminderOffset, setReminderOffset] = useState("10 min");
-
-
-{/* Reminder Toggle */}
-<View style={styles.inputCard}>
-  <View style={styles.reminderRow}>
-    <View>
-      <Text style={styles.inputLabel}>Remind me</Text>
-      <Text style={styles.reminderSub}>Get a notification before this activity</Text>
-    </View>
-    <TouchableOpacity
-      style={[styles.toggle, reminderEnabled && styles.toggleOn]}
-      onPress={() => setReminderEnabled((v) => !v)}
-      activeOpacity={0.85}
-    >
-      <View style={[styles.toggleThumb, reminderEnabled && styles.toggleThumbOn]} />
-    </TouchableOpacity>
-  </View>
-
-  {reminderEnabled && (
-    <View style={styles.reminderOptions}>
-      <Text style={styles.reminderLabel}>Remind me how early?</Text>
-      <View style={styles.reminderChips}>
-        {["5 min", "10 min", "15 min", "30 min"].map((opt) => (
-          <TouchableOpacity
-            key={opt}
-            style={[styles.reminderChip, reminderOffset === opt && styles.reminderChipActive]}
-            onPress={() => setReminderOffset(opt)}
-            activeOpacity={0.8}
-          >
-            <Text style={[styles.reminderChipText, reminderOffset === opt && styles.reminderChipTextActive]}>
-              {opt} before
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-    </View>
-  )}
-</View>
 
 // ─── Icon Options ─────────────────────────────────────────────────────────────
 const iconOptions = [
@@ -125,6 +85,8 @@ export default function AddRoutineActivityScreen({ navigation }) {
   const [hour, setHour] = useState("07");
   const [minute, setMinute] = useState("00");
   const [period, setPeriod] = useState("AM");
+  const [reminderEnabled, setReminderEnabled] = useState(false);
+  const [reminderOffset, setReminderOffset] = useState("10 min");
 
   const timeDisplay = `${hour}:${minute} ${period}`;
 
@@ -200,6 +162,43 @@ export default function AddRoutineActivityScreen({ navigation }) {
             <Feather name="clock" size={18} color="#6F42D8" />
           </View>
         </TouchableOpacity>
+
+        {/* Reminder Toggle */}
+        <View style={styles.inputCard}>
+          <View style={styles.reminderRow}>
+            <View>
+              <Text style={styles.inputLabel}>Remind me</Text>
+              <Text style={styles.reminderSub}>Get a notification before this activity</Text>
+            </View>
+            <TouchableOpacity
+              style={[styles.toggle, reminderEnabled && styles.toggleOn]}
+              onPress={() => setReminderEnabled((v) => !v)}
+              activeOpacity={0.85}
+            >
+              <View style={[styles.toggleThumb, reminderEnabled && styles.toggleThumbOn]} />
+            </TouchableOpacity>
+          </View>
+
+          {reminderEnabled && (
+            <View style={styles.reminderOptions}>
+              <Text style={styles.reminderLabel}>Remind me how early?</Text>
+              <View style={styles.reminderChips}>
+                {["5 min", "10 min", "15 min", "30 min"].map((opt) => (
+                  <TouchableOpacity
+                    key={opt}
+                    style={[styles.reminderChip, reminderOffset === opt && styles.reminderChipActive]}
+                    onPress={() => setReminderOffset(opt)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.reminderChipText, reminderOffset === opt && styles.reminderChipTextActive]}>
+                      {opt} before
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
+        </View>
 
         {/* Icon Picker */}
         <View style={styles.card}>
@@ -552,4 +551,3 @@ reminderChipActive: { backgroundColor: "#7548D8", borderColor: "#7548D8" },
 reminderChipText: { color: "#7548D8", fontSize: 12, fontWeight: "700" },
 reminderChipTextActive: { color: "#FFFFFF" },
 });
-
