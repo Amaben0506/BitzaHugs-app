@@ -20,7 +20,13 @@ export default function SplashScreen({ navigation }) {
     try {
       const complete = await AsyncStorage.getItem("bitzaOnboardingComplete");
 
-      navigation.replace(complete === "true" ? "MainTabs" : "Welcome");
+      const accountSeen = await AsyncStorage.getItem("bitzaAccountPromptSeen");
+      const accountCreated = await AsyncStorage.getItem("bitzaAccountCreated");
+      if (complete === "true" && !accountCreated && !accountSeen) {
+        navigation.replace("CreateAccount");
+      } else {
+        navigation.replace(complete === "true" ? "ReturningUser" : "Welcome");
+      }
     } catch (e) {
       console.log("Error checking onboarding:", e);
       navigation.replace("Welcome");

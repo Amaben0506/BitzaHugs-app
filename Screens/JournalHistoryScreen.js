@@ -31,6 +31,15 @@ const formatMood = (mood) => {
 export default function JournalHistoryScreen({ navigation }) {
   const [entries, setEntries] = useState([]);
 
+  // Self-check premium
+  useFocusEffect(useCallback(() => {
+    const checkPremium = async () => {
+      const premium = await AsyncStorage.getItem("bitzaIsPremium");
+      if (premium !== "true") navigation.replace("PremiumUpgrade");
+    };
+    checkPremium();
+  }, []));
+
   useFocusEffect(
     useCallback(() => {
       const load = async () => {
