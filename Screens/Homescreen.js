@@ -152,6 +152,8 @@ export default function HomeScreen({ navigation }) {
     { title: "Breathing", text: "Exercise", icon: require("../assets/icons/support-breathing.png"), screen: "Breathing", color: "#E3F2FF" },
     { title: "Calm", text: "Journal", icon: require("../assets/icons/support-calm-journal.png"), screen: "CalmJournal", color: "#EEF7E9", premium: true },
     { title: "Calming", text: "Sounds", icon: require("../assets/icons/tool-calming-sounds-headphones.png"), screen: "CalmingSounds", color: "#FFE7E0" },
+    { title: "Pause", text: "With Me", icon: require("../assets/icons/support-heart-hug.png"), screen: "PauseWithMe", color: "#FFF0DF" },
+    { title: "Show", text: "Me", icon: require("../assets/icons/support-grounding-feet.png"), screen: "ShowMe", color: "#E8F7EE" },
   ];
 
   const childName = childProfile?.childName?.trim() || null;
@@ -280,8 +282,25 @@ export default function HomeScreen({ navigation }) {
                 </View>
                 <Text style={styles.cardTitle}>Today's Routine</Text>
               </View>
+              <TouchableOpacity onPress={() => goToScreen("Routine")}>
+                <Text style={styles.linkText}>View all ›</Text>
+              </TouchableOpacity>
             </View>
-            {routineItems.map((item, index) => (
+            {/* Progress bar */}
+            {(() => {
+              const done = routineItems.filter(r => r.complete).length;
+              const total = routineItems.length;
+              const pct = total > 0 ? done / total : 0;
+              return (
+                <View style={styles.progressWrap}>
+                  <View style={styles.progressTrack}>
+                    <View style={[styles.progressFill, { width: `${Math.round(pct * 100)}%` }]} />
+                  </View>
+                  <Text style={styles.progressLabel}>{done}/{total} done</Text>
+                </View>
+              );
+            })()}
+            {routineItems.slice(0, 3).map((item, index) => (
               <View key={item.title}>
                 <View style={styles.routineRow}>
                   <Image source={item.icon} style={styles.routineIcon} />
@@ -296,6 +315,11 @@ export default function HomeScreen({ navigation }) {
                 {index !== routineItems.length - 1 && <View style={styles.divider} />}
               </View>
             ))}
+            {routineItems.length > 3 && (
+              <TouchableOpacity onPress={() => goToScreen("Routine")} activeOpacity={0.75} style={styles.moreActivities}>
+                <Text style={styles.moreActivitiesText}>+{routineItems.length - 3} more activities →</Text>
+              </TouchableOpacity>
+            )}
             <TouchableOpacity activeOpacity={0.75} style={styles.addButton} onPress={goToAddActivity}>
               <Ionicons name="add" size={16} color={ACCENT} />
               <Text style={styles.addButtonText}>Add Activity</Text>
@@ -348,9 +372,12 @@ export default function HomeScreen({ navigation }) {
           {/* Quick Tools */}
           <View style={styles.quickHeader}>
             <Text style={styles.sectionTitle}>Quick Tools</Text>
+            <TouchableOpacity onPress={() => goToScreen("Support")}>
+              <Text style={styles.linkText}>View all ›</Text>
+            </TouchableOpacity>
           </View>
 
-          <View style={styles.toolsRow}>
+          <View style={styles.toolsGrid}>
             {tools.map((tool) => (
               <TouchableOpacity
                 key={tool.title}
@@ -395,7 +422,7 @@ const styles = StyleSheet.create({
   profileIcon: { width: 32, height: 32, resizeMode: "contain" },
 
   greetingArea: { marginBottom: 10 },
-  greeting: { fontSize: 20, lineHeight: 24, fontWeight: "800", color: PURPLE, marginBottom: 2 },
+  greeting: { fontSize: 26, lineHeight: 32, fontWeight: "900", color: PURPLE, marginBottom: 2, letterSpacing: -0.5 },
   greetingSubRow: { minHeight: 38, justifyContent: "center" },
   subGreeting: { fontSize: 13, lineHeight: 18, fontWeight: "600", color: PURPLE, width: "68%" },
   sunrise: { position: "absolute", right: 0, bottom: 0, width: 90, height: 38 },
@@ -471,10 +498,17 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 16, fontWeight: "800", color: PURPLE },
 
   toolsRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 10 },
-  toolCard: { width: "23%", borderRadius: 12, paddingVertical: 7, paddingHorizontal: 4, alignItems: "center", minHeight: 85 },
+  toolsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 10 },
+  toolCard: { width: "30.5%", borderRadius: 14, paddingVertical: 10, paddingHorizontal: 6, alignItems: "center", minHeight: 88 },
   toolIcon: { width: 28, height: 28, resizeMode: "contain", marginBottom: 3 },
   toolTitle: { fontSize: 10.5, lineHeight: 12, fontWeight: "800", color: PURPLE, textAlign: "center", marginBottom: 1 },
   toolText: { fontSize: 9.5, lineHeight: 11, fontWeight: "500", color: "#4D4662", textAlign: "center" },
   toolPremiumBadge: { backgroundColor: "#EFE1FF", borderRadius: 6, paddingHorizontal: 5, paddingVertical: 2, marginTop: 2 },
   toolPremiumText: { color: "#7548D8", fontSize: 8, fontWeight: "900" },
+  progressWrap: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 8, marginTop: 2 },
+  progressTrack: { flex: 1, height: 6, borderRadius: 3, backgroundColor: "#EDE8F5", overflow: "hidden" },
+  progressFill: { height: 6, borderRadius: 3, backgroundColor: "#7548D8" },
+  progressLabel: { color: "#8E87A0", fontSize: 11, fontWeight: "700", minWidth: 50, textAlign: "right" },
+  moreActivities: { paddingVertical: 8, alignItems: "center" },
+  moreActivitiesText: { color: ACCENT, fontSize: 12, fontWeight: "700" },
 });

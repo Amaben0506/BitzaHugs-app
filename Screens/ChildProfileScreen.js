@@ -1,20 +1,13 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  TextInput,
-  Image,
-  Platform,
-  Alert,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity,
+  TextInput, Image, Platform, Alert, ActivityIndicator,
 } from "react-native";
-
 import { SafeAreaView } from "react-native-safe-area-context";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Feather, Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
+import { LinearGradient } from "expo-linear-gradient";
 
 const STORAGE_KEY = "bitzaChildProfile";
 const EXTRA_STORAGE_KEY = "bitzaChildProfiles";
@@ -34,488 +27,720 @@ const AVATARS = [
   { id: "12", source: require("../assets/icons/child-profile-12.png") },
 ];
 
-const communicationOptions = [
-  "Verbal", "Mostly verbal", "Uses short phrases", "Minimally speaking",
-  "Nonverbal", "Uses gestures", "Uses pointing", "Uses PECS / picture cards",
-  "Uses AAC device", "Uses sign language", "Uses sounds / vocalizations",
-  "Uses behavior to communicate needs", "Mixed communication style", "Not added yet",
+const PRONOUNS = ["He / Him", "She / Her", "They / Them", "He / They", "She / They", "Prefer not to say"];
+const COMM_OPTIONS = [
+  "Verbal", "Verbal with support", "Mostly verbal", "Uses short phrases",
+  "Minimally speaking", "Nonverbal", "Uses gestures", "Uses pointing",
+  "Uses PECS / picture cards", "Uses AAC device", "Uses sign language",
+  "Uses sounds / vocalizations", "Mixed communication style", "Not added yet",
 ];
-
-const supportNeeds = [
-  "Transitions", "Meltdowns", "Sensory overload", "Routine changes",
-  "Communication support", "Sleep", "School support", "Appointments",
+const GRADE_OPTIONS = [
+  "Not in school yet", "Early intervention", "Pre-K", "Kindergarten",
+  "1st grade", "2nd grade", "3rd grade", "4th grade", "5th grade",
+  "6th grade", "7th grade", "8th grade", "9th grade", "10th grade",
+  "11th grade", "12th grade", "Homeschooled", "Post-secondary",
 ];
 
 const BLANK = {
-  childName: "", age: "", dob: "",
-  communicationStyle: "Not added yet",
-  avatar: "01", supportNeeds: [], notes: "",
+  avatar: "01", childName: "", nickname: "", age: "", dob: "", pronouns: "", grade: "",
+  diagnosis: "", additionalSupport: "", supportSummary: "",
+  communicationStyle: "Not added yet", commMethod: "",
+  helpfulPhrases: [], whatNotToDo: [],
+  sensoryNeeds: "", sensorySensitivities: "",
+  comfortItems: [], favoriteReinforcers: [], whatHelpsRegulate: [],
+  knownTriggers: [], earlyWarningSigns: [],
+  whatMakesWorse: "", meltdownRecoveryNotes: "",
+  whatHelps: "", calmCornerTools: "", transitionTips: "", meltdownRecoveryPlan: "",
+  strengths: [], thingsTheyLove: [], encouragementNotes: [], caregiverNotes: "",
 };
 
-function SectionTitle({ title, caption }) {
+// ── Tag Input ─────────────────────────────────────────────────────────────────
+function TagInput({ tags, onAdd, onRemove, placeholder, accentColor = "#7548D8", bgColor = "#F0E2FF" }) {
+  const [val, setVal] = useState("");
+  const submit = () => {
+    const t = val.trim().replace(/,$/, "");
+    if (!t || tags.includes(t)) { setVal(""); return; }
+    onAdd(t); setVal("");
+  };
   return (
-    <View style={styles.sectionHeader}>
-      <Text style={styles.sectionTitle}>{title}</Text>
-      {caption ? <Text style={styles.sectionCaption}>{caption}</Text> : null}
+    <View style={ts.wrap}>
+      <View style={ts.row}>
+        {tags.map(tag => (
+          <View key={tag} style={[ts.tag, { backgroundColor: bgColor, borderColor: accentColor + "33" }]}>
+            <Text style={[ts.tagTxt, { color: accentColor }]}>{tag}</Text>
+            <TouchableOpacity onPress={() => onRemove(tag)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <Ionicons name="close-circle" size={14} color={accentColor + "99"} />
+            </TouchableOpacity>
+          </View>
+        ))}
+        <TextInput
+          style={ts.input}
+          value={val}
+          onChangeText={v => { setVal(v); if (v.endsWith(",")) submit(); }}
+          onSubmitEditing={submit}
+          placeholder={placeholder}
+          placeholderTextColor="#C0B8D0"
+          returnKeyType="done"
+          blurOnSubmit={false}
+        />
+      </View>
+      <Text style={ts.hint}>Tap Enter or comma to add</Text>
     </View>
   );
 }
+const ts = StyleSheet.create({
+  wrap: { gap: 5 },
+  row: { flexDirection: "row", flexWrap: "wrap", gap: 7, alignItems: "center", minHeight: 42, backgroundColor: "#FDFAFF", borderRadius: 14, borderWidth: 1.5, borderColor: "#EDE4F5", padding: 8 },
+  tag: { flexDirection: "row", alignItems: "center", gap: 4, borderRadius: 20, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 5 },
+  tagTxt: { fontSize: 12, fontWeight: "700" },
+  input: { flex: 1, minWidth: 80, fontSize: 13, color: "#2B2463", fontWeight: "600", paddingVertical: 2 },
+  hint: { color: "#C0B8D0", fontSize: 10, fontWeight: "600", paddingLeft: 2 },
+});
 
+// ── Dropdown ──────────────────────────────────────────────────────────────────
+function Dropdown({ value, options, onSelect, placeholder }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <View style={{ zIndex: open ? 100 : 1 }}>
+      <TouchableOpacity style={[dd.btn, open && dd.btnOpen]} onPress={() => setOpen(!open)} activeOpacity={0.85}>
+        <Text style={[dd.txt, !value && dd.ph]} numberOfLines={1}>{value || placeholder}</Text>
+        <Ionicons name={open ? "chevron-up" : "chevron-down"} size={16} color="#9B7EC8" />
+      </TouchableOpacity>
+      {open && (
+        <View style={dd.menu}>
+          <ScrollView style={{ maxHeight: 180 }} nestedScrollEnabled showsVerticalScrollIndicator={false}>
+            {options.map((opt, i) => (
+              <TouchableOpacity
+                key={opt}
+                style={[dd.opt, value === opt && dd.optSel, i === options.length - 1 && { borderBottomWidth: 0 }]}
+                onPress={() => { onSelect(opt); setOpen(false); }}
+              >
+                <Text style={[dd.optTxt, value === opt && dd.optTxtSel]}>{opt}</Text>
+                {value === opt && <Ionicons name="checkmark-circle" size={16} color="#7548D8" />}
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      )}
+    </View>
+  );
+}
+const dd = StyleSheet.create({
+  btn: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: "#FDFAFF", borderRadius: 14, borderWidth: 1.5, borderColor: "#EDE4F5", paddingHorizontal: 14, paddingVertical: 11 },
+  btnOpen: { borderColor: "#7548D8", backgroundColor: "#F8F0FF" },
+  txt: { fontSize: 13, fontWeight: "700", color: "#2B2463", flex: 1, marginRight: 6 },
+  ph: { color: "#C0B8D0" },
+  menu: { position: "absolute", top: "100%", left: 0, right: 0, marginTop: 4, backgroundColor: "#FFFFFF", borderRadius: 14, borderWidth: 1.5, borderColor: "#EDE4F5", shadowColor: "#7548D8", shadowOpacity: 0.12, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 12, zIndex: 999 },
+  opt: { paddingHorizontal: 14, paddingVertical: 12, flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderBottomWidth: 1, borderBottomColor: "#F5F0FA" },
+  optSel: { backgroundColor: "#F8F0FF" },
+  optTxt: { fontSize: 13, fontWeight: "600", color: "#4A3B6B", flex: 1 },
+  optTxtSel: { fontWeight: "800", color: "#7548D8" },
+});
+
+// ── Section Card ──────────────────────────────────────────────────────────────
+function SectionCard({ emoji, title, subtitle, gradColors, children }) {
+  return (
+    <View style={sc.card}>
+      <LinearGradient colors={gradColors || ["#F8F0FF", "#FFF9F2"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={sc.hdr}>
+        <View style={sc.iconWrap}>
+          <Text style={{ fontSize: 22 }}>{emoji}</Text>
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={sc.title}>{title}</Text>
+          <Text style={sc.sub}>{subtitle}</Text>
+        </View>
+      </LinearGradient>
+      <View style={sc.body}>{children}</View>
+    </View>
+  );
+}
+const sc = StyleSheet.create({
+  card: { borderRadius: 22, borderWidth: 1.5, borderColor: "#EDE4F5", marginBottom: 14, overflow: "hidden", backgroundColor: "#FFFFFF", shadowColor: "#7548D8", shadowOpacity: 0.06, shadowOffset: { width: 0, height: 4 }, shadowRadius: 12, elevation: 3 },
+  hdr: { padding: 16, flexDirection: "row", alignItems: "center", gap: 12 },
+  iconWrap: { width: 46, height: 46, borderRadius: 15, backgroundColor: "rgba(255,255,255,0.7)", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(255,255,255,0.9)" },
+  title: { color: "#2B1D5E", fontSize: 15, fontWeight: "900", letterSpacing: -0.2 },
+  sub: { color: "#8B7BAA", fontSize: 11, fontWeight: "600", marginTop: 1 },
+  body: { padding: 16, gap: 14 },
+});
+
+// ── Field helpers ─────────────────────────────────────────────────────────────
+const FL = ({ label }) => (
+  <Text style={{ color: "#7B5EA7", fontSize: 10, fontWeight: "900", letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 6 }}>{label}</Text>
+);
+const FI = ({ value, onChangeText, placeholder, keyboardType = "default" }) => (
+  <TextInput
+    style={{ backgroundColor: "#FDFAFF", borderRadius: 14, borderWidth: 1.5, borderColor: "#EDE4F5", paddingHorizontal: 14, paddingVertical: 11, fontSize: 13, color: "#2B2463", fontWeight: "600" }}
+    value={value} onChangeText={onChangeText} placeholder={placeholder}
+    placeholderTextColor="#C0B8D0" keyboardType={keyboardType}
+  />
+);
+const TA = ({ value, onChangeText, placeholder, rows = 3 }) => (
+  <TextInput
+    style={{ backgroundColor: "#FDFAFF", borderRadius: 14, borderWidth: 1.5, borderColor: "#EDE4F5", paddingHorizontal: 14, paddingTop: 11, paddingBottom: 11, fontSize: 13, color: "#2B2463", fontWeight: "600", minHeight: rows * 26, textAlignVertical: "top" }}
+    value={value} onChangeText={onChangeText} placeholder={placeholder}
+    placeholderTextColor="#C0B8D0" multiline numberOfLines={rows}
+  />
+);
+const Row = ({ children }) => <View style={{ flexDirection: "row", gap: 10 }}>{children}</View>;
+const Col = ({ children, flex = 1 }) => <View style={{ flex }}>{children}</View>;
+
+// ── View row ──────────────────────────────────────────────────────────────────
 function InfoRow({ label, value, last }) {
   if (!value?.trim() || value === "Not added yet") return null;
   return (
-    <View style={[styles.infoRow, last && { borderBottomWidth: 0 }]}>
-      <Text style={styles.infoLabel}>{label}</Text>
-      <Text style={styles.infoValue}>{value}</Text>
+    <View style={[vr.row, last && { borderBottomWidth: 0 }]}>
+      <Text style={vr.label}>{label}</Text>
+      <Text style={vr.value}>{value}</Text>
     </View>
   );
 }
+function TagRow({ label, tags, color = "#7548D8", bg = "#F0E2FF", last }) {
+  if (!tags?.length) return null;
+  return (
+    <View style={[vr.row, last && { borderBottomWidth: 0 }]}>
+      <Text style={vr.label}>{label}</Text>
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 5, marginTop: 4 }}>
+        {tags.map(t => (
+          <View key={t} style={{ backgroundColor: bg, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: color + "30" }}>
+            <Text style={{ color, fontSize: 11, fontWeight: "700" }}>{t}</Text>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+const vr = StyleSheet.create({
+  row: { paddingVertical: 11, borderBottomWidth: 1, borderBottomColor: "#F5F0FA" },
+  label: { color: "#8B7BAA", fontSize: 10, fontWeight: "800", letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 3 },
+  value: { color: "#2B2463", fontSize: 13, fontWeight: "700", lineHeight: 19 },
+});
 
+// ── Main ──────────────────────────────────────────────────────────────────────
 export default function ChildProfileScreen({ navigation, route }) {
   const childIndex = route?.params?.childIndex || 0;
   const [profile, setProfile] = useState(BLANK);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(BLANK);
-  const [savedMessage, setSavedMessage] = useState("");
+  const [savedMsg, setSavedMsg] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
-  useFocusEffect(
-    useCallback(() => {
-      const load = async () => {
-        try {
-          const saved =
-            childIndex === 0
-              ? await AsyncStorage.getItem(STORAGE_KEY)
-              : await AsyncStorage.getItem(EXTRA_STORAGE_KEY);
-          if (saved) {
-            const parsed = JSON.parse(saved);
-            const p = childIndex === 0 ? parsed : parsed[childIndex - 1];
-            if (!p) {
-              setProfile(BLANK);
-              setDraft(BLANK);
-              return;
-            }
-            const loaded = {
-              childName: p.childName || p.name || "",
-              age: p.age === "Not added yet" ? "" : p.age || "",
-              dob: p.dob === "Not added yet" ? "" : p.dob || "",
-              communicationStyle: p.communicationStyle || "Not added yet",
-              avatar: p.avatar || "01",
-              supportNeeds: p.supportNeeds || [],
-              notes: p.notes || "",
-            };
-            setProfile(loaded);
-            setDraft(loaded);
-          } else {
-            setProfile(BLANK);
-            setDraft(BLANK);
-          }
-        } catch (e) {
-          console.log("Error loading child profile:", e);
-        }
-      };
-      load();
-    }, [childIndex])
-  );
+  useFocusEffect(useCallback(() => {
+    const load = async () => {
+      try {
+        const raw = childIndex === 0
+          ? await AsyncStorage.getItem(STORAGE_KEY)
+          : await AsyncStorage.getItem(EXTRA_STORAGE_KEY);
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        const p = childIndex === 0 ? parsed : parsed[childIndex - 1];
+        if (!p) return;
+        const loaded = { ...BLANK, ...p };
+        setProfile(loaded); setDraft(loaded);
+      } catch (e) { console.log("Load error:", e); }
+    };
+    load();
+  }, [childIndex]));
 
-  const avatarId = editing ? draft.avatar : profile.avatar;
-  const avatarSource = AVATARS.find((avatar) => avatar.id === avatarId)?.source || AVATARS[0].source;
-  const showStatus = (msg) => {
-    setSavedMessage(msg);
-    setTimeout(() => setSavedMessage(""), 2200);
-  };
+  const showStatus = (msg) => { setSavedMsg(msg); setTimeout(() => setSavedMsg(""), 2500); };
+
+  const set = (key, val) => setDraft(p => ({ ...p, [key]: val }));
+  const addTag = (key) => (t) => setDraft(p => ({ ...p, [key]: [...(p[key] || []), t] }));
+  const removeTag = (key) => (t) => setDraft(p => ({ ...p, [key]: (p[key] || []).filter(x => x !== t) }));
 
   const handleSave = async () => {
-    const updated = {
-      ...draft,
-      childName: draft.childName.trim() || "Child 1",
-      name: draft.childName.trim() || "Child 1",
-      age: draft.age.trim() || "Not added yet",
-      dob: draft.dob.trim() || "Not added yet",
-      updatedAt: new Date().toISOString(),
-    };
+    setIsSaving(true);
     try {
+      const updated = { ...draft, updatedAt: new Date().toISOString() };
       if (childIndex === 0) {
         await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
       } else {
-        const savedExtras = await AsyncStorage.getItem(EXTRA_STORAGE_KEY);
-        const extras = savedExtras ? JSON.parse(savedExtras) : [];
+        const raw = await AsyncStorage.getItem(EXTRA_STORAGE_KEY);
+        const extras = raw ? JSON.parse(raw) : [];
         extras[childIndex - 1] = updated;
         await AsyncStorage.setItem(EXTRA_STORAGE_KEY, JSON.stringify(extras.filter(Boolean)));
       }
-      setProfile(updated);
-      setEditing(false);
-      showStatus("Child profile saved 💜");
+      setProfile(updated); setEditing(false);
+      showStatus("Child profile saved! 💜");
     } catch (e) {
-      Alert.alert("Oops", "Something went wrong saving the child profile.");
-    }
+      Alert.alert("Error", "Couldn't save. Please try again.");
+    } finally { setIsSaving(false); }
   };
 
-  const handleCancel = () => {
-    setDraft({ ...profile });
-    setEditing(false);
+  const handleCancel = () => { setDraft({ ...profile }); setEditing(false); };
+
+  const handleClear = () => {
+    Alert.alert("Clear Child Profile?", "This will remove all saved profile data.", [
+      { text: "Cancel", style: "cancel" },
+      { text: "Clear", style: "destructive", onPress: async () => {
+        try {
+          if (childIndex === 0) await AsyncStorage.removeItem(STORAGE_KEY);
+          else {
+            const raw = await AsyncStorage.getItem(EXTRA_STORAGE_KEY);
+            const extras = raw ? JSON.parse(raw) : [];
+            await AsyncStorage.setItem(EXTRA_STORAGE_KEY, JSON.stringify(extras.filter((_, i) => i !== childIndex - 1)));
+          }
+          setProfile(BLANK); setDraft(BLANK); setEditing(false);
+          showStatus("Profile cleared");
+        } catch (e) { console.log(e); }
+      }}
+    ]);
   };
 
-  const handleClear = async () => {
-    try {
-      if (childIndex === 0) {
-        await AsyncStorage.removeItem(STORAGE_KEY);
-      } else {
-        const savedExtras = await AsyncStorage.getItem(EXTRA_STORAGE_KEY);
-        const extras = savedExtras ? JSON.parse(savedExtras) : [];
-        const updated = extras.filter((_, i) => i !== childIndex - 1);
-        await AsyncStorage.setItem(EXTRA_STORAGE_KEY, JSON.stringify(updated));
-      }
-      setProfile(BLANK);
-      setDraft(BLANK);
-      setEditing(false);
-      showStatus("Child profile cleared");
-    } catch (e) {
-      console.log("Error clearing:", e);
-    }
-  };
-
-  const set = (key, val) => setDraft((prev) => ({ ...prev, [key]: val }));
-
-  const toggleNeed = (need) => {
-    setDraft((prev) => ({
-      ...prev,
-      supportNeeds: prev.supportNeeds.includes(need)
-        ? prev.supportNeeds.filter((n) => n !== need)
-        : [...prev.supportNeeds, need],
-    }));
-  };
-
+  const avatarId = editing ? draft.avatar : profile.avatar;
+  const avatarSource = AVATARS.find(a => a.id === avatarId)?.source || AVATARS[0].source;
   const displayName = profile.childName?.trim() || "Your child";
-  const hasProfile = profile.childName?.trim();
+  const hasProfile = !!profile.childName?.trim();
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+    <SafeAreaView style={s.safe}>
+      <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
 
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.circleButton} onPress={() => navigation.goBack()} activeOpacity={0.85}>
-            <Feather name="chevron-left" size={24} color="#2B2463" />
+        {/* ── HEADER ─────────────────────────────────────────────────── */}
+        <LinearGradient colors={["#EFE0FF", "#FFF9F2"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.heroGrad}>
+          <TouchableOpacity style={s.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.85}>
+            <Ionicons name="chevron-back" size={22} color="#7548D8" />
           </TouchableOpacity>
-          <View style={styles.headerTextWrap}>
-            <Text style={styles.screenTitle}>Child Profile</Text>
-            <Text style={styles.screenSubtitle}>Keep important support details in one calm place.</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={s.title}>Child Profile</Text>
+            <Text style={s.subtitle}>Keep important support details in one calm place.</Text>
           </View>
           {editing ? (
-            <TouchableOpacity style={styles.circleButton} onPress={handleSave} activeOpacity={0.85}>
-              <Feather name="save" size={19} color="#6F42D8" />
+            <TouchableOpacity style={[s.backBtn, { backgroundColor: "#7548D8" }]} onPress={handleSave} disabled={isSaving} activeOpacity={0.85}>
+              {isSaving ? <ActivityIndicator size="small" color="#FFFFFF" /> : <Ionicons name="checkmark" size={20} color="#FFFFFF" />}
             </TouchableOpacity>
           ) : (
-            <TouchableOpacity style={styles.circleButton} onPress={() => setEditing(true)} activeOpacity={0.85}>
-              <Feather name="edit-2" size={18} color="#6F42D8" />
+            <TouchableOpacity style={s.backBtn} onPress={() => setEditing(true)} activeOpacity={0.85}>
+              <Feather name="edit-2" size={17} color="#7548D8" />
             </TouchableOpacity>
           )}
-        </View>
+        </LinearGradient>
 
-        {/* Status Banner */}
-        {savedMessage ? (
-          <View style={styles.statusBanner}>
-            <Feather name="check-circle" size={16} color="#6F42D8" />
-            <Text style={styles.statusText}>{savedMessage}</Text>
+        {/* Status banner */}
+        {savedMsg ? (
+          <View style={s.statusBanner}>
+            <Ionicons name="checkmark-circle" size={18} color="#4A9E5C" />
+            <Text style={s.statusTxt}>{savedMsg}</Text>
           </View>
         ) : null}
 
-        {/* ── VIEW MODE ── */}
-        {!editing ? (
+        {editing && (
+          <View style={s.editBanner}>
+            <Feather name="edit-2" size={13} color="#7548D8" />
+            <Text style={s.editBannerTxt}>Editing child profile</Text>
+          </View>
+        )}
+
+        {/* ── VIEW MODE ──────────────────────────────────────────────── */}
+        {!editing && (
           <>
-            {/* Profile Hero */}
-            <View style={styles.heroCard}>
-              <View style={styles.avatarLargeWrap}>
-                <Image source={avatarSource} style={styles.avatarLarge} resizeMode="contain" />
-                <TouchableOpacity style={styles.avatarEditBtn} onPress={() => setEditing(true)} activeOpacity={0.85}>
-                  <Feather name="edit-2" size={11} color="#FFFFFF" />
+            <View style={s.heroCard}>
+              <View style={s.avatarWrap}>
+                <Image source={avatarSource} style={s.avatarImg} resizeMode="contain" />
+                <TouchableOpacity style={s.avatarEditBadge} onPress={() => setEditing(true)} activeOpacity={0.85}>
+                  <Feather name="edit-2" size={10} color="#FFFFFF" />
                 </TouchableOpacity>
               </View>
-              <View style={styles.heroTextWrap}>
-                <Text style={styles.heroTitle}>{displayName}</Text>
-                <Text style={styles.heroSubtitle}>
+              <View style={{ flex: 1 }}>
+                <Text style={s.heroName}>{displayName}</Text>
+                <Text style={s.heroAge}>
                   {profile.age?.trim() && profile.age !== "Not added yet" ? `${profile.age} years old` : "Age not added yet"}
                 </Text>
-                <Text style={styles.heroText}>You can update this anytime as your family's needs change.</Text>
+                {profile.pronouns ? <Text style={s.heroPronoun}>{profile.pronouns}</Text> : null}
               </View>
             </View>
 
-            {/* No profile nudge */}
             {!hasProfile && (
-              <TouchableOpacity style={styles.nudgeCard} onPress={() => setEditing(true)} activeOpacity={0.88}>
-                <Ionicons name="person-add-outline" size={20} color="#6F42D8" />
-                <View style={styles.nudgeTextWrap}>
-                  <Text style={styles.nudgeTitle}>No child profile set up yet</Text>
-                  <Text style={styles.nudgeText}>Add your child's details so BitzaHugs can personalize support for your family.</Text>
+              <TouchableOpacity style={s.nudgeCard} onPress={() => setEditing(true)} activeOpacity={0.88}>
+                <Ionicons name="person-add-outline" size={20} color="#7548D8" />
+                <View style={{ flex: 1 }}>
+                  <Text style={s.nudgeTitle}>No profile set up yet</Text>
+                  <Text style={s.nudgeSub}>Tap to add your child's details.</Text>
                 </View>
-                <Feather name="chevron-right" size={16} color="#6F42D8" />
+                <Feather name="chevron-right" size={16} color="#7548D8" />
               </TouchableOpacity>
             )}
 
-            {/* Saved Info */}
             {hasProfile && (
               <>
-                <View style={styles.card}>
+                {/* Basic */}
+                <View style={s.viewCard}>
+                  <Text style={s.viewCardTitle}>📋 Basic Info</Text>
                   <InfoRow label="Name" value={profile.childName} />
-                  <InfoRow label="Age" value={profile.age !== "Not added yet" ? `${profile.age} years old` : ""} />
-                  <InfoRow label="Date of Birth" value={profile.dob} last />
+                  <InfoRow label="Nickname" value={profile.nickname} />
+                  <InfoRow label="Date of Birth" value={profile.dob} />
+                  <InfoRow label="Grade" value={profile.grade} last />
                 </View>
 
-                {profile.communicationStyle && profile.communicationStyle !== "Not added yet" && (
-                  <View style={styles.card}>
-                    <View style={styles.infoRow}>
-                      <Text style={styles.infoLabel}>Communication Style</Text>
-                      <View style={styles.chipBadge}>
-                        <Text style={styles.chipBadgeText}>{profile.communicationStyle}</Text>
-                      </View>
-                    </View>
+                {/* Diagnosis */}
+                {(profile.diagnosis || profile.supportSummary) ? (
+                  <View style={s.viewCard}>
+                    <Text style={s.viewCardTitle}>📋 Diagnosis & Support</Text>
+                    <InfoRow label="Diagnosis" value={profile.diagnosis} />
+                    <InfoRow label="Additional Notes" value={profile.additionalSupport} />
+                    <InfoRow label="Support Summary" value={profile.supportSummary} last />
                   </View>
-                )}
+                ) : null}
 
-                {profile.supportNeeds?.length > 0 && (
-                  <View style={[styles.card, { paddingVertical: 12 }]}>
-                    <Text style={styles.infoLabel}>Support Needs</Text>
-                    <View style={styles.needsGrid}>
-                      {profile.supportNeeds.map((need) => (
-                        <View key={need} style={styles.needChipActive}>
-                          <Text style={styles.needChipTextActive}>{need}</Text>
-                        </View>
-                      ))}
-                    </View>
+                {/* Communication */}
+                <View style={s.viewCard}>
+                  <Text style={s.viewCardTitle}>💬 Communication</Text>
+                  <InfoRow label="Style" value={profile.communicationStyle !== "Not added yet" ? profile.communicationStyle : ""} />
+                  <InfoRow label="Preferred Method" value={profile.commMethod} />
+                  <TagRow label="Helpful Phrases" tags={profile.helpfulPhrases} color="#4A9E5C" bg="#EEF7E9" />
+                  <TagRow label="What NOT to Do" tags={profile.whatNotToDo} color="#D86A5B" bg="#FFE6E4" last />
+                </View>
+
+                {/* Sensory */}
+                {(profile.sensoryNeeds || profile.comfortItems?.length) ? (
+                  <View style={s.viewCard}>
+                    <Text style={s.viewCardTitle}>🌿 Sensory Profile</Text>
+                    <InfoRow label="Sensory Needs" value={profile.sensoryNeeds} />
+                    <InfoRow label="Sensory Sensitivities" value={profile.sensorySensitivities} />
+                    <TagRow label="Comfort Items" tags={profile.comfortItems} color="#7548D8" bg="#F0E2FF" />
+                    <TagRow label="Favorite Reinforcers" tags={profile.favoriteReinforcers} color="#C8872A" bg="#FFF0DF" />
+                    <TagRow label="What Helps Regulate" tags={profile.whatHelpsRegulate} color="#4C9ED9" bg="#E7F4FF" last />
                   </View>
-                )}
+                ) : null}
 
-                {profile.notes?.trim() ? (
-                  <View style={[styles.card, { paddingVertical: 12 }]}>
-                    <Text style={styles.infoLabel}>Notes</Text>
-                    <Text style={styles.notesText}>{profile.notes}</Text>
+                {/* Triggers */}
+                {profile.knownTriggers?.length ? (
+                  <View style={s.viewCard}>
+                    <Text style={s.viewCardTitle}>⚠️ Triggers & Hard Moments</Text>
+                    <TagRow label="Known Triggers" tags={profile.knownTriggers} color="#D86A5B" bg="#FFE6E4" />
+                    <TagRow label="Early Warning Signs" tags={profile.earlyWarningSigns} color="#C8872A" bg="#FFF0DF" />
+                    <InfoRow label="What Makes It Worse" value={profile.whatMakesWorse} />
+                    <InfoRow label="Recovery Notes" value={profile.meltdownRecoveryNotes} last />
+                  </View>
+                ) : null}
+
+                {/* Calming */}
+                {(profile.whatHelps || profile.meltdownRecoveryPlan) ? (
+                  <View style={s.viewCard}>
+                    <Text style={s.viewCardTitle}>🧘 Calming Strategies</Text>
+                    <InfoRow label="What Helps" value={profile.whatHelps} />
+                    <InfoRow label="Calm Corner / Tools" value={profile.calmCornerTools} />
+                    <InfoRow label="Transition Tips" value={profile.transitionTips} />
+                    <InfoRow label="Meltdown Recovery Plan" value={profile.meltdownRecoveryPlan} last />
+                  </View>
+                ) : null}
+
+                {/* Strengths */}
+                {(profile.strengths?.length || profile.caregiverNotes) ? (
+                  <View style={s.viewCard}>
+                    <Text style={s.viewCardTitle}>⭐ Strengths & What They Love</Text>
+                    <TagRow label="Strengths" tags={profile.strengths} color="#7548D8" bg="#F0E2FF" />
+                    <TagRow label="Things They Love" tags={profile.thingsTheyLove} color="#C8872A" bg="#FFF0DF" />
+                    <TagRow label="Encouragement Notes" tags={profile.encouragementNotes} color="#4A9E5C" bg="#EEF7E9" />
+                    <InfoRow label="Caregiver Notes" value={profile.caregiverNotes} last />
                   </View>
                 ) : null}
               </>
             )}
 
-            {/* Edit Button */}
-            <TouchableOpacity style={styles.editFullBtn} onPress={() => setEditing(true)} activeOpacity={0.88}>
-              <Feather name="edit-2" size={16} color="#6F42D8" />
-              <Text style={styles.editFullBtnText}>Edit Child Profile</Text>
-            </TouchableOpacity>
-          </>
-        ) : (
-          /* ── EDIT MODE ── */
-          <>
-            {/* Edit Banner */}
-            <View style={styles.editBanner}>
-              <Feather name="edit-2" size={14} color="#6F42D8" />
-              <Text style={styles.editBannerText}>Editing child profile</Text>
-            </View>
-
-            {/* Basic Info */}
-            <SectionTitle title="Basic Info" caption="Small details that help personalize support." />
-            <View style={styles.card}>
-              <ProfileInput label="Child's Name" placeholder="Enter name" value={draft.childName} onChangeText={(v) => set("childName", v)} icon="user" />
-              <ProfileInput label="Age" placeholder="Example: 7" value={draft.age} onChangeText={(v) => set("age", v)} icon="calendar" keyboardType="number-pad" />
-              <ProfileInput label="Date of Birth" placeholder="Example: May 28, 2018" value={draft.dob} onChangeText={(v) => set("dob", v)} icon="gift" last />
-            </View>
-
-            {/* Avatar */}
-            <SectionTitle title="Avatar" caption="Choose a soft profile image for your child." />
-            <View style={styles.avatarCard}>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.avatarRow}>
-                {AVATARS.map((avatar) => (
-                  <TouchableOpacity
-                    key={avatar.id}
-                    style={[styles.avatarOption, draft.avatar === avatar.id && styles.avatarOptionActive]}
-                    onPress={() => set("avatar", avatar.id)}
-                    activeOpacity={0.85}
-                  >
-                    <Image source={avatar.source} style={styles.avatarImage} resizeMode="contain" />
-                    {draft.avatar === avatar.id && (
-                      <View style={styles.avatarCheck}>
-                        <Feather name="check" size={12} color="#FFFFFF" />
-                      </View>
-                    )}
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-
-            {/* Communication Style */}
-            <SectionTitle title="Communication Style" caption="Choose what fits best right now." />
-            <View style={styles.optionCard}>
-              {communicationOptions.map((option) => (
-                <TouchableOpacity
-                  key={option}
-                  style={[styles.choiceChip, draft.communicationStyle === option && styles.choiceChipActive]}
-                  onPress={() => set("communicationStyle", option)}
-                  activeOpacity={0.85}
-                >
-                  <Text style={[styles.choiceChipText, draft.communicationStyle === option && styles.choiceChipTextActive]}>
-                    {option}
-                  </Text>
-                  {draft.communicationStyle === option && <Feather name="check" size={14} color="#6F42D8" />}
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            {/* Support Needs */}
-            <SectionTitle title="Support Needs" caption="Tap any areas where extra support may help." />
-            <View style={styles.needsGrid}>
-              {supportNeeds.map((need) => {
-                const active = draft.supportNeeds.includes(need);
-                return (
-                  <TouchableOpacity
-                    key={need}
-                    style={[styles.needChip, active && styles.needChipActive]}
-                    onPress={() => toggleNeed(need)}
-                    activeOpacity={0.85}
-                  >
-                    <Text style={[styles.needChipText, active && styles.needChipTextActive]}>{need}</Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-
-            {/* Notes */}
-            <SectionTitle title="Notes" caption="Anything helpful for routines, comfort, or support." />
-            <View style={styles.notesCard}>
-              <TextInput
-                value={draft.notes}
-                onChangeText={(v) => set("notes", v)}
-                placeholder="Example: Loves deep pressure, needs warnings before transitions..."
-                placeholderTextColor="#A8A0B8"
-                style={styles.notesInput}
-                multiline
-                textAlignVertical="top"
-              />
-            </View>
-
-            {/* Buttons */}
-            <TouchableOpacity style={styles.saveButton} onPress={handleSave} activeOpacity={0.88}>
-              <Text style={styles.saveButtonText}>Save Child Profile</Text>
-              <Feather name="check" size={19} color="#FFFFFF" />
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.cancelButton} onPress={handleCancel} activeOpacity={0.85}>
-              <Text style={styles.cancelButtonText}>Cancel</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.clearButton} onPress={handleClear} activeOpacity={0.86}>
-              <Feather name="trash-2" size={16} color="#D86A5B" />
-              <Text style={styles.clearButtonText}>Clear Child Profile</Text>
+            <TouchableOpacity style={s.editBtn} onPress={() => setEditing(true)} activeOpacity={0.88}>
+              <Feather name="edit-2" size={16} color="#7548D8" />
+              <Text style={s.editBtnTxt}>Edit Child Profile</Text>
             </TouchableOpacity>
           </>
         )}
 
-        <Text style={styles.footerText}>
-          {editing ? "This information is saved locally during prototype testing." : "Tap Edit Child Profile to update details anytime."}
+        {/* ── EDIT MODE ──────────────────────────────────────────────── */}
+        {editing && (
+          <>
+            {/* ── SECTION 1: BASIC INFO ─────────────────────────────── */}
+            <SectionCard emoji="👤" title="Basic Information" subtitle="Your child's name, age, and identity."
+              gradColors={["#F0E4FF", "#FAF6FF"]}>
+
+              {/* Avatar */}
+              <View>
+                <FL label="Avatar" />
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
+                  {AVATARS.map(a => (
+                    <TouchableOpacity key={a.id}
+                      style={[s.avOpt, draft.avatar === a.id && s.avOptSel]}
+                      onPress={() => set("avatar", a.id)} activeOpacity={0.85}>
+                      <Image source={a.source} style={s.avImg} resizeMode="contain" />
+                      {draft.avatar === a.id && (
+                        <View style={s.avCheck}>
+                          <Feather name="check" size={10} color="#FFFFFF" />
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+
+              <Row>
+                <Col flex={2}>
+                  <FL label="Child's Name" />
+                  <FI value={draft.childName} onChangeText={v => set("childName", v)} placeholder="Full name" />
+                </Col>
+                <Col flex={1.4}>
+                  <FL label="Nickname" />
+                  <FI value={draft.nickname} onChangeText={v => set("nickname", v)} placeholder="Nickname" />
+                </Col>
+                <Col flex={0.7}>
+                  <FL label="Age" />
+                  <FI value={draft.age} onChangeText={v => set("age", v)} placeholder="5" keyboardType="number-pad" />
+                </Col>
+              </Row>
+
+              <Row>
+                <Col>
+                  <FL label="Date of Birth" />
+                  <FI value={draft.dob} onChangeText={v => set("dob", v)} placeholder="MM/DD/YYYY" />
+                </Col>
+                <Col>
+                  <FL label="Pronouns" />
+                  <Dropdown value={draft.pronouns} options={PRONOUNS} onSelect={v => set("pronouns", v)} placeholder="Select..." />
+                </Col>
+              </Row>
+
+              <View>
+                <FL label="Grade / School Level" />
+                <Dropdown value={draft.grade} options={GRADE_OPTIONS} onSelect={v => set("grade", v)} placeholder="Select grade..." />
+              </View>
+            </SectionCard>
+
+            {/* ── SECTION 2: DIAGNOSIS ──────────────────────────────── */}
+            <SectionCard emoji="📋" title="Diagnosis & Support Notes" subtitle="For your reference — only shared when you choose."
+              gradColors={["#E8F3FF", "#F5FAFF"]}>
+              <View>
+                <FL label="Primary Diagnosis / Support Area" />
+                <FI value={draft.diagnosis} onChangeText={v => set("diagnosis", v)} placeholder="e.g. Autism Spectrum Disorder (ASD)" />
+              </View>
+              <View>
+                <FL label="Additional Support Notes" />
+                <FI value={draft.additionalSupport} onChangeText={v => set("additionalSupport", v)} placeholder="e.g. ADHD, Sensory Processing" />
+              </View>
+              <View>
+                <FL label="Support Summary for Care Team" />
+                <TA value={draft.supportSummary} onChangeText={v => set("supportSummary", v)}
+                  placeholder="Describe what your child needs and how they do best..." rows={4} />
+              </View>
+              <View style={s.privNote}>
+                <Ionicons name="lock-closed" size={13} color="#4C9ED9" />
+                <Text style={s.privTxt}>This profile is private by default. It powers your Support Snapshot, PDF exports, and care-team sharing.</Text>
+              </View>
+            </SectionCard>
+
+            {/* ── SECTION 3: COMMUNICATION ──────────────────────────── */}
+            <SectionCard emoji="💬" title="Communication" subtitle="How your child communicates and what helps."
+              gradColors={["#E8F7EE", "#F5FFF9"]}>
+              <View>
+                <FL label="Communication Style" />
+                <Dropdown value={draft.communicationStyle} options={COMM_OPTIONS} onSelect={v => set("communicationStyle", v)} placeholder="Select..." />
+              </View>
+              <View>
+                <FL label="Preferred Communication Method" />
+                <FI value={draft.commMethod} onChangeText={v => set("commMethod", v)} placeholder="e.g. Spoken language + visual schedule" />
+              </View>
+              <View>
+                <FL label="Helpful Phrases & Approaches" />
+                <TagInput tags={draft.helpfulPhrases} onAdd={addTag("helpfulPhrases")} onRemove={removeTag("helpfulPhrases")}
+                  placeholder="Type and press Enter..." accentColor="#4A9E5C" bgColor="#EEF7E9" />
+              </View>
+              <View>
+                <FL label="What NOT to Do During Hard Moments" />
+                <TagInput tags={draft.whatNotToDo} onAdd={addTag("whatNotToDo")} onRemove={removeTag("whatNotToDo")}
+                  placeholder="Type and press Enter..." accentColor="#D86A5B" bgColor="#FFE6E4" />
+              </View>
+            </SectionCard>
+
+            {/* ── SECTION 4: SENSORY ────────────────────────────────── */}
+            <SectionCard emoji="🌿" title="Sensory Profile" subtitle="What helps your child feel safe and regulated."
+              gradColors={["#EDF7EE", "#F8FFF9"]}>
+              <Row>
+                <Col>
+                  <FL label="Sensory Needs" />
+                  <TA value={draft.sensoryNeeds} onChangeText={v => set("sensoryNeeds", v)}
+                    placeholder="e.g. Deep pressure, movement breaks..." rows={3} />
+                </Col>
+                <Col>
+                  <FL label="Sensory Sensitivities" />
+                  <TA value={draft.sensorySensitivities} onChangeText={v => set("sensorySensitivities", v)}
+                    placeholder="e.g. Loud noises, bright lights..." rows={3} />
+                </Col>
+              </Row>
+              <View>
+                <FL label="Comfort Items" />
+                <TagInput tags={draft.comfortItems} onAdd={addTag("comfortItems")} onRemove={removeTag("comfortItems")}
+                  placeholder="Type and press Enter..." accentColor="#7548D8" bgColor="#F0E2FF" />
+              </View>
+              <View>
+                <FL label="Favorite Reinforcers" />
+                <TagInput tags={draft.favoriteReinforcers} onAdd={addTag("favoriteReinforcers")} onRemove={removeTag("favoriteReinforcers")}
+                  placeholder="Type and press Enter..." accentColor="#C8872A" bgColor="#FFF0DF" />
+              </View>
+              <View>
+                <FL label="What Helps Regulate" />
+                <TagInput tags={draft.whatHelpsRegulate} onAdd={addTag("whatHelpsRegulate")} onRemove={removeTag("whatHelpsRegulate")}
+                  placeholder="Type and press Enter..." accentColor="#4C9ED9" bgColor="#E7F4FF" />
+              </View>
+            </SectionCard>
+
+            {/* ── SECTION 5: TRIGGERS ───────────────────────────────── */}
+            <SectionCard emoji="⚠️" title="Triggers & Hard Moments" subtitle="What to watch for and how to help."
+              gradColors={["#FFF5E8", "#FFFAF5"]}>
+              <View>
+                <FL label="Known Triggers" />
+                <TagInput tags={draft.knownTriggers} onAdd={addTag("knownTriggers")} onRemove={removeTag("knownTriggers")}
+                  placeholder="Type and press Enter..." accentColor="#D86A5B" bgColor="#FFE6E4" />
+              </View>
+              <View>
+                <FL label="Early Warning Signs" />
+                <TagInput tags={draft.earlyWarningSigns} onAdd={addTag("earlyWarningSigns")} onRemove={removeTag("earlyWarningSigns")}
+                  placeholder="Type and press Enter..." accentColor="#C8872A" bgColor="#FFF0DF" />
+              </View>
+              <Row>
+                <Col>
+                  <FL label="What Makes Hard Moments Worse" />
+                  <TA value={draft.whatMakesWorse} onChangeText={v => set("whatMakesWorse", v)}
+                    placeholder="e.g. Rushing, raised voices..." rows={3} />
+                </Col>
+                <Col>
+                  <FL label="Meltdown / Recovery Notes" />
+                  <TA value={draft.meltdownRecoveryNotes} onChangeText={v => set("meltdownRecoveryNotes", v)}
+                    placeholder="e.g. Needs 5-10 min alone..." rows={3} />
+                </Col>
+              </Row>
+            </SectionCard>
+
+            {/* ── SECTION 6: CALMING ────────────────────────────────── */}
+            <SectionCard emoji="🧘" title="Calming Strategies" subtitle="What works when things get hard."
+              gradColors={["#E8F3FF", "#F0F7FF"]}>
+              <Row>
+                <Col>
+                  <FL label="What Helps" />
+                  <TA value={draft.whatHelps} onChangeText={v => set("whatHelps", v)}
+                    placeholder="e.g. Offer blanket, gentle touch..." rows={3} />
+                </Col>
+                <Col>
+                  <FL label="Calm Corner / Tools" />
+                  <TA value={draft.calmCornerTools} onChangeText={v => set("calmCornerTools", v)}
+                    placeholder="e.g. Blanket, toy, iPad..." rows={3} />
+                </Col>
+              </Row>
+              <Row>
+                <Col>
+                  <FL label="Transition Tips" />
+                  <TA value={draft.transitionTips} onChangeText={v => set("transitionTips", v)}
+                    placeholder="e.g. 10 and 5 min warnings..." rows={3} />
+                </Col>
+                <Col>
+                  <FL label="Meltdown Recovery Plan" />
+                  <TA value={draft.meltdownRecoveryPlan} onChangeText={v => set("meltdownRecoveryPlan", v)}
+                    placeholder="Step 1: Create safety..." rows={3} />
+                </Col>
+              </Row>
+            </SectionCard>
+
+            {/* ── SECTION 7: STRENGTHS ──────────────────────────────── */}
+            <SectionCard emoji="⭐" title="Strengths & What They Love" subtitle="The things that make your child uniquely them."
+              gradColors={["#FFF8E8", "#FFFDF5"]}>
+              <View>
+                <FL label="Strengths" />
+                <TagInput tags={draft.strengths} onAdd={addTag("strengths")} onRemove={removeTag("strengths")}
+                  placeholder="Type and press Enter..." accentColor="#7548D8" bgColor="#F0E2FF" />
+              </View>
+              <View>
+                <FL label="Things They Love" />
+                <TagInput tags={draft.thingsTheyLove} onAdd={addTag("thingsTheyLove")} onRemove={removeTag("thingsTheyLove")}
+                  placeholder="Type and press Enter..." accentColor="#C8872A" bgColor="#FFF0DF" />
+              </View>
+              <View>
+                <FL label="Encouragement Notes" />
+                <TagInput tags={draft.encouragementNotes} onAdd={addTag("encouragementNotes")} onRemove={removeTag("encouragementNotes")}
+                  placeholder="Type and press Enter..." accentColor="#4A9E5C" bgColor="#EEF7E9" />
+              </View>
+              <View>
+                <FL label="Caregiver Notes Visible on Snapshot" />
+                <TA value={draft.caregiverNotes} onChangeText={v => set("caregiverNotes", v)}
+                  placeholder="What do you want teachers and therapists to know about your child?" rows={4} />
+              </View>
+            </SectionCard>
+
+            {/* Buttons */}
+            <TouchableOpacity style={[s.saveBtn, isSaving && { opacity: 0.7 }]} onPress={handleSave} disabled={isSaving} activeOpacity={0.88}>
+              <LinearGradient colors={["#9B6DE8", "#7548D8"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={s.saveBtnGrad}>
+                {isSaving ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <>
+                    <Ionicons name="checkmark-circle" size={20} color="#FFFFFF" />
+                    <Text style={s.saveBtnTxt}>Save Child Profile</Text>
+                  </>
+                )}
+              </LinearGradient>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={s.cancelBtn} onPress={handleCancel} activeOpacity={0.85}>
+              <Text style={s.cancelTxt}>Cancel</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={s.clearBtn} onPress={handleClear} activeOpacity={0.86}>
+              <Feather name="trash-2" size={15} color="#D86A5B" />
+              <Text style={s.clearTxt}>Clear Child Profile</Text>
+            </TouchableOpacity>
+          </>
+        )}
+
+        <Text style={s.footer}>
+          {editing ? "Changes save to this device." : "Tap Edit Child Profile to update details anytime."}
         </Text>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-function ProfileInput({ label, placeholder, value, onChangeText, icon, keyboardType = "default", last }) {
-  return (
-    <View style={[styles.inputRow, last && { borderBottomWidth: 0 }]}>
-      <View style={styles.inputIconBox}>
-        <Feather name={icon} size={17} color="#6F42D8" />
-      </View>
-      <View style={styles.inputTextWrap}>
-        <Text style={styles.inputLabel}>{label}</Text>
-        <TextInput
-          value={value}
-          onChangeText={onChangeText}
-          placeholder={placeholder}
-          placeholderTextColor="#A8A0B8"
-          style={styles.input}
-          keyboardType={keyboardType}
-        />
-      </View>
-    </View>
-  );
-}
+const s = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: "#FBF7FF" },
+  content: { paddingBottom: 100 },
 
-const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#FFF9F2" },
-  content: { paddingHorizontal: 16, paddingTop: Platform.OS === "ios" ? 8 : 14, paddingBottom: 110 },
+  heroGrad: { paddingHorizontal: 16, paddingTop: Platform.OS === "ios" ? 8 : 16, paddingBottom: 18, flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 14 },
+  backBtn: { width: 40, height: 40, borderRadius: 14, backgroundColor: "rgba(255,255,255,0.8)", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(117,72,216,0.15)" },
+  title: { color: "#2B1D5E", fontSize: 22, fontWeight: "900", letterSpacing: -0.4 },
+  subtitle: { color: "#8B7BAA", fontSize: 12, fontWeight: "600", marginTop: 2 },
 
-  header: { flexDirection: "row", alignItems: "center", marginBottom: 12 },
-  circleButton: { width: 42, height: 42, borderRadius: 16, backgroundColor: "#F0E2FF", borderWidth: 1, borderColor: "#E3D2F8", alignItems: "center", justifyContent: "center" },
-  headerTextWrap: { flex: 1, marginHorizontal: 12 },
-  screenTitle: { color: "#2B2463", fontSize: 22, fontWeight: "900", letterSpacing: -0.3 },
-  screenSubtitle: { color: "#837E96", fontSize: 12, fontWeight: "700", marginTop: 2, lineHeight: 16 },
+  statusBanner: { flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: "#EAF7EE", borderRadius: 14, padding: 12, marginHorizontal: 16, marginBottom: 12, borderWidth: 1.5, borderColor: "#B8E8C8" },
+  statusTxt: { color: "#3A8A52", fontSize: 13, fontWeight: "800" },
+  editBanner: { flexDirection: "row", alignItems: "center", gap: 7, backgroundColor: "#F0E8FF", borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8, marginHorizontal: 16, marginBottom: 12, borderWidth: 1, borderColor: "#D8C3F7" },
+  editBannerTxt: { color: "#7548D8", fontSize: 12, fontWeight: "800" },
 
-  statusBanner: { minHeight: 40, borderRadius: 14, backgroundColor: "#F0E2FF", borderWidth: 1, borderColor: "#E3D2F8", flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 12, marginBottom: 12 },
-  statusText: { color: "#6F42D8", fontSize: 13, fontWeight: "900" },
+  heroCard: { backgroundColor: "#FFFFFF", borderRadius: 22, borderWidth: 1.5, borderColor: "#EDE4F5", padding: 16, flexDirection: "row", alignItems: "center", marginHorizontal: 16, marginBottom: 12, shadowColor: "#7548D8", shadowOpacity: 0.07, shadowOffset: { width: 0, height: 4 }, shadowRadius: 12, elevation: 3 },
+  avatarWrap: { width: 84, height: 84, borderRadius: 26, backgroundColor: "#F4EAFE", alignItems: "center", justifyContent: "center", marginRight: 14, position: "relative", borderWidth: 2, borderColor: "#E3D2F8" },
+  avatarImg: { width: 74, height: 74 },
+  avatarEditBadge: { position: "absolute", bottom: -2, right: -2, width: 24, height: 24, borderRadius: 12, backgroundColor: "#7548D8", alignItems: "center", justifyContent: "center", borderWidth: 2, borderColor: "#FFFFFF" },
+  heroName: { color: "#2B1D5E", fontSize: 20, fontWeight: "900", marginBottom: 3 },
+  heroAge: { color: "#7548D8", fontSize: 13, fontWeight: "800", marginBottom: 3 },
+  heroPronoun: { color: "#8B7BAA", fontSize: 12, fontWeight: "600" },
 
-  heroCard: { backgroundColor: "#FFFFFF", borderRadius: 24, borderWidth: 1, borderColor: "#EFE4DC", padding: 16, flexDirection: "row", alignItems: "center", marginBottom: 12, shadowColor: "#BFA99D", shadowOpacity: 0.08, shadowOffset: { width: 0, height: 3 }, shadowRadius: 9, elevation: 2 },
-  avatarLargeWrap: { width: 88, height: 88, borderRadius: 28, backgroundColor: "#F4EAFE", alignItems: "center", justifyContent: "center", marginRight: 14, position: "relative" },
-  avatarLarge: { width: 78, height: 78 },
-  avatarEditBtn: { position: "absolute", bottom: -2, right: -2, width: 24, height: 24, borderRadius: 12, backgroundColor: "#6F42D8", alignItems: "center", justifyContent: "center", borderWidth: 2, borderColor: "#FFFFFF" },
-  heroTextWrap: { flex: 1 },
-  heroTitle: { color: "#2B2463", fontSize: 20, fontWeight: "900", marginBottom: 3 },
-  heroSubtitle: { color: "#6F42D8", fontSize: 13, fontWeight: "800", marginBottom: 6 },
-  heroText: { color: "#5B5672", fontSize: 12, lineHeight: 17, fontWeight: "600" },
+  nudgeCard: { backgroundColor: "#F6ECFF", borderRadius: 16, borderWidth: 1.5, borderColor: "#DEC9F7", paddingHorizontal: 14, paddingVertical: 12, flexDirection: "row", alignItems: "center", gap: 10, marginHorizontal: 16, marginBottom: 12 },
+  nudgeTitle: { color: "#2B1D5E", fontSize: 13, fontWeight: "800", marginBottom: 2 },
+  nudgeSub: { color: "#8B7BAA", fontSize: 11, fontWeight: "600" },
 
-  nudgeCard: { backgroundColor: "#F6ECFF", borderRadius: 16, borderWidth: 1, borderColor: "#E3D2F8", paddingHorizontal: 13, paddingVertical: 11, flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 12 },
-  nudgeTextWrap: { flex: 1 },
-  nudgeTitle: { color: "#2B2463", fontSize: 13, fontWeight: "800", marginBottom: 2 },
-  nudgeText: { color: "#5B5672", fontSize: 11, lineHeight: 16, fontWeight: "600" },
+  viewCard: { backgroundColor: "#FFFFFF", borderRadius: 18, borderWidth: 1.5, borderColor: "#EDE4F5", paddingHorizontal: 14, paddingTop: 12, paddingBottom: 2, marginHorizontal: 16, marginBottom: 10, shadowColor: "#7548D8", shadowOpacity: 0.04, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 2 },
+  viewCardTitle: { color: "#2B1D5E", fontSize: 13, fontWeight: "900", marginBottom: 8 },
 
-  card: { backgroundColor: "#FFFFFF", borderRadius: 22, borderWidth: 1, borderColor: "#EFE4DC", paddingHorizontal: 13, paddingVertical: 5, marginBottom: 10, shadowColor: "#BFA99D", shadowOpacity: 0.06, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 2 },
+  editBtn: { height: 50, borderRadius: 16, backgroundColor: "#F0E8FF", borderWidth: 1.5, borderColor: "#D8C3F7", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginHorizontal: 16, marginBottom: 12 },
+  editBtnTxt: { color: "#7548D8", fontSize: 14, fontWeight: "800" },
 
-  infoRow: { paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: "#F0E8E2" },
-  infoLabel: { color: "#837E96", fontSize: 10, fontWeight: "700", marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.5 },
-  infoValue: { color: "#2B2463", fontSize: 14, fontWeight: "700" },
+  // Avatar in edit
+  avOpt: { width: 68, height: 68, borderRadius: 22, backgroundColor: "#F4EAFE", alignItems: "center", justifyContent: "center", borderWidth: 1.5, borderColor: "#E3D2F8", position: "relative" },
+  avOptSel: { borderWidth: 2.5, borderColor: "#7548D8", backgroundColor: "#ECE0FF" },
+  avImg: { width: 58, height: 58 },
+  avCheck: { position: "absolute", right: -4, top: -4, width: 22, height: 22, borderRadius: 11, backgroundColor: "#7548D8", alignItems: "center", justifyContent: "center", borderWidth: 2, borderColor: "#FFFFFF" },
 
-  chipBadge: { backgroundColor: "#F0E2FF", borderRadius: 10, paddingHorizontal: 10, paddingVertical: 5, alignSelf: "flex-start", marginTop: 4 },
-  chipBadgeText: { color: "#6F42D8", fontSize: 12, fontWeight: "800" },
-  notesText: { color: "#2B2463", fontSize: 13, lineHeight: 19, fontWeight: "600", marginTop: 4 },
+  privNote: { flexDirection: "row", gap: 8, backgroundColor: "#EEF6FF", borderRadius: 12, padding: 12, borderWidth: 1, borderColor: "#BCD9F5", alignItems: "flex-start" },
+  privTxt: { flex: 1, color: "#3A7DB5", fontSize: 11, fontWeight: "600", lineHeight: 17 },
 
-  editFullBtn: { height: 50, borderRadius: 16, backgroundColor: "#F0E2FF", borderWidth: 1, borderColor: "#E3D2F8", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 12 },
-  editFullBtnText: { color: "#6F42D8", fontSize: 14, fontWeight: "800" },
+  saveBtn: { marginHorizontal: 16, marginTop: 4, marginBottom: 10, borderRadius: 18, overflow: "hidden", shadowColor: "#7548D8", shadowOpacity: 0.3, shadowOffset: { width: 0, height: 6 }, shadowRadius: 12, elevation: 7 },
+  saveBtnGrad: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, paddingVertical: 16 },
+  saveBtnTxt: { color: "#FFFFFF", fontSize: 16, fontWeight: "900" },
+  cancelBtn: { height: 48, borderRadius: 16, backgroundColor: "#FFFFFF", borderWidth: 1.5, borderColor: "#EDE4F5", alignItems: "center", justifyContent: "center", marginHorizontal: 16, marginBottom: 10 },
+  cancelTxt: { color: "#7548D8", fontSize: 14, fontWeight: "800" },
+  clearBtn: { height: 46, borderRadius: 16, backgroundColor: "#FFF1EC", borderWidth: 1, borderColor: "#FFD0C0", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginHorizontal: 16, marginBottom: 16 },
+  clearTxt: { color: "#D86A5B", fontSize: 13, fontWeight: "800" },
 
-  editBanner: { flexDirection: "row", alignItems: "center", gap: 7, backgroundColor: "#F0E2FF", borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8, marginBottom: 12, borderWidth: 1, borderColor: "#E3D2F8" },
-  editBannerText: { color: "#6F42D8", fontSize: 12, fontWeight: "800" },
-
-  sectionHeader: { marginTop: 8, marginBottom: 8 },
-  sectionTitle: { color: "#2B2463", fontSize: 16, fontWeight: "900" },
-  sectionCaption: { color: "#837E96", fontSize: 12, fontWeight: "700", marginTop: 2 },
-
-  inputRow: { minHeight: 68, flexDirection: "row", alignItems: "center", borderBottomWidth: 1, borderBottomColor: "#F0E8E2", paddingVertical: 8 },
-  inputIconBox: { width: 42, height: 42, borderRadius: 14, backgroundColor: "#F0E2FF", alignItems: "center", justifyContent: "center", marginRight: 12 },
-  inputTextWrap: { flex: 1 },
-  inputLabel: { color: "#2B2463", fontSize: 13, fontWeight: "900", marginBottom: 4 },
-  input: { height: 38, borderRadius: 13, backgroundColor: "#FFF9F2", borderWidth: 1, borderColor: "#EFE4DC", paddingHorizontal: 12, color: "#2B2463", fontSize: 14, fontWeight: "700" },
-
-  avatarCard: { backgroundColor: "#FFFFFF", borderRadius: 22, borderWidth: 1, borderColor: "#EFE4DC", paddingVertical: 14, marginBottom: 10 },
-  avatarRow: { paddingHorizontal: 12, gap: 10 },
-  avatarOption: { width: 72, height: 72, borderRadius: 23, backgroundColor: "#F8F1FF", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "#E3D2F8", position: "relative" },
-  avatarOptionActive: { borderWidth: 2, borderColor: "#8B5BE8", backgroundColor: "#F0E2FF" },
-  avatarImage: { width: 62, height: 62 },
-  avatarCheck: { position: "absolute", right: -3, top: -3, width: 22, height: 22, borderRadius: 11, backgroundColor: "#8B5BE8", alignItems: "center", justifyContent: "center" },
-
-  optionCard: { backgroundColor: "#FFFFFF", borderRadius: 22, borderWidth: 1, borderColor: "#EFE4DC", padding: 12, marginBottom: 10, flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  choiceChip: { borderRadius: 14, backgroundColor: "#FFF9F2", borderWidth: 1, borderColor: "#EFE4DC", paddingHorizontal: 12, paddingVertical: 9, flexDirection: "row", alignItems: "center", gap: 6 },
-  choiceChipActive: { backgroundColor: "#F0E2FF", borderColor: "#8B5BE8" },
-  choiceChipText: { color: "#5B5672", fontSize: 12, fontWeight: "800" },
-  choiceChipTextActive: { color: "#2B2463", fontWeight: "900" },
-
-  needsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 10 },
-  needChip: { backgroundColor: "#FFFFFF", borderRadius: 15, borderWidth: 1, borderColor: "#EFE4DC", paddingHorizontal: 13, paddingVertical: 10 },
-  needChipActive: { backgroundColor: "#F0E2FF", borderColor: "#8B5BE8", borderRadius: 15, paddingHorizontal: 13, paddingVertical: 10 },
-  needChipText: { color: "#5B5672", fontSize: 12, fontWeight: "800" },
-  needChipTextActive: { color: "#2B2463", fontWeight: "900", fontSize: 12 },
-
-  notesCard: { backgroundColor: "#FFFFFF", borderRadius: 22, borderWidth: 1, borderColor: "#EFE4DC", padding: 13, marginBottom: 14 },
-  notesInput: { minHeight: 110, color: "#2B2463", fontSize: 14, lineHeight: 20, fontWeight: "600" },
-
-  saveButton: { height: 54, borderRadius: 18, backgroundColor: "#8B5BE8", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, shadowColor: "#6F42D8", shadowOpacity: 0.22, shadowOffset: { width: 0, height: 6 }, shadowRadius: 12, elevation: 4, marginBottom: 10 },
-  saveButtonText: { color: "#FFFFFF", fontSize: 16, fontWeight: "900" },
-  cancelButton: { height: 48, borderRadius: 16, backgroundColor: "#FFFFFF", borderWidth: 1, borderColor: "#E3D2F8", alignItems: "center", justifyContent: "center", marginBottom: 10 },
-  cancelButtonText: { color: "#6F42D8", fontSize: 14, fontWeight: "900" },
-  clearButton: { height: 48, borderRadius: 16, backgroundColor: "#FFE7E1", borderWidth: 1, borderColor: "#FFD0C0", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 12 },
-  clearButtonText: { color: "#D86A5B", fontSize: 14, fontWeight: "900" },
-
-  footerText: { color: "#837E96", fontSize: 11, lineHeight: 16, textAlign: "center", fontWeight: "700" },
+  footer: { color: "#B0A4C8", fontSize: 11, textAlign: "center", lineHeight: 17, paddingHorizontal: 24, marginBottom: 8 },
 });

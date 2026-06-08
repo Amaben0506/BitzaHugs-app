@@ -177,6 +177,10 @@ export default function ProgressScreen({ navigation }) {
   const [insights, setInsights] = useState([]);
   const [badges, setBadges] = useState(BADGE_DEFS.map((b) => ({ ...b, earned: false })));
   const [streak, setStreak] = useState(0);
+  const [hardDays, setHardDays] = useState(0);
+  const [calmToolUses, setCalmToolUses] = useState(0);
+  const [supportModeUses, setSupportModeUses] = useState(0);
+  const [moodChartRange, setMoodChartRange] = useState("7d");
 
   useFocusEffect(
     useCallback(() => {
@@ -204,6 +208,17 @@ export default function ProgressScreen({ navigation }) {
           const routineDays = await AsyncStorage.getItem("bitzaRoutineCompleteDays");
           const completeDays = routineDays ? parseInt(routineDays) : 0;
 
+          setCalmToolUses(calmUses);
+          setSupportModeUses(supportUses);
+          const hardDaysRaw = await AsyncStorage.getItem("bitzaHardDays");
+          const hardDaysParsed = hardDaysRaw ? JSON.parse(hardDaysRaw) : [];
+          const thisMonth = new Date().getMonth();
+          const thisYear = new Date().getFullYear();
+          const thisMonthHardDays = hardDaysParsed.filter(d => {
+            const date = new Date(d.date);
+            return date.getMonth() === thisMonth && date.getFullYear() === thisYear;
+          }).length;
+          setHardDays(thisMonthHardDays);
           setBadges(calculateBadges(parsedMoods, parsedJournal, calmUses, supportUses, completeDays));
           setInsights(generateInsights(parsedMoods.slice(0, 20), parsedRoutine, parsedJournal));
         } catch (e) {
@@ -282,11 +297,11 @@ export default function ProgressScreen({ navigation }) {
             </View>
             <View style={[styles.statCard, { backgroundColor: "#EEF7E9" }]}>
               <Text style={styles.statNumber}>{journalEntries.length}</Text>
-              <Text style={styles.statLabel}>Journal{"\n"}Entries</Text>
+              <Text style={styles.statLabel}>Journal{" "}Entries</Text>
             </View>
-            <View style={[styles.statCard, { backgroundColor: "#FFF0DF" }]}>
-              <Text style={styles.statNumber}>{earnedCount}</Text>
-              <Text style={styles.statLabel}>Badges{"\n"}Earned</Text>
+            <View style={[styles.statCard, { backgroundColor: "#FFE6E4" }]}>
+              <Text style={[styles.statNumber, { color: hardDays > 0 ? "#D86A5B" : "#2B2463" }]}>{hardDays}</Text>
+              <Text style={styles.statLabel}>Hard{" "}Days</Text>
             </View>
           </View>
 
@@ -322,6 +337,61 @@ export default function ProgressScreen({ navigation }) {
               </View>
             </View>
           )}
+
+          {/* Week at a Glance */}
+          <View style={styles.card}>
+            <View style={styles.cardHeaderRow}>
+              <View style={styles.cardIconBubble}>
+                <Ionicons name="grid-outline" size={16} color="#6F42D8" />
+              </View>
+              <Text style={styles.cardTitle}>Week at a Glance</Text>
+            </View>
+            {(() => {
+              const today = new Date();
+              const dayOfWeek = today.getDay();
+              const weekDays = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+              const checkedDays = new Set(moodHistory.map(e => new Date(e.date).toDateString()));
+              return (
+                <View>
+                  <View style={styles.weekHeaderRow}>
+                    <Text style={styles.weekSubLabel}>This Week</Text>
+                    <Text style={styles.weekSubLabel}>{checkedDays.size}/7 days</Text>
+                  </View>
+                  <View style={styles.weekDaysRow}>
+                    {weekDays.map((day, i) => {
+                      const date = new Date(today);
+                      date.setDate(today.getDate() - dayOfWeek + i);
+                      const isToday = i === dayOfWeek;
+                      const checked = checkedDays.has(date.toDateString());
+                      return (
+                        <View key={day} style={styles.weekDayWrap}>
+                          <Text style={[styles.weekDayLabel, isToday && styles.weekDayLabelToday]}>{day}</Text>
+                          <View style={[styles.weekDayCircle, checked && styles.weekDayCircleChecked, isToday && styles.weekDayCircleToday]}>
+                            {checked && <Feather name="check" size={12} color={checked ? "#FFFFFF" : "#ccc"} />}
+                          </View>
+                        </View>
+                      );
+                    })}
+                  </View>
+                  {topMood && (
+                    <View style={styles.weekCompareWrap}>
+                      <Text style={styles.weekCompareLabel}>This week</Text>
+                      <View style={[styles.weekMoodBadge, { backgroundColor: MOOD_COLORS[topMood] + "30" }]}>
+                        <Text style={[styles.weekMoodBadgeTxt, { color: MOOD_COLORS[topMood] }]}>
+                          {MOOD_LABELS[topMood]}
+                        </Text>
+                      </View>
+                      <Text style={styles.weekScoreLabel}>
+                        {moodHistory.length > 0
+                          ? (moodHistory.reduce((s,e) => s + (MOOD_SCORE[e.mood?.toLowerCase()] || 3), 0) / moodHistory.length).toFixed(1)
+                          : "—"} / 5
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              );
+            })()}
+          </View>
 
           {/* Insights */}
           {insights.length > 0 && (
@@ -396,6 +466,63 @@ export default function ProgressScreen({ navigation }) {
             </View>
           )}
 
+          {/* Calm & Support Tools Used */}
+          <View style={styles.card}>
+            <View style={styles.cardHeaderRow}>
+              <View style={styles.cardIconBubble}>
+                <Ionicons name="heart-outline" size={16} color="#6F42D8" />
+              </View>
+              <Text style={styles.cardTitle}>Calm & Support Tools Used</Text>
+            </View>
+            <View style={styles.toolsStatsRow}>
+              <View style={styles.toolStatCol}>
+                <Text style={styles.toolStatNumber}>{calmToolUses}</Text>
+                <Text style={styles.toolStatLabel}>Calm{"
+"}Moments</Text>
+                <View style={styles.toolStatTrack}>
+                  <View style={[styles.toolStatFill, { width: `${Math.min((calmToolUses / 10) * 100, 100)}%`, backgroundColor: "#7548D8" }]} />
+                </View>
+                <Text style={styles.toolStatGoal}>Goal: 10</Text>
+              </View>
+              <View style={styles.toolStatDivider} />
+              <View style={styles.toolStatCol}>
+                <Text style={styles.toolStatNumber}>{supportModeUses}</Text>
+                <Text style={styles.toolStatLabel}>Support{"
+"}Sessions</Text>
+                <View style={styles.toolStatTrack}>
+                  <View style={[styles.toolStatFill, { width: `${Math.min((supportModeUses / 3) * 100, 100)}%`, backgroundColor: "#4A9E5C" }]} />
+                </View>
+                <Text style={styles.toolStatGoal}>Goal: 3</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Hard Day Log */}
+          <View style={styles.card}>
+            <View style={styles.cardHeaderRow}>
+              <View style={[styles.cardIconBubble, { backgroundColor: "#FFE6E4" }]}>
+                <Ionicons name="cloud-outline" size={16} color="#D86A5B" />
+              </View>
+              <Text style={styles.cardTitle}>Hard Day Log</Text>
+            </View>
+            <Text style={styles.hardDayDesc}>Track difficult days to spot patterns and share with your child's care team.</Text>
+            <View style={styles.hardDayCountRow}>
+              <View style={styles.hardDayCountBox}>
+                <Text style={styles.hardDayCountNum}>{hardDays}</Text>
+              </View>
+              <Text style={styles.hardDayCountLabel}>hard days logged in {new Date().toLocaleDateString("en-US", { month: "long" })}</Text>
+            </View>
+            <TouchableOpacity
+              style={styles.logHardDayBtn}
+              onPress={() => navigation.navigate("MoodSupport", { mood: "overwhelmed" })}
+              activeOpacity={0.88}
+            >
+              <Ionicons name="add-circle-outline" size={16} color="#D86A5B" />
+              <Text style={styles.logHardDayTxt}>Log a Hard Day</Text>
+            </TouchableOpacity>
+            <Text style={styles.hardDayReset}>Logging resets at the start of each month.</Text>
+          </View>
+
           {/* Badges */}
           <View style={styles.card}>
             <View style={styles.cardHeaderRow}>
@@ -457,6 +584,25 @@ export default function ProgressScreen({ navigation }) {
               </View>
             ))
           )}
+
+          {/* Copy Progress Summary */}
+          <TouchableOpacity
+            style={styles.copyProgressCard}
+            onPress={() => {
+              const summary = `BitzaHugs Progress Summary\n\nStreak: ${streak} days\nMood check-ins: ${moodHistory.length}\nJournal entries: ${journalEntries.length}\nCalm moments: ${calmToolUses}\nSupport sessions: ${supportModeUses}\nBadges earned: ${earnedCount}/${badges.length}\n\nShared from BitzaHugs`;
+              require("react-native").Clipboard.setString(summary);
+            }}
+            activeOpacity={0.88}
+          >
+            <View style={styles.copyProgressIcon}>
+              <Feather name="share" size={18} color="#7548D8" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.copyProgressTitle}>Copy Progress Summary</Text>
+              <Text style={styles.copyProgressSub}>Share with your child's doctor, therapist, or school.</Text>
+            </View>
+            <Feather name="chevron-right" size={16} color="#7548D8" />
+          </TouchableOpacity>
 
           {/* Footer */}
           <View style={styles.footerCard}>
@@ -578,4 +724,46 @@ const styles = StyleSheet.create({
   footerCard: { backgroundColor: "#F6ECFF", borderRadius: 16, borderWidth: 1, borderColor: "#E3D2F8", padding: 12, flexDirection: "row", alignItems: "center", marginTop: 4 },
   footerIcon: { width: 36, height: 36, marginRight: 11 },
   footerText: { flex: 1, color: "#2B2463", fontSize: 12, lineHeight: 17, fontWeight: "700" },
+
+  // Week at a Glance
+  weekHeaderRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 10 },
+  weekSubLabel: { color: "#837E96", fontSize: 11, fontWeight: "700" },
+  weekDaysRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 12 },
+  weekDayWrap: { alignItems: "center", gap: 5 },
+  weekDayLabel: { color: "#837E96", fontSize: 10, fontWeight: "700" },
+  weekDayLabelToday: { color: "#7548D8", fontWeight: "900" },
+  weekDayCircle: { width: 32, height: 32, borderRadius: 16, borderWidth: 1.5, borderColor: "#EDE4F5", alignItems: "center", justifyContent: "center", backgroundColor: "#FDFAFF" },
+  weekDayCircleChecked: { backgroundColor: "#4A9E5C", borderColor: "#4A9E5C" },
+  weekDayCircleToday: { borderColor: "#7548D8", borderWidth: 2 },
+  weekCompareWrap: { flexDirection: "row", alignItems: "center", gap: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: "#F5F0FA" },
+  weekCompareLabel: { color: "#837E96", fontSize: 11, fontWeight: "700" },
+  weekMoodBadge: { borderRadius: 12, paddingHorizontal: 12, paddingVertical: 5 },
+  weekMoodBadgeTxt: { fontSize: 12, fontWeight: "800" },
+  weekScoreLabel: { color: "#837E96", fontSize: 11, fontWeight: "600", marginLeft: "auto" },
+
+  // Calm & Support Tools
+  toolsStatsRow: { flexDirection: "row", alignItems: "flex-start" },
+  toolStatCol: { flex: 1, alignItems: "center", gap: 4 },
+  toolStatDivider: { width: 1, backgroundColor: "#F0E8E2", marginHorizontal: 12 },
+  toolStatNumber: { color: "#2B2463", fontSize: 36, fontWeight: "900", lineHeight: 42 },
+  toolStatLabel: { color: "#837E96", fontSize: 12, fontWeight: "700", textAlign: "center", lineHeight: 17 },
+  toolStatTrack: { width: "80%", height: 4, borderRadius: 2, backgroundColor: "#EDE3FB", overflow: "hidden" },
+  toolStatFill: { height: "100%", borderRadius: 2 },
+  toolStatGoal: { color: "#B0A8C8", fontSize: 10, fontWeight: "600" },
+
+  // Hard Day Log
+  hardDayDesc: { color: "#5B5672", fontSize: 12, lineHeight: 18, fontWeight: "600", marginBottom: 12 },
+  hardDayCountRow: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 12 },
+  hardDayCountBox: { width: 54, height: 54, borderRadius: 16, backgroundColor: "#FFE6E4", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "#FFD0C0" },
+  hardDayCountNum: { color: "#D86A5B", fontSize: 24, fontWeight: "900" },
+  hardDayCountLabel: { color: "#5B5672", fontSize: 13, fontWeight: "700", flex: 1 },
+  logHardDayBtn: { height: 48, borderRadius: 14, backgroundColor: "#FFE6E4", borderWidth: 1, borderColor: "#FFD0C0", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 8 },
+  logHardDayTxt: { color: "#D86A5B", fontSize: 14, fontWeight: "800" },
+  hardDayReset: { color: "#B0A8C8", fontSize: 10, fontWeight: "600", textAlign: "center" },
+
+  // Copy Progress Summary
+  copyProgressCard: { backgroundColor: "#FFFFFF", borderRadius: 16, borderWidth: 1, borderColor: "#EDE4F5", padding: 14, flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 10 },
+  copyProgressIcon: { width: 36, height: 36, borderRadius: 12, backgroundColor: "#F0E2FF", alignItems: "center", justifyContent: "center" },
+  copyProgressTitle: { color: "#2B2463", fontSize: 13, fontWeight: "800", marginBottom: 2 },
+  copyProgressSub: { color: "#837E96", fontSize: 11, fontWeight: "600" },
 });
