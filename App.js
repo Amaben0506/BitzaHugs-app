@@ -508,10 +508,8 @@ const setupRevenueCat = async () => {
     });
 
     const customerInfo = await Purchases.getCustomerInfo();
-    const isPremium =
-  customerInfo.entitlements.active["BitzaHugs Pro"] != null ||
-  customerInfo.entitlements.active["premium"] != null ||
-  customerInfo.entitlements.active["premium_access"] != null;
+    const activeEntitlements = customerInfo?.entitlements?.active || {};
+    const isPremium = activeEntitlements["BitzaHugs Pro"] != null;
 
     await AsyncStorage.setItem("bitzaIsPremium", isPremium ? "true" : "false");
 
