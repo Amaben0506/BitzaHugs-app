@@ -43,7 +43,6 @@ async function readFromFirestore(uid, collection) {
 
 export const migrateLocalDataToFirestore = async (uid) => {
   if (!uid) return { success: false, error: "No user ID provided." };
-  console.log("Starting data migration for:", uid);
   const results = [];
   for (const { asyncKey, firestoreCollection } of MIGRATION_KEYS) {
     try {
@@ -61,7 +60,6 @@ export const migrateLocalDataToFirestore = async (uid) => {
   }
   const migrated = results.filter((r) => r.status === "migrated").length;
   const failed = results.filter((r) => r.status === "failed" || r.status === "error").length;
-  console.log("Migration complete:", results);
   return { success: failed === 0, migrated, failed, results };
 };
 
@@ -83,7 +81,6 @@ export const syncToFirestore = async (uid, asyncKey) => {
 
 export const loadFirestoreDataToLocal = async (uid) => {
   if (!uid) return { success: false };
-  console.log("Loading Firestore data for:", uid);
   const results = [];
   for (const { asyncKey, firestoreCollection } of MIGRATION_KEYS) {
     try {
