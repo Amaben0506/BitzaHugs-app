@@ -477,8 +477,7 @@ export default function ProgressScreen({ navigation }) {
             <View style={styles.toolsStatsRow}>
               <View style={styles.toolStatCol}>
                 <Text style={styles.toolStatNumber}>{calmToolUses}</Text>
-                <Text style={styles.toolStatLabel}>Calm{"
-"}Moments</Text>
+                <Text style={styles.toolStatLabel}>Calm Moments</Text>
                 <View style={styles.toolStatTrack}>
                   <View style={[styles.toolStatFill, { width: `${Math.min((calmToolUses / 10) * 100, 100)}%`, backgroundColor: "#7548D8" }]} />
                 </View>
@@ -487,8 +486,7 @@ export default function ProgressScreen({ navigation }) {
               <View style={styles.toolStatDivider} />
               <View style={styles.toolStatCol}>
                 <Text style={styles.toolStatNumber}>{supportModeUses}</Text>
-                <Text style={styles.toolStatLabel}>Support{"
-"}Sessions</Text>
+                <Text style={styles.toolStatLabel}>Support Sessions</Text>
                 <View style={styles.toolStatTrack}>
                   <View style={[styles.toolStatFill, { width: `${Math.min((supportModeUses / 3) * 100, 100)}%`, backgroundColor: "#4A9E5C" }]} />
                 </View>
