@@ -6,7 +6,8 @@
         "image": "latest"
       },
       "env": {
-        "NODE_ENV": "production"
+        "NODE_ENV": "production",
+        "EXPO_PUBLIC_ANTHROPIC_API_KEY": "$EXPO_PUBLIC_ANTHROPIC_API_KEY"
       }
     },
     "production": {
@@ -15,7 +16,8 @@
         "image": "latest"
       },
       "env": {
-        "NODE_ENV": "production"
+        "NODE_ENV": "production",
+        "EXPO_PUBLIC_ANTHROPIC_API_KEY": "$EXPO_PUBLIC_ANTHROPIC_API_KEY"
       }
     }
   }
