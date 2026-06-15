@@ -54,7 +54,7 @@ function formatTime(timestamp) {
   }
 }
 
-function MessageBubble({ msg, currentUserId, onLike, onReport, theme }) {
+function MessageBubble({ msg, currentUserId, onLike, onReport, theme, styles }) {
   const isOwn = msg.userId && currentUserId && msg.userId === currentUserId;
   return (
     <View style={[styles.msgRow, isOwn && styles.msgRowOwn]}>
@@ -216,7 +216,7 @@ export default function CommunityScreen({ navigation }) {
               }
               renderItem={({ item }) => {
                 try {
-                  return <MessageBubble msg={item} currentUserId={userId} onLike={handleLike} onReport={handleReport} theme={theme} />;
+                  return <MessageBubble msg={item} currentUserId={userId} onLike={handleLike} onReport={handleReport} theme={theme} styles={s} />;
                 } catch (e) {
                   console.log("Message render error:", e);
                   return null;

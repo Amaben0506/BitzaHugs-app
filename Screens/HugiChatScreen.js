@@ -27,6 +27,8 @@ const calmActions = [
   { label: "Journal", icon: "edit-3", route: "CalmJournal" },
 ];
 
+const ANTHROPIC_API_KEY = process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY || '';
+
 const EMERGENCY_PATTERN = /(911|emergency|danger|unsafe|hurt|injur|bleeding|can't breathe|cannot breathe|chok|suicide|self harm|kill|abuse|weapon|overdose)/i;
 
 const buildQuickReplies = (childProfile, parentProfile) => {
@@ -115,6 +117,72 @@ const buildLocalHugiResponse = (text, childProfile, parentProfile) => {
   return `That sounds like a lot to carry. Focus on one gentle next step for ${childName}, and one breath for you. You're doing hard things with care. 💜`;
 };
 
+const buildSystemPrompt = (childProfile, parentProfile) => {
+  const childName = childProfile?.childName?.trim() || 'the child';
+  const childAge = childProfile?.age?.trim() || '';
+  const diagnosis = childProfile?.diagnosis?.trim() || '';
+  const triggers = childProfile?.triggers?.trim() || '';
+  const childCalming = childProfile?.calmingStrategies?.trim() || '';
+  const parentName = parentProfile?.preferredGreeting?.trim() || parentProfile?.name?.trim() || '';
+  const parentCalming = parentProfile?.calmingStrategies?.trim() || '';
+  const hugiTone = parentProfile?.hugiTone || 'gentle';
+
+  const toneGuide = {
+    gentle: 'warm, calm, and nurturing',
+    practical: 'clear, practical, and solution-focused',
+    direct: 'direct and straightforward',
+    encouraging: 'encouraging and affirming',
+  }[hugiTone] || 'warm and calm';
+
+  let prompt = `You are Hugi, a compassionate AI support companion inside the BitzaHugs app for caregivers of neurodivergent children — including those with autism, ADHD, sensory processing differences, or behavioral challenges. Your role is to offer calm, grounded emotional support in real moments of stress. You are not a therapist, doctor, or crisis service.
+
+Your tone is ${toneGuide}. Keep every response to 2–4 sentences. End each message with 💜. Do not give long lists or lectures. Ask one gentle follow-up question when you need more context. Never minimize what the caregiver is feeling.`;
+
+  if (childName !== 'the child' || childAge || diagnosis || triggers || childCalming) {
+    prompt += `\n\nChild profile:`;
+    if (childName !== 'the child') prompt += `\n- Name: ${childName}`;
+    if (childAge) prompt += `\n- Age: ${childAge}`;
+    if (diagnosis) prompt += `\n- Diagnosis/profile: ${diagnosis}`;
+    if (triggers) prompt += `\n- Known triggers: ${triggers}`;
+    if (childCalming) prompt += `\n- Calming strategies that work: ${childCalming}`;
+  }
+
+  if (parentName || parentCalming) {
+    prompt += `\n\nCaregiver profile:`;
+    if (parentName) prompt += `\n- Name: ${parentName}`;
+    if (parentCalming) prompt += `\n- Their own calming strategies: ${parentCalming}`;
+  }
+
+  prompt += `\n\nSafety rule: If the caregiver mentions immediate danger, self-harm, a medical emergency, or uses words like "911", always respond that BitzaHugs is not an emergency service and they should call 911 or their local emergency number immediately.`;
+
+  return prompt;
+};
+
+const callHugiAI = async (userMessage, history, childProfile, parentProfile) => {
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 200,
+      system: buildSystemPrompt(childProfile, parentProfile),
+      messages: [...history, { role: 'user', content: userMessage }],
+    }),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error?.message || `API error ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data.content[0].text;
+};
+
 export default function HugiChatScreen({ navigation }) {
   const [childProfile, setChildProfile] = useState(null);
   const [parentProfile, setParentProfile] = useState(null);
@@ -185,8 +253,20 @@ export default function HugiChatScreen({ navigation }) {
     setIsLoading(true);
     scrollToBottom();
 
+    if (EMERGENCY_PATTERN.test(trimmed)) {
+      const emergencyText = "This may be more than BitzaHugs can safely support. If there is immediate danger, risk of harm, or a medical emergency, contact emergency services now. Stay as close to safety as you can — you are not alone. 💜";
+      const hugiMsg = { id: (Date.now() + 1).toString(), from: "hugi", text: emergencyText };
+      setMessages((prev) => [...prev, hugiMsg]);
+      setConversationHistory((prev) => [...prev, { role: "user", content: trimmed }, { role: "assistant", content: emergencyText }]);
+      setIsLoading(false);
+      scrollToBottom();
+      return;
+    }
+
     try {
-      const hugiText = buildLocalHugiResponse(trimmed, childProfile, parentProfile);
+      const hugiText = ANTHROPIC_API_KEY
+        ? await callHugiAI(trimmed, conversationHistory, childProfile, parentProfile)
+        : buildLocalHugiResponse(trimmed, childProfile, parentProfile);
       const hugiMsg = { id: (Date.now() + 1).toString(), from: "hugi", text: hugiText };
       setMessages((prev) => [...prev, hugiMsg]);
       setConversationHistory((prev) => [
@@ -196,8 +276,10 @@ export default function HugiChatScreen({ navigation }) {
       ]);
     } catch (e) {
       console.log("Hugi API error:", e);
-      const fallbackMsg = { id: (Date.now() + 1).toString(), from: "hugi", text: "I'm here with you. Something went a little quiet on my end — can you try again? 💜" };
+      const fallbackText = buildLocalHugiResponse(trimmed, childProfile, parentProfile);
+      const fallbackMsg = { id: (Date.now() + 1).toString(), from: "hugi", text: fallbackText };
       setMessages((prev) => [...prev, fallbackMsg]);
+      setConversationHistory((prev) => [...prev, { role: "user", content: trimmed }, { role: "assistant", content: fallbackText }]);
     } finally {
       setIsLoading(false);
       scrollToBottom();
