@@ -1,14 +1,18 @@
 import { Platform } from "react-native";
 import Purchases, { LOG_LEVEL } from "react-native-purchases";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { scheduleTrialNudges } from "../../utils/notifications";
+import { auth, signInUser } from "./firebase";
 
 const REVENUECAT_IOS_API_KEY = "appl_nrdgYpwvNLPBLEIWXHsUpdPYFqy";
 const REVENUECAT_ANDROID_API_KEY = "goog_IXzEaPiCbFMcyjVsQsZdcfIPixp";
 const REVENUECAT_TEST_STORE_API_KEY = "rcb_OiEbQvrKAMNOPFQTTGSsagxjjMK";
 const PREMIUM_ENTITLEMENT_ID = "BitzaHugs Pro";
 const PREMIUM_STORAGE_KEY = "bitzaIsPremium";
+const PREMIUM_CACHE_KEY = "bitzaPremiumEntitlementCache";
 
 let revenueCatConfigured = false;
+let configuredAppUserId = null;
 
 const getRevenueCatApiKey = () => {
   if (__DEV__) return REVENUECAT_TEST_STORE_API_KEY;
@@ -19,8 +23,19 @@ const getRevenueCatApiKey = () => {
 const savePremiumStatus = async (customerInfo) => {
   try {
     const activeEntitlements = customerInfo?.entitlements?.active || {};
-    const isPremium = activeEntitlements[PREMIUM_ENTITLEMENT_ID] !== undefined;
+    const entitlement = activeEntitlements[PREMIUM_ENTITLEMENT_ID];
+    const isPremium = entitlement !== undefined;
+    const cache = {
+      isPremium,
+      checkedAt: new Date().toISOString(),
+      entitlementId: PREMIUM_ENTITLEMENT_ID,
+      periodType: entitlement?.periodType ?? null,
+      expirationDate: entitlement?.expirationDate ?? null,
+      willRenew: entitlement?.willRenew ?? null,
+      productIdentifier: entitlement?.productIdentifier ?? null,
+    };
     await AsyncStorage.setItem(PREMIUM_STORAGE_KEY, isPremium ? "true" : "false");
+    await AsyncStorage.setItem(PREMIUM_CACHE_KEY, JSON.stringify(cache));
     return isPremium;
   } catch (error) {
     console.log("Error saving premium status:", error);
@@ -42,14 +57,54 @@ export const configureRevenueCat = () => {
   }
 };
 
+export const configureRevenueCatForCurrentUser = async () => {
+  try {
+    const user = auth.currentUser || await signInUser();
+    if (!user?.uid) {
+      configureRevenueCat();
+      return null;
+    }
+
+    Purchases.setLogLevel(__DEV__ ? LOG_LEVEL.VERBOSE : LOG_LEVEL.WARN);
+
+    if (!revenueCatConfigured) {
+      Purchases.configure({ apiKey: getRevenueCatApiKey(), appUserID: user.uid });
+      Purchases.addCustomerInfoUpdateListener(async (customerInfo) => {
+        await savePremiumStatus(customerInfo);
+      });
+      revenueCatConfigured = true;
+      configuredAppUserId = user.uid;
+      return user.uid;
+    }
+
+    if (configuredAppUserId !== user.uid) {
+      await Purchases.logIn(user.uid);
+      configuredAppUserId = user.uid;
+      await refreshCustomerInfo();
+    }
+
+    return user.uid;
+  } catch (error) {
+    console.log("Error configuring RevenueCat for Firebase user:", error);
+    configureRevenueCat();
+    return null;
+  }
+};
+
 export const refreshCustomerInfo = async () => {
   try {
     const customerInfo = await Purchases.getCustomerInfo();
     const isPremium = await savePremiumStatus(customerInfo);
-    return { customerInfo, isPremium };
+    return { customerInfo, isPremium, fromCache: false, error: null };
   } catch (error) {
     console.log("Error refreshing customer info:", error);
-    return { customerInfo: null, isPremium: false };
+    const cached = await checkLocalPremiumStatus();
+    return {
+      customerInfo: null,
+      isPremium: cached,
+      fromCache: true,
+      error: error?.message || "Could not refresh subscription status.",
+    };
   }
 };
 
@@ -68,6 +123,10 @@ export const purchasePackage = async (selectedPackage) => {
     const purchaseResult = await Purchases.purchasePackage(selectedPackage);
     const customerInfo = purchaseResult?.customerInfo;
     const isPremium = await savePremiumStatus(customerInfo);
+    const entitlement = customerInfo?.entitlements?.active?.[PREMIUM_ENTITLEMENT_ID];
+    if (entitlement?.periodType === "TRIAL") {
+      scheduleTrialNudges().catch(() => {});
+    }
     return { success: true, customerInfo, isPremium, error: null };
   } catch (error) {
     if (error?.userCancelled) {
@@ -98,3 +157,16 @@ export const checkLocalPremiumStatus = async () => {
     return false;
   }
 };
+
+export const getCachedPremiumEntitlement = async () => {
+  try {
+    const stored = await AsyncStorage.getItem(PREMIUM_CACHE_KEY);
+    if (stored) return JSON.parse(stored);
+    return { isPremium: await checkLocalPremiumStatus(), checkedAt: null };
+  } catch (error) {
+    console.log("Error checking cached premium entitlement:", error);
+    return { isPremium: false, checkedAt: null };
+  }
+};
+
+export { PREMIUM_ENTITLEMENT_ID, PREMIUM_STORAGE_KEY, PREMIUM_CACHE_KEY };

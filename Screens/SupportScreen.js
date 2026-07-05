@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React from "react";
 import {
   View,
   Text,
@@ -11,8 +11,6 @@ import {
 } from "react-native";
 
 import { SafeAreaView } from "react-native-safe-area-context";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useFocusEffect } from "@react-navigation/native";
 import { Feather, Ionicons } from "@expo/vector-icons";
 
 const supportHeartHug = require("../assets/icons/support-heart-hug.png");
@@ -69,34 +67,10 @@ function ToolCard({ title, subtitle, icon, bg, accent, onPress }) {
 }
 
 export default function SupportScreen({ navigation }) {
-  const [isPremium, setIsPremium] = useState(false);
-
   // ✅ Fixed: getParent().getParent() reaches Drawer level where HugiChat + SupportMode live
   const nav = (screen, params) =>
     navigation.getParent()?.getParent()?.navigate(screen, params) ??
     navigation.navigate(screen, params);
-
-  useFocusEffect(
-    useCallback(() => {
-      const loadPremium = async () => {
-        try {
-          const premium = await AsyncStorage.getItem("bitzaIsPremium");
-          setIsPremium(premium === "true");
-        } catch (e) {
-          console.log("Error loading premium state:", e);
-        }
-      };
-      loadPremium();
-    }, [])
-  );
-
-  const handleNav = (screen, params = {}, premiumOnly = false) => {
-    if (premiumOnly && !isPremium) {
-      nav("PremiumUpgrade");
-      return;
-    }
-    nav(screen, params);
-  };
 
   return (
     <ImageBackground
@@ -140,8 +114,7 @@ export default function SupportScreen({ navigation }) {
           icon="message-circle"
           bg="#F0E7FF"
           accent="#8B5BE8"
-          premium
-          onPress={() => handleNav("HugiChat", {}, true)}
+          onPress={() => nav("HugiChat")}
         />
 
         {/* Printable Resources */}
@@ -152,7 +125,7 @@ export default function SupportScreen({ navigation }) {
           bg="#EEF7E9"
           accent="#4A9E5C"
           premium
-          onPress={() => handleNav("Resources", {}, true)}
+          onPress={() => nav("Resources")}
         />
 
         {/* ✅ Support Right Now — navigates to SupportMode */}
@@ -168,7 +141,7 @@ export default function SupportScreen({ navigation }) {
         {/* Community */}
         <BigSupportRow
           title="Caregiver Community"
-          subtitle="Connect with caregivers who understand. 8 rooms."
+          subtitle="Connect with caregivers who understand."
           icon="users"
           bg="#F0E7FF"
           accent="#8B5BE8"

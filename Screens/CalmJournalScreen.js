@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { useFocusEffect } from "@react-navigation/native";
+import React, { useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   View,
@@ -71,14 +70,6 @@ const gratitudePrompts = [
 ];
 
 export default function CalmJournalScreen({ navigation, route }) {
-  // Self-check premium
-  useFocusEffect(useCallback(() => {
-    const checkPremium = async () => {
-      const premium = await AsyncStorage.getItem("bitzaIsPremium");
-      if (premium !== "true") navigation.replace("PremiumUpgrade");
-    };
-    checkPremium();
-  }, []));
   const startingMood = route?.params?.mood || null;
 
   const [entry, setEntry] = useState("");

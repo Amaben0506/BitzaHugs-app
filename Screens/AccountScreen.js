@@ -6,17 +6,18 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
-  ActivityIndicator,
   TextInput,
-  Platform,
   KeyboardAvoidingView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
+import { getFunctions, httpsCallable } from "firebase/functions";
 
 import {
+  app,
   auth,
   signOutUser,
   createAccount,
@@ -24,34 +25,30 @@ import {
   resetPassword,
 } from "../src/lib/firebase";
 
-const COLORS = {
-  background: "#FFF9F3",
-  surface: "#FFFFFF",
-  text: "#2B2463",
-  textSoft: "#625D78",
-  textMuted: "#928CA5",
+import Card from "../src/components/ui/Card";
+import PressableScale from "../src/components/ui/PressableScale";
+import ScreenHeader from "../src/components/ui/ScreenHeader";
+import PrimaryButton from "../src/components/ui/PrimaryButton";
+import SecondaryButton from "../src/components/ui/SecondaryButton";
+import { Colors, Fonts, Type, Spacing, Radius, Shadows } from "../src/theme/theme";
 
-  purple: "#7548D8",
-  purpleDark: "#6034BF",
-  purpleSoft: "#F1E7FF",
-  purpleLight: "#F8F2FF",
-  purpleBorder: "#E4D4F8",
-
+// Colors that don't exist in the design system token set
+const C = {
   green: "#4C9B63",
   greenSoft: "#EDF8EF",
   greenBorder: "#CBE6D0",
-
   blue: "#4C94C9",
   blueSoft: "#EAF5FD",
-  blueBorder: "#C8E3F6",
-
   coral: "#D96D61",
   coralSoft: "#FFF1ED",
-  coralBorder: "#F7CDC5",
+};
 
-  peach: "#FFE9D8",
-  border: "#EFE5DE",
-  divider: "#F2EBE6",
+const functions = getFunctions(app);
+
+const deleteAccountAndData = async () => {
+  const callable = httpsCallable(functions, "deleteAccountAndData");
+  const result = await callable();
+  return result.data;
 };
 
 export default function AccountScreen({ navigation }) {
@@ -64,6 +61,7 @@ export default function AccountScreen({ navigation }) {
 
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [statusMsg, setStatusMsg] = useState("");
 
   const statusTimerRef = useRef(null);
@@ -138,7 +136,7 @@ export default function AccountScreen({ navigation }) {
       setPassword("");
       setMode("main");
 
-      showStatus("Welcome back! You’re signed in. 💜");
+      showStatus("Welcome back! You're signed in. 💜");
     } catch (error) {
       console.error("Sign-in error:", error);
 
@@ -272,7 +270,7 @@ export default function AccountScreen({ navigation }) {
               setPassword("");
               setName("");
 
-              showStatus("You’ve been signed out.");
+              showStatus("You've been signed out.");
             } catch (error) {
               console.error("Sign-out error:", error);
 
@@ -283,6 +281,58 @@ export default function AccountScreen({ navigation }) {
             }
           },
         },
+      ]
+    );
+  };
+
+  // ─── Delete Account helpers ──────────────────────────────────────────────────
+
+  const clearLocalData = async () => {
+    await AsyncStorage.multiRemove([
+      "bitzaIsPremium",
+      "bitzaAccountCreated",
+      "bitzaAccountPromptSeen",
+      "bitzaNotificationPreferences",
+      "bitzaNotificationsMaster",
+      "bitzaAppointments",
+    ]);
+  };
+
+  const finaliseDelete = async () => {
+    await clearLocalData();
+    setUser(null);
+    setMode("main");
+    setEmail("");
+    setPassword("");
+    setName("");
+    showStatus("Your account has been deleted.");
+  };
+
+  const confirmDelete = async () => {
+    if (!auth.currentUser?.uid) return;
+    setIsDeleting(true);
+    try {
+      const result = await deleteAccountAndData();
+      if (!result?.success) {
+        Alert.alert("Unable to delete", "Something went wrong. Please try again.");
+        return;
+      }
+      await finaliseDelete();
+    } catch (e) {
+      console.error("Delete error:", e);
+      Alert.alert("Unable to delete", e?.message || "Something went wrong. Please try again.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      "Delete your account?",
+      "This permanently removes your BitzaHugs account and your data. This cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Delete", style: "destructive", onPress: confirmDelete },
       ]
     );
   };
@@ -315,7 +365,7 @@ export default function AccountScreen({ navigation }) {
       ? "Sign in to continue your BitzaHugs journey."
       : mode === "signup"
       ? "Create a free account to keep your supports connected."
-      : "Enter your email and we’ll send you a reset link.";
+      : "Enter your email and we'll send you a reset link.";
 
   const handleBackPress = () => {
     if (mode === "main") {
@@ -326,38 +376,13 @@ export default function AccountScreen({ navigation }) {
     changeMode("main");
   };
 
-  const renderHeader = () => (
-    <View style={styles.header}>
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={handleBackPress}
-        activeOpacity={0.8}
-        accessibilityRole="button"
-        accessibilityLabel="Go back"
-      >
-        <Feather name="chevron-left" size={22} color={COLORS.purple} />
-      </TouchableOpacity>
-
-      <View style={styles.headerCenter}>
-        <Text style={styles.headerEyebrow}>BITZAHUGS</Text>
-        <Text style={styles.headerTitle}>{screenTitle}</Text>
-      </View>
-
-      <View style={styles.headerSpacer} />
-    </View>
-  );
-
   const renderStatusBanner = () => {
-    if (!statusMsg) {
-      return null;
-    }
-
+    if (!statusMsg) return null;
     return (
       <View style={styles.statusBanner}>
         <View style={styles.statusIcon}>
           <Feather name="check" size={14} color="#FFFFFF" />
         </View>
-
         <Text style={styles.statusText}>{statusMsg}</Text>
       </View>
     );
@@ -369,18 +394,26 @@ export default function AccountScreen({ navigation }) {
 
   if (user?.uid && !user.isAnonymous) {
     return (
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.backgroundDecorationOne} />
-        <View style={styles.backgroundDecorationTwo} />
-
+      <SafeAreaView style={styles.safe}>
+        <LinearGradient
+          colors={["#EEE8F5", "#F5F0FA", "#FDFBFF"]}
+          locations={[0, 0.4, 1]}
+          style={StyleSheet.absoluteFill}
+        />
+        <ScreenHeader
+          title="Your Account"
+          onBack={handleBackPress}
+          style={styles.headerBg}
+        />
         <ScrollView
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
+          style={styles.scroll}
         >
-          {renderHeader()}
           {renderStatusBanner()}
 
-          <View style={styles.profileHero}>
+          {/* Profile Hero */}
+          <Card tint="lavender" style={styles.profileHero}>
             <View style={styles.heroGlowLarge} />
             <View style={styles.heroGlowSmall} />
 
@@ -388,7 +421,6 @@ export default function AccountScreen({ navigation }) {
               <View style={styles.avatar}>
                 <Text style={styles.avatarText}>{avatarInitial}</Text>
               </View>
-
               <View style={styles.onlineIndicator}>
                 <Feather name="check" size={11} color="#FFFFFF" />
               </View>
@@ -402,37 +434,35 @@ export default function AccountScreen({ navigation }) {
               <View style={styles.accountActiveDot} />
               <Text style={styles.accountActiveText}>Account active</Text>
             </View>
-          </View>
+          </Card>
 
-          <View style={styles.syncCard}>
+          {/* Sync Card */}
+          <Card style={styles.syncCard}>
             <View style={styles.syncIconWrap}>
-              <Feather name="cloud" size={21} color={COLORS.green} />
+              <Feather name="cloud" size={21} color={C.green} />
             </View>
-
             <View style={styles.cardTextContainer}>
               <View style={styles.cardTitleRow}>
                 <Text style={styles.cardTitle}>Connected Care</Text>
-
                 <View style={styles.activePill}>
                   <Text style={styles.activePillText}>Active</Text>
                 </View>
               </View>
-
               <Text style={styles.cardDescription}>
                 Keep your routines, child supports, mood history, and caregiver
                 tools connected to your BitzaHugs account.
               </Text>
             </View>
-          </View>
+          </Card>
 
-          <Text style={styles.sectionLabel}>ACCOUNT INFORMATION</Text>
+          <Text style={styles.sectionLabel}>Account Information</Text>
 
-          <View style={styles.detailsCard}>
+          {/* Details Card */}
+          <Card style={styles.detailsCard}>
             <View style={styles.detailsHeading}>
               <View style={styles.detailsHeadingIcon}>
-                <Feather name="user" size={18} color={COLORS.purple} />
+                <Feather name="user" size={18} color={Colors.purple} />
               </View>
-
               <View style={styles.cardTextContainer}>
                 <Text style={styles.detailsTitle}>Account Details</Text>
                 <Text style={styles.detailsSubtitle}>
@@ -443,31 +473,15 @@ export default function AccountScreen({ navigation }) {
 
             <View style={styles.detailDivider} />
 
-            <DetailRow
-              icon="smile"
-              label="Name"
-              value={user.displayName || "Not set"}
-            />
+            <DetailRow icon="smile" label="Name" value={user.displayName || "Not set"} />
+            <DetailRow icon="mail" label="Email" value={user.email || "Not available"} />
+            <DetailRow icon="calendar" label="Member since" value={memberSince} isLast />
+          </Card>
 
-            <DetailRow
-              icon="mail"
-              label="Email"
-              value={user.email || "Not available"}
-            />
+          <Text style={styles.sectionLabel}>Your BitzaHugs Access</Text>
 
-            <DetailRow
-              icon="calendar"
-              label="Member since"
-              value={memberSince}
-              isLast
-            />
-          </View>
-
-          <Text style={styles.sectionLabel}>YOUR BITZAHUGS ACCESS</Text>
-
-          <TouchableOpacity
-            style={styles.desktopCard}
-            activeOpacity={0.86}
+          {/* Desktop / Portal Card */}
+          <PressableScale
             onPress={() =>
               Alert.alert(
                 "Caregiver Portal 💜",
@@ -475,51 +489,54 @@ export default function AccountScreen({ navigation }) {
               )
             }
           >
-            <View style={styles.desktopIconWrap}>
-              <Feather name="monitor" size={22} color={COLORS.blue} />
-            </View>
-
-            <View style={styles.cardTextContainer}>
-              <Text style={styles.desktopTitle}>Open the Caregiver Portal</Text>
-
-              <Text style={styles.desktopDescription}>
-                Visit bitzahugs.com/login to manage supports, export
-                information, and print family resources.
-              </Text>
-
-              <View style={styles.desktopLinkRow}>
-                <Text style={styles.desktopLink}>bitzahugs.com/login</Text>
-                <Feather
-                  name="arrow-up-right"
-                  size={14}
-                  color={COLORS.blue}
-                />
+            <Card style={styles.desktopCard}>
+              <View style={styles.desktopIconWrap}>
+                <Feather name="monitor" size={22} color={C.blue} />
               </View>
-            </View>
+              <View style={styles.cardTextContainer}>
+                <Text style={styles.desktopTitle}>Open the Caregiver Portal</Text>
+                <Text style={styles.desktopDescription}>
+                  Visit bitzahugs.com/login to manage supports, export
+                  information, and print family resources.
+                </Text>
+                <View style={styles.desktopLinkRow}>
+                  <Text style={styles.desktopLink}>bitzahugs.com/login</Text>
+                  <Feather name="arrow-up-right" size={14} color={C.blue} />
+                </View>
+              </View>
+              <View style={styles.chevronCircle}>
+                <Feather name="chevron-right" size={17} color={C.blue} />
+              </View>
+            </Card>
+          </PressableScale>
 
-            <View style={styles.chevronCircle}>
-              <Feather name="chevron-right" size={17} color={COLORS.blue} />
-            </View>
-          </TouchableOpacity>
-
-          <View style={styles.privacyNote}>
+          {/* Privacy Note */}
+          <Card tint="lavender" style={styles.privacyNote}>
             <View style={styles.privacyNoteIcon}>
-              <Feather name="heart" size={16} color={COLORS.purple} />
+              <Feather name="heart" size={16} color={Colors.purple} />
             </View>
-
             <Text style={styles.privacyNoteText}>
               Your family information is treated with care and is never sold.
             </Text>
-          </View>
+          </Card>
 
-          <TouchableOpacity
-            style={styles.signOutButton}
-            onPress={handleSignOut}
-            activeOpacity={0.85}
-          >
-            <Feather name="log-out" size={18} color={COLORS.coral} />
+          {/* Sign Out */}
+          <PressableScale style={styles.signOutButton} onPress={handleSignOut}>
+            <Feather name="log-out" size={18} color={C.coral} />
             <Text style={styles.signOutText}>Sign Out</Text>
-          </TouchableOpacity>
+          </PressableScale>
+
+          {/* Delete Account */}
+          <PressableScale
+            style={[styles.signOutButton, styles.deleteAccountButton]}
+            onPress={handleDeleteAccount}
+            disabled={isDeleting}
+          >
+            <Feather name="trash-2" size={18} color="#C03060" />
+            <Text style={styles.deleteAccountText}>
+              {isDeleting ? "Deleting…" : "Delete Account"}
+            </Text>
+          </PressableScale>
 
           <Text style={styles.footerText}>
             Your locally saved information remains on this device after signing
@@ -535,10 +552,17 @@ export default function AccountScreen({ navigation }) {
   // ─────────────────────────────────────────────────────────────────────────────
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.backgroundDecorationOne} />
-      <View style={styles.backgroundDecorationTwo} />
-
+    <SafeAreaView style={styles.safe}>
+      <LinearGradient
+        colors={["#EEE8F5", "#F5F0FA", "#FDFBFF"]}
+        locations={[0, 0.4, 1]}
+        style={StyleSheet.absoluteFill}
+      />
+      <ScreenHeader
+        title={screenTitle}
+        onBack={handleBackPress}
+        style={styles.headerBg}
+      />
       <KeyboardAvoidingView
         style={styles.keyboardContainer}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -546,101 +570,80 @@ export default function AccountScreen({ navigation }) {
         <ScrollView
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
+          style={styles.scroll}
           keyboardShouldPersistTaps="handled"
         >
-          {renderHeader()}
           {renderStatusBanner()}
 
           {mode === "main" && (
             <>
+              {/* Signed-out hero artwork */}
               <View style={styles.signedOutHero}>
                 <View style={styles.heroArtwork}>
                   <View style={styles.heroArtworkGlow} />
-
                   <View style={styles.personIconCircle}>
                     <Ionicons
                       name="person-outline"
                       size={43}
-                      color={COLORS.purple}
+                      color={Colors.purple}
                     />
                   </View>
-
                   <View style={styles.heroCloudBadge}>
-                    <Feather name="cloud" size={15} color={COLORS.green} />
+                    <Feather name="cloud" size={15} color={C.green} />
                   </View>
-
                   <View style={styles.heroHeartBadge}>
-                    <Feather name="heart" size={14} color={COLORS.coral} />
+                    <Feather name="heart" size={14} color={C.coral} />
                   </View>
                 </View>
 
                 <Text style={styles.signedOutHeadline}>
                   Keep your supports close
                 </Text>
-
                 <Text style={styles.signedOutSubtext}>
                   Create a free account to connect your BitzaHugs experience
                   across devices and keep Premium access linked to you.
                 </Text>
               </View>
 
-              <View style={styles.benefitsCard}>
+              {/* Benefits Card */}
+              <Card style={styles.benefitsCard}>
                 <BenefitRow
                   icon="cloud"
                   title="Stay connected"
                   description="Access your family supports across your devices."
                 />
-
                 <BenefitRow
                   icon="shield"
                   title="Protect Premium access"
                   description="Keep your subscription connected to your account."
                 />
-
                 <BenefitRow
                   icon="monitor"
                   title="Use the caregiver portal"
                   description="Sign in from your phone or computer."
                 />
-
                 <BenefitRow
                   icon="lock"
                   title="Private by design"
                   description="Your information is never sold."
                   isLast
                 />
-              </View>
+              </Card>
 
-              <TouchableOpacity
-                style={styles.primaryButton}
+              <PrimaryButton
+                label="Create Free Account"
                 onPress={() => changeMode("signup")}
-                activeOpacity={0.88}
-              >
-                <View style={styles.primaryButtonIcon}>
-                  <Feather name="user-plus" size={17} color="#FFFFFF" />
-                </View>
-
-                <Text style={styles.primaryButtonText}>
-                  Create Free Account
-                </Text>
-
-                <Feather name="arrow-right" size={18} color="#FFFFFF" />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.secondaryButton}
+                icon="person-add-outline"
+                style={styles.createAccountBtn}
+              />
+              <SecondaryButton
+                label="I Already Have an Account"
                 onPress={() => changeMode("signin")}
-                activeOpacity={0.86}
-              >
-                <Feather name="log-in" size={18} color={COLORS.purple} />
-                <Text style={styles.secondaryButtonText}>
-                  I Already Have an Account
-                </Text>
-              </TouchableOpacity>
+                style={styles.secondaryBtn}
+              />
 
               <View style={styles.gentleNote}>
-                <Feather name="heart" size={15} color={COLORS.coral} />
-
+                <Feather name="heart" size={15} color={C.coral} />
                 <Text style={styles.gentleNoteText}>
                   Your support tools can still be used without creating an
                   account.
@@ -649,10 +652,9 @@ export default function AccountScreen({ navigation }) {
             </>
           )}
 
-          {(mode === "signin" ||
-            mode === "signup" ||
-            mode === "reset") && (
+          {(mode === "signin" || mode === "signup" || mode === "reset") && (
             <>
+              {/* Form intro icon + headline */}
               <View style={styles.formIntro}>
                 <View style={styles.formIntroIcon}>
                   <Feather
@@ -664,27 +666,23 @@ export default function AccountScreen({ navigation }) {
                         : "key"
                     }
                     size={25}
-                    color={COLORS.purple}
+                    color={Colors.purple}
                   />
                 </View>
-
                 <Text style={styles.formHeadline}>{screenTitle}</Text>
                 <Text style={styles.formDescription}>{formDescription}</Text>
               </View>
 
-              <View style={styles.formCard}>
+              {/* Form Card */}
+              <Card style={styles.formCard}>
                 {mode === "signup" && (
-                  <FormField
-                    label="Your name"
-                    helper="Optional"
-                    icon="user"
-                  >
+                  <FormField label="Your name" helper="Optional" icon="user">
                     <TextInput
                       style={styles.input}
                       value={name}
                       onChangeText={setName}
                       placeholder="What should we call you?"
-                      placeholderTextColor="#ACA5BD"
+                      placeholderTextColor={Colors.grayLavender}
                       autoCapitalize="words"
                       autoCorrect={false}
                       returnKeyType="next"
@@ -698,7 +696,7 @@ export default function AccountScreen({ navigation }) {
                     value={email}
                     onChangeText={setEmail}
                     placeholder="your@email.com"
-                    placeholderTextColor="#ACA5BD"
+                    placeholderTextColor={Colors.grayLavender}
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoCorrect={false}
@@ -730,7 +728,7 @@ export default function AccountScreen({ navigation }) {
                             ? "Create a password"
                             : "Enter your password"
                         }
-                        placeholderTextColor="#ACA5BD"
+                        placeholderTextColor={Colors.grayLavender}
                         secureTextEntry={!showPassword}
                         autoCapitalize="none"
                         autoCorrect={false}
@@ -741,7 +739,6 @@ export default function AccountScreen({ navigation }) {
                           mode === "signin" ? handleSignIn : handleSignUp
                         }
                       />
-
                       <TouchableOpacity
                         style={styles.eyeButton}
                         onPress={() => setShowPassword((current) => !current)}
@@ -754,19 +751,21 @@ export default function AccountScreen({ navigation }) {
                         <Feather
                           name={showPassword ? "eye-off" : "eye"}
                           size={19}
-                          color={COLORS.textMuted}
+                          color={Colors.grayLavender}
                         />
                       </TouchableOpacity>
                     </View>
                   </FormField>
                 )}
 
-                <TouchableOpacity
-                  style={[
-                    styles.primaryButton,
-                    styles.formSubmitButton,
-                    isLoading && styles.buttonDisabled,
-                  ]}
+                <PrimaryButton
+                  label={
+                    mode === "signin"
+                      ? "Sign In"
+                      : mode === "signup"
+                      ? "Create My Account"
+                      : "Send Reset Email"
+                  }
                   onPress={
                     mode === "signin"
                       ? handleSignIn
@@ -774,31 +773,10 @@ export default function AccountScreen({ navigation }) {
                       ? handleSignUp
                       : handleResetPassword
                   }
+                  loading={isLoading}
                   disabled={isLoading}
-                  activeOpacity={0.88}
-                >
-                  {isLoading ? (
-                    <ActivityIndicator color="#FFFFFF" size="small" />
-                  ) : (
-                    <>
-                      <Text style={styles.primaryButtonText}>
-                        {mode === "signin"
-                          ? "Sign In"
-                          : mode === "signup"
-                          ? "Create My Account"
-                          : "Send Reset Email"}
-                      </Text>
-
-                      <Feather
-                        name={
-                          mode === "reset" ? "send" : "arrow-right"
-                        }
-                        size={18}
-                        color="#FFFFFF"
-                      />
-                    </>
-                  )}
-                </TouchableOpacity>
+                  style={mode === "signup" ? [styles.formSubmitButton, styles.createAccountBtn] : styles.formSubmitButton}
+                />
 
                 {mode === "signin" && (
                   <TouchableOpacity
@@ -806,20 +784,16 @@ export default function AccountScreen({ navigation }) {
                     onPress={() => changeMode("reset")}
                     activeOpacity={0.75}
                   >
-                    <Feather
-                      name="key"
-                      size={14}
-                      color={COLORS.purple}
-                    />
-
+                    <Feather name="key" size={14} color={Colors.purple} />
                     <Text style={styles.forgotPasswordText}>
                       Forgot your password?
                     </Text>
                   </TouchableOpacity>
                 )}
-              </View>
+              </Card>
 
-              <View style={styles.accountSwitchCard}>
+              {/* Account Switch Card */}
+              <Card tint="lavender" style={styles.accountSwitchCard}>
                 <Text style={styles.accountSwitchText}>
                   {mode === "signin"
                     ? "New to BitzaHugs?"
@@ -827,7 +801,6 @@ export default function AccountScreen({ navigation }) {
                     ? "Already have an account?"
                     : "Remembered your password?"}
                 </Text>
-
                 <TouchableOpacity
                   onPress={() =>
                     changeMode(mode === "signin" ? "signup" : "signin")
@@ -840,12 +813,12 @@ export default function AccountScreen({ navigation }) {
                       : "Sign in instead"}
                   </Text>
                 </TouchableOpacity>
-              </View>
+              </Card>
             </>
           )}
 
           <View style={styles.footerPrivacyRow}>
-            <Feather name="lock" size={12} color={COLORS.textMuted} />
+            <Feather name="lock" size={12} color={Colors.textMuted} />
             <Text style={styles.footerPrivacyText}>
               Private, gentle, and made with care for families.
             </Text>
@@ -856,17 +829,17 @@ export default function AccountScreen({ navigation }) {
   );
 }
 
+// ─── Helper Components ────────────────────────────────────────────────────────
+
 function DetailRow({ icon, label, value, isLast = false }) {
   return (
     <View style={[styles.detailRow, isLast && styles.detailRowLast]}>
       <View style={styles.detailLabelGroup}>
         <View style={styles.detailIcon}>
-          <Feather name={icon} size={14} color={COLORS.purple} />
+          <Feather name={icon} size={14} color={Colors.purple} />
         </View>
-
         <Text style={styles.detailLabel}>{label}</Text>
       </View>
-
       <Text style={styles.detailValue} numberOfLines={1}>
         {value}
       </Text>
@@ -878,188 +851,83 @@ function BenefitRow({ icon, title, description, isLast = false }) {
   return (
     <View style={[styles.benefitRow, isLast && styles.benefitRowLast]}>
       <View style={styles.benefitIcon}>
-        <Feather name={icon} size={18} color={COLORS.purple} />
+        <Feather name={icon} size={18} color={Colors.purple} />
       </View>
-
       <View style={styles.cardTextContainer}>
         <Text style={styles.benefitTitle}>{title}</Text>
         <Text style={styles.benefitDescription}>{description}</Text>
       </View>
-
-      <Feather name="check-circle" size={17} color={COLORS.green} />
+      <Feather name="check-circle" size={17} color={C.green} />
     </View>
   );
 }
 
-function FormField({
-  label,
-  helper,
-  icon,
-  children,
-  isLast = false,
-}) {
+function FormField({ label, helper, icon, children, isLast = false }) {
   return (
     <View style={[styles.fieldGroup, isLast && styles.fieldGroupLast]}>
       <View style={styles.fieldLabelRow}>
         <View style={styles.fieldLabelLeft}>
-          <Feather name={icon} size={14} color={COLORS.purple} />
+          <Feather name={icon} size={14} color={Colors.purple} />
           <Text style={styles.inputLabel}>{label}</Text>
         </View>
-
         {helper ? <Text style={styles.inputHelper}>{helper}</Text> : null}
       </View>
-
       {children}
     </View>
   );
 }
 
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-
-  keyboardContainer: {
-    flex: 1,
-  },
-
-  backgroundDecorationOne: {
-    position: "absolute",
-    top: -95,
-    right: -80,
-    width: 220,
-    height: 220,
-    borderRadius: 110,
-    backgroundColor: "#F2E4FF",
-    opacity: 0.72,
-  },
-
-  backgroundDecorationTwo: {
-    position: "absolute",
-    bottom: 50,
-    left: -95,
-    width: 190,
-    height: 190,
-    borderRadius: 95,
-    backgroundColor: "#FFEBD9",
-    opacity: 0.45,
-  },
-
+  safe: { flex: 1, backgroundColor: "transparent" },
+  headerBg: { backgroundColor: "transparent" },
+  scroll: { flex: 1, backgroundColor: "transparent" },
+  keyboardContainer: { flex: 1 },
   content: {
-    paddingHorizontal: 20,
-    paddingTop: Platform.OS === "ios" ? 8 : 16,
-    paddingBottom: 70,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.sm,
+    paddingBottom: 100,
+    gap: Spacing.sm,
   },
 
-  cardTextContainer: {
-    flex: 1,
-  },
+  // Shared
+  cardTextContainer: { flex: 1 },
 
-  // Header
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 22,
-  },
-
-  backButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 15,
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.purpleBorder,
-    alignItems: "center",
-    justifyContent: "center",
-
-    shadowColor: "#5B398F",
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-
-  headerCenter: {
-    flex: 1,
-    alignItems: "center",
-  },
-
-  headerEyebrow: {
-    color: COLORS.purple,
-    fontSize: 9,
-    fontWeight: "900",
-    letterSpacing: 1.7,
-    marginBottom: 2,
-  },
-
-  headerTitle: {
-    color: COLORS.text,
-    fontSize: 17,
-    fontWeight: "900",
-  },
-
-  headerSpacer: {
-    width: 42,
-  },
-
-  // Status
+  // Status Banner
   statusBanner: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: COLORS.purpleSoft,
-    borderRadius: 15,
-    paddingHorizontal: 13,
+    backgroundColor: Colors.lavenderSurface,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.md,
     paddingVertical: 11,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: COLORS.purpleBorder,
   },
-
   statusIcon: {
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: COLORS.purple,
+    backgroundColor: Colors.purple,
     alignItems: "center",
     justifyContent: "center",
-    marginRight: 9,
+    marginRight: Spacing.sm,
   },
-
   statusText: {
     flex: 1,
-    color: COLORS.purpleDark,
-    fontSize: 13,
-    fontWeight: "700",
+    ...Type.caption,
+    color: Colors.textPrimary,
+    fontFamily: Fonts.bold,
     lineHeight: 18,
   },
 
-  // Signed-in profile hero
+  // ── Signed-in Profile Hero ───────────────────────────────────────────────────
   profileHero: {
     overflow: "hidden",
     alignItems: "center",
-    backgroundColor: COLORS.purpleSoft,
-    borderRadius: 28,
-    borderWidth: 1,
-    borderColor: COLORS.purpleBorder,
-    paddingHorizontal: 20,
-    paddingTop: 26,
-    paddingBottom: 24,
-    marginBottom: 15,
-
-    shadowColor: "#6841A6",
-    shadowOffset: {
-      width: 0,
-      height: 8,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 18,
-    elevation: 4,
+    paddingHorizontal: Spacing.xl,
+    paddingTop: Spacing.xxl,
+    paddingBottom: Spacing.xl,
   },
-
   heroGlowLarge: {
     position: "absolute",
     top: -60,
@@ -1070,7 +938,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#E6D1FF",
     opacity: 0.8,
   },
-
   heroGlowSmall: {
     position: "absolute",
     bottom: -45,
@@ -1078,41 +945,22 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: COLORS.peach,
+    backgroundColor: "#FFE9D8",
     opacity: 0.65,
   },
-
-  avatarOuter: {
-    position: "relative",
-    marginBottom: 13,
-  },
-
+  avatarOuter: { position: "relative", marginBottom: Spacing.md },
   avatar: {
     width: 88,
     height: 88,
     borderRadius: 44,
-    backgroundColor: COLORS.purple,
+    backgroundColor: Colors.purple,
     borderWidth: 5,
     borderColor: "#FFFFFF",
     alignItems: "center",
     justifyContent: "center",
-
-    shadowColor: "#4A267F",
-    shadowOffset: {
-      width: 0,
-      height: 6,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    elevation: 5,
+    ...Shadows.raised,
   },
-
-  avatarText: {
-    color: "#FFFFFF",
-    fontSize: 34,
-    fontWeight: "900",
-  },
-
+  avatarText: { color: "#FFFFFF", fontSize: 34, fontFamily: Fonts.extrabold },
   onlineIndicator: {
     position: "absolute",
     right: 1,
@@ -1120,411 +968,254 @@ const styles = StyleSheet.create({
     width: 25,
     height: 25,
     borderRadius: 13,
-    backgroundColor: COLORS.green,
+    backgroundColor: C.green,
     borderWidth: 3,
     borderColor: "#FFFFFF",
     alignItems: "center",
     justifyContent: "center",
   },
-
   welcomeLabel: {
-    color: COLORS.purple,
-    fontSize: 11,
-    fontWeight: "800",
-    letterSpacing: 0.5,
-    textTransform: "uppercase",
+    ...Type.overline,
+    color: Colors.purple,
     marginBottom: 3,
   },
-
   displayName: {
-    color: COLORS.text,
+    fontFamily: Fonts.extrabold,
     fontSize: 23,
-    fontWeight: "900",
+    lineHeight: 28,
+    color: Colors.textPrimary,
     textAlign: "center",
     marginBottom: 4,
   },
-
   emailText: {
-    color: COLORS.textSoft,
-    fontSize: 13,
-    fontWeight: "600",
+    ...Type.caption,
+    color: Colors.textSecondary,
     textAlign: "center",
-    marginBottom: 13,
+    marginBottom: Spacing.md,
   },
-
   accountActiveBadge: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "rgba(255,255,255,0.86)",
-    borderRadius: 20,
-    paddingHorizontal: 12,
+    borderRadius: Radius.pill,
+    paddingHorizontal: Spacing.md,
     paddingVertical: 6,
     borderWidth: 1,
-    borderColor: COLORS.greenBorder,
+    borderColor: C.greenBorder,
   },
-
   accountActiveDot: {
     width: 7,
     height: 7,
     borderRadius: 4,
-    backgroundColor: COLORS.green,
+    backgroundColor: C.green,
     marginRight: 7,
   },
-
   accountActiveText: {
-    color: COLORS.green,
-    fontSize: 11,
-    fontWeight: "900",
+    ...Type.overline,
+    color: C.green,
   },
 
-  // Sync card
+  // ── Sync Card ────────────────────────────────────────────────────────────────
   syncCard: {
     flexDirection: "row",
-    backgroundColor: COLORS.greenSoft,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: COLORS.greenBorder,
-    padding: 15,
-    marginBottom: 22,
+    alignItems: "center",
+    backgroundColor: C.greenSoft,
   },
-
   syncIconWrap: {
     width: 42,
     height: 42,
-    borderRadius: 14,
-    backgroundColor: "#FFFFFF",
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.cardBg,
     alignItems: "center",
     justifyContent: "center",
-    marginRight: 12,
-
-    shadowColor: "#487B55",
-    shadowOffset: {
-      width: 0,
-      height: 3,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 1,
+    marginRight: Spacing.md,
+    flexShrink: 0,
+    ...Shadows.card,
   },
-
-  cardTitleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 5,
-  },
-
-  cardTitle: {
-    flex: 1,
-    color: COLORS.text,
-    fontSize: 14,
-    fontWeight: "900",
-  },
-
+  cardTitleRow: { flexDirection: "row", alignItems: "center", marginBottom: 5 },
+  cardTitle: { flex: 1, ...Type.cardTitle, color: Colors.textPrimary },
   activePill: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    paddingHorizontal: 9,
+    backgroundColor: Colors.cardBg,
+    borderRadius: Radius.pill,
+    paddingHorizontal: Spacing.sm,
     paddingVertical: 4,
     borderWidth: 1,
-    borderColor: COLORS.greenBorder,
+    borderColor: C.greenBorder,
   },
-
   activePillText: {
-    color: COLORS.green,
-    fontSize: 10,
-    fontWeight: "900",
+    ...Type.caption,
+    color: C.green,
+    fontFamily: Fonts.extrabold,
   },
+  cardDescription: { ...Type.bodySmall, color: Colors.textSecondary },
 
-  cardDescription: {
-    color: COLORS.textSoft,
-    fontSize: 12,
-    lineHeight: 18,
-    fontWeight: "500",
-  },
-
+  // ── Section Labels ───────────────────────────────────────────────────────────
   sectionLabel: {
-    color: COLORS.textMuted,
-    fontSize: 10,
-    fontWeight: "900",
-    letterSpacing: 1.2,
-    marginLeft: 3,
-    marginBottom: 9,
-  },
-
-  // Details
-  detailsCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 21,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    padding: 15,
-    marginBottom: 22,
-
-    shadowColor: "#4B3A56",
-    shadowOffset: {
-      width: 0,
-      height: 5,
-    },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    elevation: 2,
-  },
-
-  detailsHeading: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-
-  detailsHeadingIcon: {
-    width: 39,
-    height: 39,
-    borderRadius: 13,
-    backgroundColor: COLORS.purpleSoft,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 11,
-  },
-
-  detailsTitle: {
-    color: COLORS.text,
-    fontSize: 14,
-    fontWeight: "900",
+    ...Type.overline,
+    color: Colors.textMuted,
+    marginTop: Spacing.xs,
+    marginLeft: 4,
     marginBottom: 2,
   },
 
-  detailsSubtitle: {
-    color: COLORS.textMuted,
-    fontSize: 11,
-    fontWeight: "500",
-  },
-
-  detailDivider: {
-    height: 1,
-    backgroundColor: COLORS.divider,
-    marginTop: 14,
-  },
-
-  detailRow: {
-    minHeight: 53,
-    flexDirection: "row",
-    alignItems: "center",
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.divider,
-  },
-
-  detailRowLast: {
-    borderBottomWidth: 0,
-  },
-
-  detailLabelGroup: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
-  },
-
-  detailIcon: {
-    width: 27,
-    height: 27,
-    borderRadius: 9,
-    backgroundColor: COLORS.purpleLight,
+  // ── Details Card ─────────────────────────────────────────────────────────────
+  detailsCard: {},
+  detailsHeading: { flexDirection: "row", alignItems: "center" },
+  detailsHeadingIcon: {
+    width: 39,
+    height: 39,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.lavenderSurface,
     alignItems: "center",
     justifyContent: "center",
-    marginRight: 9,
+    marginRight: Spacing.md,
   },
-
-  detailLabel: {
-    color: COLORS.textSoft,
-    fontSize: 12,
-    fontWeight: "600",
+  detailsTitle: { ...Type.cardTitle, color: Colors.textPrimary, marginBottom: 2 },
+  detailsSubtitle: { ...Type.caption, color: Colors.textMuted },
+  detailDivider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: Colors.divider,
+    marginTop: Spacing.md,
   },
-
+  detailRow: {
+    minHeight: 50,
+    flexDirection: "row",
+    alignItems: "center",
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.divider,
+  },
+  detailRowLast: { borderBottomWidth: 0 },
+  detailLabelGroup: { flexDirection: "row", alignItems: "center", flex: 1 },
+  detailIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.lavenderSurface,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: Spacing.sm,
+  },
+  detailLabel: { ...Type.caption, color: Colors.textSecondary },
   detailValue: {
     maxWidth: "55%",
-    color: COLORS.text,
-    fontSize: 12,
-    fontWeight: "800",
+    ...Type.caption,
+    color: Colors.textPrimary,
+    fontFamily: Fonts.bold,
     textAlign: "right",
   },
 
-  // Desktop card
-  desktopCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: COLORS.surface,
-    borderRadius: 21,
-    borderWidth: 1,
-    borderColor: COLORS.blueBorder,
-    padding: 15,
-    marginBottom: 13,
-
-    shadowColor: "#3978A6",
-    shadowOffset: {
-      width: 0,
-      height: 5,
-    },
-    shadowOpacity: 0.07,
-    shadowRadius: 12,
-    elevation: 2,
-  },
-
+  // ── Desktop / Portal Card ────────────────────────────────────────────────────
+  desktopCard: { flexDirection: "row", alignItems: "center" },
   desktopIconWrap: {
     width: 45,
     height: 45,
-    borderRadius: 15,
-    backgroundColor: COLORS.blueSoft,
+    borderRadius: Radius.md,
+    backgroundColor: C.blueSoft,
     alignItems: "center",
     justifyContent: "center",
-    marginRight: 12,
+    marginRight: Spacing.md,
+    flexShrink: 0,
   },
-
-  desktopTitle: {
-    color: COLORS.text,
-    fontSize: 14,
-    fontWeight: "900",
-    marginBottom: 4,
-  },
-
+  desktopTitle: { ...Type.cardTitle, color: Colors.textPrimary, marginBottom: 4 },
   desktopDescription: {
-    color: COLORS.textSoft,
-    fontSize: 11,
+    ...Type.caption,
+    color: Colors.textSecondary,
     lineHeight: 16,
-    fontWeight: "500",
     marginBottom: 7,
   },
-
-  desktopLinkRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-
+  desktopLinkRow: { flexDirection: "row", alignItems: "center" },
   desktopLink: {
-    color: COLORS.blue,
-    fontSize: 11,
-    fontWeight: "800",
+    ...Type.caption,
+    color: C.blue,
+    fontFamily: Fonts.bold,
     marginRight: 4,
   },
-
   chevronCircle: {
     width: 29,
     height: 29,
-    borderRadius: 10,
-    backgroundColor: COLORS.blueSoft,
+    borderRadius: Radius.sm,
+    backgroundColor: C.blueSoft,
     alignItems: "center",
     justifyContent: "center",
-    marginLeft: 8,
+    marginLeft: Spacing.sm,
   },
 
-  privacyNote: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: COLORS.purpleLight,
-    borderRadius: 16,
-    padding: 12,
-    marginBottom: 17,
-  },
-
+  // ── Privacy Note ─────────────────────────────────────────────────────────────
+  privacyNote: { flexDirection: "row", alignItems: "center" },
   privacyNoteIcon: {
-    width: 30,
-    height: 30,
-    borderRadius: 10,
-    backgroundColor: "#FFFFFF",
+    width: 32,
+    height: 32,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.cardBg,
     alignItems: "center",
     justifyContent: "center",
-    marginRight: 10,
+    marginRight: Spacing.md,
+    flexShrink: 0,
   },
+  privacyNoteText: { flex: 1, ...Type.caption, color: Colors.textSecondary },
 
-  privacyNoteText: {
-    flex: 1,
-    color: COLORS.textSoft,
-    fontSize: 11,
-    lineHeight: 16,
-    fontWeight: "600",
-  },
-
+  // ── Sign Out Button ──────────────────────────────────────────────────────────
   signOutButton: {
     height: 52,
-    borderRadius: 17,
-    backgroundColor: COLORS.coralSoft,
-    borderWidth: 1,
-    borderColor: COLORS.coralBorder,
+    borderRadius: Radius.md,
+    backgroundColor: C.coralSoft,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 11,
+    gap: Spacing.sm,
   },
+  signOutText: { ...Type.cardTitle, color: C.coral },
+  deleteAccountButton: { backgroundColor: "#FFF1F3" },
+  deleteAccountText: { ...Type.cardTitle, color: "#C03060" },
 
-  signOutText: {
-    color: COLORS.coral,
-    fontSize: 14,
-    fontWeight: "900",
-    marginLeft: 9,
-  },
-
+  // ── Signed-in Footer ─────────────────────────────────────────────────────────
   footerText: {
-    color: COLORS.textMuted,
-    fontSize: 10,
-    lineHeight: 15,
-    fontWeight: "500",
+    ...Type.caption,
+    color: Colors.textMuted,
     textAlign: "center",
-    paddingHorizontal: 20,
+    paddingHorizontal: Spacing.xl,
   },
 
-  // Signed-out hero
-  signedOutHero: {
-    alignItems: "center",
-    marginBottom: 21,
-  },
-
+  // ── Signed-out Hero ──────────────────────────────────────────────────────────
+  signedOutHero: { alignItems: "center" },
   heroArtwork: {
     width: 116,
     height: 116,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 16,
+    marginBottom: Spacing.lg,
   },
-
   heroArtworkGlow: {
     position: "absolute",
     width: 116,
     height: 116,
     borderRadius: 58,
-    backgroundColor: COLORS.purpleSoft,
-    borderWidth: 1,
-    borderColor: COLORS.purpleBorder,
+    backgroundColor: Colors.lavenderSurface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Colors.lavenderBorder,
   },
-
   personIconCircle: {
     width: 76,
     height: 76,
     borderRadius: 38,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: Colors.cardBg,
     alignItems: "center",
     justifyContent: "center",
-
-    shadowColor: "#5E3B91",
-    shadowOffset: {
-      width: 0,
-      height: 7,
-    },
-    shadowOpacity: 0.12,
-    shadowRadius: 13,
-    elevation: 4,
+    ...Shadows.raised,
   },
-
   heroCloudBadge: {
     position: "absolute",
     top: 7,
     right: 3,
     width: 34,
     height: 34,
-    borderRadius: 12,
-    backgroundColor: COLORS.greenSoft,
+    borderRadius: Radius.sm,
+    backgroundColor: C.greenSoft,
     borderWidth: 2,
     borderColor: "#FFFFFF",
     alignItems: "center",
     justifyContent: "center",
   },
-
   heroHeartBadge: {
     position: "absolute",
     bottom: 5,
@@ -1532,350 +1223,186 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 11,
-    backgroundColor: COLORS.coralSoft,
+    backgroundColor: C.coralSoft,
     borderWidth: 2,
     borderColor: "#FFFFFF",
     alignItems: "center",
     justifyContent: "center",
   },
-
   signedOutHeadline: {
-    color: COLORS.text,
+    fontFamily: Fonts.extrabold,
     fontSize: 27,
     lineHeight: 33,
-    fontWeight: "900",
+    color: Colors.textPrimary,
     textAlign: "center",
-    marginBottom: 9,
+    marginBottom: Spacing.sm,
   },
-
   signedOutSubtext: {
     maxWidth: 330,
-    color: COLORS.textSoft,
-    fontSize: 13,
-    lineHeight: 20,
-    fontWeight: "500",
+    ...Type.body,
+    color: Colors.textSecondary,
     textAlign: "center",
   },
 
-  benefitsCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 22,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    paddingHorizontal: 14,
-    marginBottom: 19,
-
-    shadowColor: "#4B3A56",
-    shadowOffset: {
-      width: 0,
-      height: 6,
-    },
-    shadowOpacity: 0.06,
-    shadowRadius: 14,
-    elevation: 2,
-  },
-
+  // ── Benefits Card ────────────────────────────────────────────────────────────
+  benefitsCard: { padding: 0, paddingHorizontal: Spacing.md },
   benefitRow: {
-    minHeight: 70,
+    minHeight: 68,
     flexDirection: "row",
     alignItems: "center",
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.divider,
-    paddingVertical: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.divider,
+    paddingVertical: Spacing.md,
+    gap: Spacing.md,
   },
-
-  benefitRowLast: {
-    borderBottomWidth: 0,
-  },
-
+  benefitRowLast: { borderBottomWidth: 0 },
   benefitIcon: {
     width: 39,
     height: 39,
-    borderRadius: 13,
-    backgroundColor: COLORS.purpleLight,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.lavenderSurface,
     alignItems: "center",
     justifyContent: "center",
-    marginRight: 11,
+    flexShrink: 0,
   },
-
-  benefitTitle: {
-    color: COLORS.text,
-    fontSize: 13,
-    fontWeight: "900",
-    marginBottom: 3,
-  },
-
+  benefitTitle: { ...Type.cardTitle, color: Colors.textPrimary, marginBottom: 3 },
   benefitDescription: {
-    color: COLORS.textSoft,
-    fontSize: 11,
+    ...Type.caption,
+    color: Colors.textSecondary,
     lineHeight: 16,
-    fontWeight: "500",
     paddingRight: 8,
   },
 
-  primaryButton: {
-    minHeight: 54,
-    borderRadius: 17,
-    backgroundColor: COLORS.purple,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 18,
-    marginBottom: 11,
+  // ── Main CTA buttons ─────────────────────────────────────────────────────────
+  createAccountBtn: { backgroundColor: Colors.primaryPlum },
+  secondaryBtn: { marginTop: Spacing.xs },
 
-    shadowColor: COLORS.purpleDark,
-    shadowOffset: {
-      width: 0,
-      height: 7,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    elevation: 5,
-  },
-
-  primaryButtonIcon: {
-    width: 29,
-    height: 29,
-    borderRadius: 10,
-    backgroundColor: "rgba(255,255,255,0.16)",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 10,
-  },
-
-  primaryButtonText: {
-    flexShrink: 1,
-    color: "#FFFFFF",
-    fontSize: 15,
-    fontWeight: "900",
-    textAlign: "center",
-    marginRight: 10,
-  },
-
-  secondaryButton: {
-    minHeight: 53,
-    borderRadius: 17,
-    backgroundColor: COLORS.surface,
-    borderWidth: 1.5,
-    borderColor: COLORS.purpleBorder,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 16,
-    marginBottom: 13,
-  },
-
-  secondaryButtonText: {
-    color: COLORS.purple,
-    fontSize: 14,
-    fontWeight: "900",
-    marginLeft: 9,
-  },
-
+  // ── Gentle Note ──────────────────────────────────────────────────────────────
   gentleNote: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 15,
-    marginTop: 1,
+    paddingHorizontal: Spacing.md,
   },
-
   gentleNoteText: {
     flexShrink: 1,
-    color: COLORS.textMuted,
-    fontSize: 10,
-    lineHeight: 15,
-    fontWeight: "600",
+    ...Type.caption,
+    color: Colors.textMuted,
     textAlign: "center",
     marginLeft: 7,
   },
 
-  // Form
-  formIntro: {
-    alignItems: "center",
-    marginBottom: 19,
-  },
-
+  // ── Form Intro ───────────────────────────────────────────────────────────────
+  formIntro: { alignItems: "center" },
   formIntroIcon: {
-    width: 59,
-    height: 59,
-    borderRadius: 20,
-    backgroundColor: COLORS.purpleSoft,
-    borderWidth: 1,
-    borderColor: COLORS.purpleBorder,
+    width: 60,
+    height: 60,
+    borderRadius: Radius.lg,
+    backgroundColor: Colors.lavenderSurface,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 12,
+    marginBottom: Spacing.md,
   },
-
   formHeadline: {
-    color: COLORS.text,
+    fontFamily: Fonts.extrabold,
     fontSize: 25,
-    fontWeight: "900",
+    lineHeight: 30,
+    color: Colors.textPrimary,
     textAlign: "center",
     marginBottom: 6,
   },
-
   formDescription: {
     maxWidth: 300,
-    color: COLORS.textSoft,
-    fontSize: 12,
-    lineHeight: 18,
-    fontWeight: "500",
+    ...Type.bodySmall,
+    color: Colors.textSecondary,
     textAlign: "center",
   },
 
-  formCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 23,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    padding: 17,
-    marginBottom: 13,
-
-    shadowColor: "#4B3A56",
-    shadowOffset: {
-      width: 0,
-      height: 7,
-    },
-    shadowOpacity: 0.07,
-    shadowRadius: 16,
-    elevation: 3,
-  },
-
-  fieldGroup: {
-    marginBottom: 16,
-  },
-
-  fieldGroupLast: {
-    marginBottom: 6,
-  },
-
+  // ── Form Card ────────────────────────────────────────────────────────────────
+  formCard: {},
+  fieldGroup: { marginBottom: Spacing.lg },
+  fieldGroupLast: { marginBottom: 6 },
   fieldLabelRow: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 7,
   },
-
-  fieldLabelLeft: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-
+  fieldLabelLeft: { flex: 1, flexDirection: "row", alignItems: "center" },
   inputLabel: {
-    color: COLORS.text,
-    fontSize: 12,
-    fontWeight: "900",
+    fontFamily: Fonts.extrabold,
+    fontSize: 11.5,
+    color: Colors.textPrimary,
+    letterSpacing: 0.3,
     marginLeft: 7,
   },
-
-  inputHelper: {
-    color: COLORS.textMuted,
-    fontSize: 10,
-    fontWeight: "600",
-  },
-
+  inputHelper: { ...Type.caption, color: Colors.textMuted },
   input: {
-    height: 52,
-    backgroundColor: COLORS.purpleLight,
-    borderRadius: 15,
-    borderWidth: 1.5,
-    borderColor: COLORS.purpleBorder,
-    paddingHorizontal: 14,
-    color: COLORS.text,
+    height: 44,
+    backgroundColor: Colors.lavenderSurface,
+    borderRadius: Radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Colors.lavenderBorder,
+    paddingHorizontal: Spacing.md,
+    color: Colors.textPrimary,
+    fontFamily: Fonts.semibold,
     fontSize: 14,
-    fontWeight: "600",
   },
-
   passwordContainer: {
-    height: 52,
+    height: 44,
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: COLORS.purpleLight,
-    borderRadius: 15,
-    borderWidth: 1.5,
-    borderColor: COLORS.purpleBorder,
+    backgroundColor: Colors.lavenderSurface,
+    borderRadius: Radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Colors.lavenderBorder,
   },
-
   passwordInput: {
     flex: 1,
     height: "100%",
-    paddingLeft: 14,
-    color: COLORS.text,
+    paddingLeft: Spacing.md,
+    color: Colors.textPrimary,
+    fontFamily: Fonts.semibold,
     fontSize: 14,
-    fontWeight: "600",
   },
-
   eyeButton: {
     height: "100%",
-    paddingHorizontal: 15,
+    paddingHorizontal: Spacing.md,
     alignItems: "center",
     justifyContent: "center",
   },
-
-  formSubmitButton: {
-    marginTop: 13,
-    marginBottom: 8,
-  },
-
-  buttonDisabled: {
-    opacity: 0.62,
-    shadowOpacity: 0,
-    elevation: 0,
-  },
-
+  formSubmitButton: { marginTop: Spacing.md },
   forgotPasswordButton: {
     minHeight: 40,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
   },
-
   forgotPasswordText: {
-    color: COLORS.purple,
-    fontSize: 12,
-    fontWeight: "800",
+    ...Type.caption,
+    color: Colors.purple,
+    fontFamily: Fonts.extrabold,
     marginLeft: 6,
   },
 
-  accountSwitchCard: {
-    backgroundColor: COLORS.purpleLight,
-    borderRadius: 17,
-    borderWidth: 1,
-    borderColor: COLORS.purpleBorder,
-    paddingHorizontal: 15,
-    paddingVertical: 13,
-    alignItems: "center",
-    marginBottom: 8,
-  },
-
-  accountSwitchText: {
-    color: COLORS.textSoft,
-    fontSize: 11,
-    fontWeight: "600",
-    marginBottom: 3,
-  },
-
+  // ── Account Switch Card ──────────────────────────────────────────────────────
+  accountSwitchCard: { alignItems: "center" },
+  accountSwitchText: { ...Type.caption, color: Colors.textSecondary, marginBottom: 3 },
   accountSwitchLink: {
-    color: COLORS.purple,
-    fontSize: 12,
-    fontWeight: "900",
+    ...Type.caption,
+    color: Colors.purple,
+    fontFamily: Fonts.extrabold,
   },
 
+  // ── Footer Privacy Row ───────────────────────────────────────────────────────
   footerPrivacyRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 15,
-    paddingHorizontal: 15,
+    paddingHorizontal: Spacing.md,
   },
-
   footerPrivacyText: {
-    color: COLORS.textMuted,
-    fontSize: 10,
-    lineHeight: 15,
-    fontWeight: "600",
+    ...Type.caption,
+    color: Colors.textMuted,
     textAlign: "center",
     marginLeft: 6,
   },

@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
+import { useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   ScrollView,
@@ -12,21 +13,39 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from "@expo/vector-icons";
 import { createAudioPlayer, setAudioModeAsync } from "expo-audio";
 
-const sounds = [
-  { id: 1, title: "Soft Rain", icon: "rainy-outline", color: "#60A5FA", bg: "#E7F4FF", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" },
-  { id: 2, title: "Forest Calm", icon: "leaf-outline", color: "#78A866", bg: "#EEF7E8", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" },
-  { id: 3, title: "Ocean Waves", icon: "water-outline", color: "#4C9ED9", bg: "#E7F4FF", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3" },
-  { id: 4, title: "Night Wind", icon: "moon-outline", color: "#8B5BE8", bg: "#F0E2FF", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3" },
-  { id: 5, title: "Campfire", icon: "bonfire-outline", color: "#D99A3D", bg: "#FFF0DF", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3" },
-  { id: 6, title: "White Noise", icon: "radio-outline", color: "#837E96", bg: "#F5F0FF", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3" },
+const TIMER_OPTIONS = [
+  { label: "Off", value: null },
+  { label: "10 min", value: 10 },
+  { label: "20 min", value: 20 },
+  { label: "30 min", value: 30 },
 ];
+
+const sounds = [
+  { id: 1, title: "Soft Rain", icon: "rainy-outline", color: "#60A5FA", bg: "#E7F4FF", source: require("../assets/sounds/soft-rain.mp3") },
+  { id: 2, title: "Forest Calm", icon: "leaf-outline", color: "#78A866", bg: "#EEF7E8", source: require("../assets/sounds/forest-calm.mp3") },
+  { id: 3, title: "Ocean Waves", icon: "water-outline", color: "#4C9ED9", bg: "#E7F4FF", source: require("../assets/sounds/ocean-waves.mp3") },
+  { id: 4, title: "Night Wind", icon: "moon-outline", color: "#8B5BE8", bg: "#F0E2FF", source: require("../assets/sounds/night-wind.mp3") },
+  { id: 5, title: "Campfire", icon: "bonfire-outline", color: "#D99A3D", bg: "#FFF0DF", source: require("../assets/sounds/campfire.mp3") },
+  { id: 6, title: "White Noise", icon: "radio-outline", color: "#837E96", bg: "#F5F0FF", source: require("../assets/sounds/white-noise.mp3") },
+];
+
+function formatTime(seconds) {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
 
 export default function SoundsScreen({ navigation }) {
   const soundRef = useRef(null);
+  const timerRef = useRef(null);
+  const fadingRef = useRef(false);
+
   const [selectedSound, setSelectedSound] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [timerMinutes, setTimerMinutes] = useState(null);
+  const [timeRemaining, setTimeRemaining] = useState(null);
 
-  // ✅ Track calm tool use for Calm Champion badge
+  // Track calm tool use for Calm Champion badge
   useEffect(() => {
     const track = async () => {
       try {
@@ -38,6 +57,7 @@ export default function SoundsScreen({ navigation }) {
     track();
   }, []);
 
+  // Audio mode setup + unmount cleanup
   useEffect(() => {
     const setupAudio = async () => {
       try {
@@ -46,25 +66,81 @@ export default function SoundsScreen({ navigation }) {
           shouldPlayInBackground: false,
           interruptionMode: "duckOthers",
         });
-      } catch (e) {
-        console.log('Audio mode setup failed:', e);
-      }
+      } catch (e) { console.log("Audio mode setup failed:", e); }
     };
     setupAudio();
-    return () => { stopSound(); };
+    return () => {
+      if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+      if (soundRef.current) {
+        try { soundRef.current.pause(); soundRef.current.remove(); } catch (e) {}
+        soundRef.current = null;
+      }
+    };
   }, []);
 
-  const stopSound = async () => {
+  // Stable fade-and-stop — only refs and stable state setters, no stale closure risk
+  const fadeAndStop = useCallback(async () => {
+    if (fadingRef.current) return;
+    fadingRef.current = true;
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+    setTimeRemaining(null);
     if (soundRef.current) {
       try {
-        soundRef.current.pause();
-        soundRef.current.remove();
-      } catch (e) {
-        console.log('Error unloading sound:', e);
-      }
+        // 10 steps × 100 ms = 1 s fade (gentle enough; stays under 2 s)
+        for (let i = 9; i >= 0; i--) {
+          if (!soundRef.current) break;
+          soundRef.current.volume = i / 10;
+          await new Promise((r) => setTimeout(r, 100));
+        }
+      } catch (e) {}
+      try { soundRef.current.pause(); soundRef.current.remove(); } catch (e) {}
       soundRef.current = null;
     }
     setIsPlaying(false);
+    setSelectedSound(null);
+    setTimerMinutes(null);
+    fadingRef.current = false;
+  }, []);
+
+  // Trigger gentle fade when the countdown reaches zero
+  useEffect(() => {
+    if (timeRemaining === 0) fadeAndStop();
+  }, [timeRemaining, fadeAndStop]);
+
+  // Stop sound + timer when navigating away (e.g. back to home)
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+        if (soundRef.current) {
+          try { soundRef.current.pause(); soundRef.current.remove(); } catch (e) {}
+          soundRef.current = null;
+        }
+      };
+    }, [])
+  );
+
+  const stopSound = async () => {
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+    setTimeRemaining(null);
+    if (soundRef.current) {
+      try { soundRef.current.pause(); soundRef.current.remove(); } catch (e) { console.log("Error unloading sound:", e); }
+      soundRef.current = null;
+    }
+    setIsPlaying(false);
+  };
+
+  const startTimer = (minutes) => {
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+    setTimeRemaining(null);
+    if (!minutes) return;
+    setTimeRemaining(minutes * 60);
+    timerRef.current = setInterval(() => {
+      setTimeRemaining((prev) => {
+        if (prev === null || prev <= 0) return prev;
+        return prev - 1;
+      });
+    }, 1000);
   };
 
   const playSound = async () => {
@@ -73,14 +149,13 @@ export default function SoundsScreen({ navigation }) {
       await stopSound();
       const chosen = sounds.find((s) => s.id === selectedSound);
       if (!chosen) return;
-      const player = createAudioPlayer({ uri: chosen.url });
+      const player = createAudioPlayer(chosen.source);
       player.loop = true;
       player.play();
       soundRef.current = player;
       setIsPlaying(true);
-    } catch (e) {
-      console.log("Error playing sound:", e);
-    }
+      if (timerMinutes) startTimer(timerMinutes);
+    } catch (e) { console.log("Error playing sound:", e); }
   };
 
   const handlePlayPause = async () => {
@@ -89,9 +164,18 @@ export default function SoundsScreen({ navigation }) {
   };
 
   const handleSelect = (id) => {
-    // stop current sound before switching selection
     stopSound();
     setSelectedSound(id);
+  };
+
+  const handleTimerSelect = (minutes) => {
+    setTimerMinutes(minutes);
+    if (isPlaying) {
+      startTimer(minutes);
+    } else {
+      if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+      setTimeRemaining(null);
+    }
   };
 
   const currentSound = sounds.find((s) => s.id === selectedSound);
@@ -176,6 +260,29 @@ export default function SoundsScreen({ navigation }) {
             <Ionicons name={isPlaying ? "pause" : "play"} size={18} color="#FFFFFF" />
             <Text style={styles.primaryButtonText}>{isPlaying ? "Stop Sound" : "Play Sound"}</Text>
           </TouchableOpacity>
+
+          {/* Sleep Timer */}
+          <View style={styles.timerSection}>
+            <Text style={styles.timerLabel}>Sleep Timer</Text>
+            <View style={styles.timerRow}>
+              {TIMER_OPTIONS.map((opt) => {
+                const active = timerMinutes === opt.value;
+                const showCountdown = active && timeRemaining !== null && opt.value !== null;
+                return (
+                  <TouchableOpacity
+                    key={String(opt.value)}
+                    style={[styles.timerChip, active && styles.timerChipActive]}
+                    onPress={() => handleTimerSelect(opt.value)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.timerChipText, active && styles.timerChipTextActive]}>
+                      {showCountdown ? formatTime(timeRemaining) : opt.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
         </View>
 
         {/* Tip */}
@@ -244,6 +351,24 @@ const styles = StyleSheet.create({
   },
   disabledButton: { backgroundColor: "#C9C2E8" },
   primaryButtonText: { color: "#FFFFFF", fontSize: 14, fontWeight: "800" },
+
+  timerSection: {
+    marginTop: 14, paddingTop: 12,
+    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: "#EEE8F1",
+  },
+  timerLabel: {
+    color: "#837E96", fontSize: 10.5, fontWeight: "700",
+    letterSpacing: 0.8, textTransform: "uppercase", textAlign: "center", marginBottom: 8,
+  },
+  timerRow: { flexDirection: "row", gap: 8, justifyContent: "center" },
+  timerChip: {
+    paddingVertical: 5, paddingHorizontal: 14, borderRadius: 20,
+    backgroundColor: "#F0E2FF", borderWidth: 1, borderColor: "#E3D2F8",
+    minWidth: 52, alignItems: "center",
+  },
+  timerChipActive: { backgroundColor: "#8B5BE8", borderColor: "#8B5BE8" },
+  timerChipText: { color: "#5B5672", fontSize: 12, fontWeight: "700" },
+  timerChipTextActive: { color: "#FFFFFF" },
 
   tipCard: {
     backgroundColor: "#F6ECFF", borderRadius: 16, borderWidth: 1,

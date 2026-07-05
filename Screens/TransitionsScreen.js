@@ -43,7 +43,6 @@ export default function TransitionsScreen({ navigation }) {
   const [showActivityPicker, setShowActivityPicker] = useState(false);
   const [customActivity, setCustomActivity] = useState("");
   const [showCustomInput, setShowCustomInput] = useState(false);
-  const [isPremium, setIsPremium] = useState(false);
 
   const nav = (screen, params) =>
     navigation.getParent()?.getParent()?.navigate(screen, params) ??
@@ -57,8 +56,6 @@ export default function TransitionsScreen({ navigation }) {
           if (saved) {
             setRoutineActivities(JSON.parse(saved));
           }
-          const premium = await AsyncStorage.getItem("bitzaIsPremium");
-          setIsPremium(premium === "true");
         } catch (e) {
           console.log("Error loading routine:", e);
         }
@@ -265,23 +262,11 @@ export default function TransitionsScreen({ navigation }) {
 
             <TouchableOpacity
               style={styles.toolChip}
-              onPress={() => {
-                if (!isPremium) {
-                  nav("PremiumUpgrade");
-                } else {
-                  nav("HugiChat");
-                }
-              }}
+              onPress={() => nav("HugiChat")}
               activeOpacity={0.8}
             >
               <Ionicons name="chatbubble-ellipses-outline" size={20} color="#6F42D8" />
               <Text style={styles.toolLabel}>Talk to Hugi</Text>
-              {!isPremium && (
-                <View style={styles.premiumBadge}>
-                  <Ionicons name="sparkles" size={8} color="#7548D8" />
-                  <Text style={styles.premiumText}>Premium</Text>
-                </View>
-              )}
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.toolChip} onPress={() => nav("GroundingSteps")} activeOpacity={0.8}>

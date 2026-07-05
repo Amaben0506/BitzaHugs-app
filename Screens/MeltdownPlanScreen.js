@@ -17,6 +17,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
 import * as FileSystem from "expo-file-system";
+import { usePremium } from "../src/lib/premium";
 
 const CHILD_PROFILE_KEY = "bitzaChildProfile";
 const PLAN_KEY = "bitzaMeltdownPlan";
@@ -30,6 +31,7 @@ const DEFAULT_STEPS = [
 ];
 
 export default function MeltdownPlanScreen({ navigation }) {
+  const { requirePremium } = usePremium();
   const [childProfile, setChildProfile] = useState(null);
   const [steps, setSteps] = useState(DEFAULT_STEPS);
   const [draft, setDraft] = useState(DEFAULT_STEPS);
@@ -135,6 +137,7 @@ export default function MeltdownPlanScreen({ navigation }) {
   };
 
   const handleShare = async () => {
+    if (!requirePremium({ feature: "support_plans" })) return;
     try {
       setExporting(true);
       const date = new Date().toLocaleDateString("en-US", {

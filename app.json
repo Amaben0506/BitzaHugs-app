@@ -2,21 +2,21 @@
   "expo": {
     "name": "BitzaHugs",
     "slug": "bitzahugs-app",
-    "version": "1.1.9",
+    "version": "1.2.0",
     "orientation": "portrait",
     "icon": "./assets/icons/Bitzahugs-App-Icon.png",
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.bitzahugs.app",
-      "buildNumber": "18",
+      "buildNumber": "19",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
       "package": "com.bitzahugs.app",
-      "versionCode": 31,
+      "versionCode": 32,
       "adaptiveIcon": {
         "foregroundImage": "./assets/icons/Bitzahugs-App-Icon.png",
         "backgroundColor": "#FFF9F2"
@@ -33,6 +33,13 @@
       "favicon": "./assets/icons/Bitzahugs-App-Icon.png"
     },
     "plugins": [
+      [
+        "expo-notifications",
+        {
+          "color": "#7B5EA7",
+          "sounds": []
+        }
+      ],
       [
         "expo-splash-screen",
         {
@@ -53,7 +60,8 @@
       "expo-font",
       "expo-status-bar",
       "expo-audio",
-      "expo-sharing"
+      "expo-sharing",
+      "@react-native-community/datetimepicker"
     ],
     "extra": {
       "eas": {

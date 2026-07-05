@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useState } from "react";
 import {
   ScrollView,
   View,
@@ -10,8 +10,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useFocusEffect } from "@react-navigation/native";
+import { usePremium } from "../src/lib/premium";
 
 const PURPLE = "#2D246B";
 const ACCENT = "#7548D8";
@@ -93,32 +92,11 @@ const CATEGORIES = [
 
 export default function ResourcesScreen({ navigation }) {
   const [expandedCategory, setExpandedCategory] = useState(null);
-  const [isPremium, setIsPremium] = useState(false);
-
-  useFocusEffect(
-    useCallback(() => {
-      const loadPremium = async () => {
-        try {
-          const premium = await AsyncStorage.getItem("bitzaIsPremium");
-          setIsPremium(premium === "true");
-        } catch (e) {
-          setIsPremium(false);
-        }
-      };
-      loadPremium();
-    }, [])
-  );
+  const { isPremium, showPremiumUpgrade } = usePremium();
 
   const handleDownload = (resource) => {
     if (!resource.free && !isPremium) {
-      Alert.alert(
-        "Premium Feature",
-        "Unlock all 20 printable resources with BitzaHugs Premium. Designed to support your child at home, school, and on the go.",
-        [
-          { text: "Not now", style: "cancel" },
-          { text: "Upgrade", onPress: () => navigation.navigate("PremiumUpgrade") },
-        ]
-      );
+      showPremiumUpgrade({ feature: "resources" });
       return;
     }
     // TODO: implement actual PDF open/download
@@ -164,7 +142,7 @@ export default function ResourcesScreen({ navigation }) {
         {!isPremium && (
           <TouchableOpacity
             style={styles.premiumBanner}
-            onPress={() => navigation.navigate("PremiumUpgrade")}
+            onPress={() => showPremiumUpgrade({ feature: "resources" })}
             activeOpacity={0.88}
           >
             <View style={styles.premiumBannerLeft}>

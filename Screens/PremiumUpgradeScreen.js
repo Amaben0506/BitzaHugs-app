@@ -5,37 +5,81 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Feather, Ionicons } from "@expo/vector-icons";
-import { doc, setDoc, updateDoc, serverTimestamp } from "firebase/firestore";
-import { db, auth } from "../src/lib/firebase";
 import {
   getCurrentOffering,
   purchasePackage,
   restorePurchases,
   refreshCustomerInfo,
 } from "../src/lib/revenuecat";
+import { usePremium } from "../src/lib/premium";
+import { syncServerPremiumEntitlement } from "../src/lib/serverEntitlements";
 
+// ── Free, always-on safety & core features ──────────────────────────────
 const FREE_FEATURES = [
-  { label: "Basic child profile", icon: "user" },
-  { label: "Daily routines", icon: "calendar" },
   { label: "Support Right Now mode", icon: "heart" },
-  { label: "Breathing & calm tools", icon: "wind" },
-  { label: "Simple mood check-in", icon: "smile" },
-  { label: "Limited journal entries (5)", icon: "book-open" },
-  { label: "Hugi (scripted support)", icon: "message-circle" },
+  { label: "Breathing & grounding tools", icon: "wind" },
+  { label: "Transition timer", icon: "clock" },
+  { label: "Calming sounds", icon: "music" },
+  { label: "Basic meltdown guidance", icon: "shield" },
+  { label: "One child profile", icon: "user" },
+  { label: "One routine", icon: "calendar" },
+  { label: "One support plan", icon: "file-text" },
+  { label: "Daily mood check-in", icon: "smile" },
+  { label: "Basic journal use", icon: "book-open" },
+  { label: "Limited Hugi messages", icon: "message-circle" },
+  { label: "Basic Community Chat access", icon: "users" },
 ];
 
-const PREMIUM_FEATURES = [
-  { label: "Unlimited child profiles", icon: "users", desc: "Add every child in your family" },
-  { label: "Advanced routine builder", icon: "sliders", desc: "Custom categories, reordering, scheduling" },
-  { label: "Appointment Tracker", icon: "calendar", desc: "Therapy, doctors, school meetings & more" },
-  { label: "Progress insights & patterns", icon: "bar-chart-2", desc: "See what helps most over time" },
-  { label: "Unlimited journaling", icon: "edit-3", desc: "Write as much as you need" },
-  { label: "Printable resources", icon: "printer", desc: "20+ visual tools to print and keep" },
-  { label: "Caregiver support library", icon: "users", desc: "Gentle prompts and encouragement for hard moments" },
-  { label: "Expanded Hugi support", icon: "message-circle", desc: "More personalized calm guidance using your saved preferences" },
-  { label: "Saved sensory plans", icon: "bookmark", desc: "Keep plans ready for hard moments" },
-  { label: "Desktop caregiver portal", icon: "monitor", desc: "Full access at bitzahugs.com/login" },
-  { label: "Support Team Portal", icon: "share-2", desc: "Share child profile with teachers & therapists" },
+// ── Premium features, grouped into four value pillars ───────────────────
+const PREMIUM_GROUPS = [
+  {
+    key: "personalized",
+    title: "Personalized support",
+    subtitle: "Unlimited Hugi, multiple children, support plans, and routines.",
+    icon: "heart",
+    features: [
+      "Unlimited conversations with Hugi",
+      "AI-assisted routines & meltdown plans",
+      "Multiple child profiles",
+      "Unlimited routines, templates & reuse",
+    ],
+  },
+  {
+    key: "organized",
+    title: "Stay organized",
+    subtitle: "Appointments, reminders, full history, and caregiver planning.",
+    icon: "calendar",
+    features: [
+      "Appointment tracker with reminders",
+      "Prep checklists & follow-up reminders",
+      "Full mood & journal history",
+      "Printable resource library",
+    ],
+  },
+  {
+    key: "patterns",
+    title: "Understand patterns",
+    subtitle: "Insights, trends, mood tracking, journals, and progress reports.",
+    icon: "bar-chart-2",
+    features: [
+      "Mood trends & behavior patterns",
+      "Personalized caregiver insights",
+      "Progress tracking over time",
+      "Longer-term comparisons",
+    ],
+  },
+  {
+    key: "share",
+    title: "Share with your care team",
+    subtitle: "PDF exports, desktop portal, Support Team Portal, and secure share codes.",
+    icon: "share-2",
+    features: [
+      "PDF reports & printable support plans",
+      "Caregiver desktop portal access",
+      "Support Team Portal with share codes",
+      "Full community access & discussion rooms",
+    ],
+  },
 ];
 
 const PLANS = [
@@ -51,22 +95,12 @@ const PLANS = [
   },
 ];
 
-// Sync premium to Firestore so portal stays in sync
 const syncPremiumToFirestore = async () => {
-  try {
-    const user = auth.currentUser;
-    if (user) {
-      await setDoc(doc(db, "users", user.uid), {
-        isPremium: true,
-        premiumActivatedAt: serverTimestamp(),
-      }, { merge: true });
-    }
-  } catch (err) {
-    console.log("Firestore premium sync error:", err);
-  }
+  await syncServerPremiumEntitlement();
 };
 
 export default function PremiumUpgradeScreen({ navigation }) {
+  const { refreshPremium } = usePremium();
   const [selectedPlan, setSelectedPlan] = useState("annual");
   const [isLoading, setIsLoading] = useState(false);
   const [offering, setOffering] = useState(null);
@@ -104,6 +138,7 @@ export default function PremiumUpgradeScreen({ navigation }) {
 
       if (result.isPremium) {
         await syncPremiumToFirestore();
+        await refreshPremium();
         Alert.alert(
           "Welcome to Premium! 💜",
           "You now have full access to all BitzaHugs Premium features. We're so glad you're here.",
@@ -116,6 +151,7 @@ export default function PremiumUpgradeScreen({ navigation }) {
         const refreshed = await refreshCustomerInfo();
         if (refreshed.isPremium) {
           await syncPremiumToFirestore();
+          await refreshPremium();
           Alert.alert(
             "Welcome to Premium! 💜",
             "You now have full access to all BitzaHugs Premium features.",
@@ -143,6 +179,7 @@ export default function PremiumUpgradeScreen({ navigation }) {
       const result = await restorePurchases();
       if (result.isPremium) {
         await syncPremiumToFirestore();
+        await refreshPremium();
         Alert.alert(
           "Welcome back! 💜",
           "Your Premium access has been restored.",
@@ -181,7 +218,7 @@ export default function PremiumUpgradeScreen({ navigation }) {
           <View style={styles.heroIconWrap}>
             <Ionicons name="sparkles" size={32} color="#7548D8" />
           </View>
-          <Text style={styles.heroTitle}>More support.{"\n"}More calm. More you.</Text>
+          <Text style={styles.heroTitle}>More support. More organization.{"\n"}More ways to care for your family.</Text>
           <Text style={styles.heroSubtitle}>
             Premium unlocks deeper tools to help your family feel more organized, supported, and less alone.
           </Text>
@@ -224,34 +261,41 @@ export default function PremiumUpgradeScreen({ navigation }) {
 
         <CTAButton isLoading={isLoading} onPress={activatePremium} label="Start Free 7-Day Trial" />
         <Text style={styles.ctaNote}>{ctaNoteText}</Text>
+        <Text style={styles.ctaSecondaryNote}>Your family's data stays private and secure.</Text>
 
         <Text style={styles.sectionTitle}>Everything in Premium</Text>
-        <View style={styles.featuresCard}>
-          {PREMIUM_FEATURES.map((f, i) => (
-            <View key={f.label} style={[styles.featureRow, i === PREMIUM_FEATURES.length - 1 && styles.featureRowLast]}>
-              <View style={styles.featureIconBubble}>
-                <Feather name={f.icon} size={16} color="#7548D8" />
+        {PREMIUM_GROUPS.map((group) => (
+          <View key={group.key} style={styles.groupCard}>
+            <View style={styles.groupHeader}>
+              <View style={styles.groupIconBubble}>
+                <Feather name={group.icon} size={17} color="#7548D8" />
               </View>
-              <View style={styles.featureTextWrap}>
-                <Text style={styles.featureLabel}>{f.label}</Text>
-                <Text style={styles.featureDesc}>{f.desc}</Text>
+              <View style={styles.groupHeaderText}>
+                <Text style={styles.groupTitle}>{group.title}</Text>
+                <Text style={styles.groupSubtitle}>{group.subtitle}</Text>
               </View>
-              <Feather name="check" size={14} color="#78A866" />
             </View>
-          ))}
-        </View>
+            <View style={styles.groupFeatureList}>
+              {group.features.map((f) => (
+                <View key={f} style={styles.groupFeatureRow}>
+                  <Feather name="check" size={13} color="#78A866" />
+                  <Text style={styles.groupFeatureText}>{f}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        ))}
 
         <Text style={styles.sectionTitle}>Always Free</Text>
         <View style={styles.freeCard}>
-          {FREE_FEATURES.map((f, i) => (
-            <View key={f.label} style={[styles.freeRow, i === FREE_FEATURES.length - 1 && styles.freeRowLast]}>
-              <View style={styles.freeIconBubble}>
-                <Feather name={f.icon} size={14} color="#837E96" />
+          <View style={styles.freeGrid}>
+            {FREE_FEATURES.map((f) => (
+              <View key={f.label} style={styles.freeChip}>
+                <Feather name={f.icon} size={12} color="#837E96" />
+                <Text style={styles.freeChipText}>{f.label}</Text>
               </View>
-              <Text style={styles.freeLabel}>{f.label}</Text>
-              <Feather name="check" size={13} color="#837E96" />
-            </View>
-          ))}
+            ))}
+          </View>
         </View>
 
         <View style={styles.promiseCard}>
@@ -262,6 +306,7 @@ export default function PremiumUpgradeScreen({ navigation }) {
         </View>
 
         <CTAButton isLoading={isLoading} onPress={activatePremium} label="Start Free 7-Day Trial" />
+        <Text style={styles.ctaSecondaryNote}>Cancel anytime. Your family's data stays private and secure.</Text>
 
         <TouchableOpacity style={styles.restoreButton} onPress={handleRestore} activeOpacity={0.85} disabled={isLoading}>
           <Text style={styles.restoreText}>Restore Purchase</Text>
@@ -313,13 +358,16 @@ const styles = StyleSheet.create({
   topBar: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 14 },
   circleButton: { width: 38, height: 38, borderRadius: 19, backgroundColor: "#F0E2FF", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "#E3D2F8" },
   topTitle: { color: "#2B2463", fontSize: 16, fontWeight: "800" },
+
   heroCard: { backgroundColor: "#F6ECFF", borderRadius: 24, borderWidth: 1, borderColor: "#E3D2F8", padding: 20, alignItems: "center", marginBottom: 18 },
   heroIconWrap: { width: 64, height: 64, borderRadius: 20, backgroundColor: "#FFFFFF", alignItems: "center", justifyContent: "center", marginBottom: 12, borderWidth: 1, borderColor: "#E3D2F8" },
-  heroTitle: { color: "#2B2463", fontSize: 24, fontWeight: "800", textAlign: "center", lineHeight: 30, marginBottom: 8, letterSpacing: -0.3 },
+  heroTitle: { color: "#2B2463", fontSize: 21, fontWeight: "800", textAlign: "center", lineHeight: 27, marginBottom: 8, letterSpacing: -0.2 },
   heroSubtitle: { color: "#5B5672", fontSize: 13, lineHeight: 19, fontWeight: "600", textAlign: "center", marginBottom: 14 },
   trialBadge: { flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: "#EEF7E9", borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1, borderColor: "#C5E3C8" },
   trialBadgeText: { color: "#4A9E5C", fontSize: 11, fontWeight: "800" },
-  sectionTitle: { color: "#2B2463", fontSize: 15, fontWeight: "800", marginBottom: 10 },
+
+  sectionTitle: { color: "#2B2463", fontSize: 15, fontWeight: "800", marginBottom: 10, marginTop: 4 },
+
   pricingRow: { flexDirection: "row", gap: 10, marginBottom: 16 },
   pricingCard: { flex: 1, backgroundColor: "#FFFFFF", borderRadius: 18, borderWidth: 1.5, borderColor: "#EFE4DC", padding: 14, alignItems: "center", position: "relative", paddingTop: 20 },
   pricingCardActive: { borderColor: "#7548D8", borderWidth: 2, backgroundColor: "#F6ECFF" },
@@ -333,24 +381,31 @@ const styles = StyleSheet.create({
   pricingNote: { color: "#A0A0A0", fontSize: 9, fontWeight: "500", marginTop: 3, textAlign: "center" },
   savingBadge: { marginTop: 6, backgroundColor: "#EEF7E9", borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
   savingText: { color: "#4A9E5C", fontSize: 10, fontWeight: "800" },
-  ctaButton: { height: 52, borderRadius: 18, backgroundColor: "#7548D8", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 8 },
-  ctaButtonDisabled: { backgroundColor: "#C9B8E8" },
+
+  ctaButton: { height: 52, borderRadius: 18, backgroundColor: "#2B2463", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 8 },
+  ctaButtonDisabled: { backgroundColor: "#837E96" },
   ctaText: { color: "#FFFFFF", fontSize: 16, fontWeight: "800" },
-  ctaNote: { color: "#837E96", fontSize: 11, fontWeight: "600", textAlign: "center", marginBottom: 20 },
-  featuresCard: { backgroundColor: "#FFFFFF", borderRadius: 18, borderWidth: 1, borderColor: "#EFE4DC", paddingHorizontal: 13, paddingVertical: 4, marginBottom: 14, shadowColor: "#BFA99D", shadowOpacity: 0.06, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 2 },
-  featureRow: { flexDirection: "row", alignItems: "center", paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: "#F0E8E2", gap: 10 },
-  featureRowLast: { borderBottomWidth: 0 },
-  featureIconBubble: { width: 30, height: 30, borderRadius: 9, backgroundColor: "#F0E2FF", alignItems: "center", justifyContent: "center" },
-  featureTextWrap: { flex: 1 },
-  featureLabel: { color: "#2B2463", fontSize: 13, fontWeight: "800", marginBottom: 1 },
-  featureDesc: { color: "#837E96", fontSize: 11, fontWeight: "600" },
-  freeCard: { backgroundColor: "#F5F5F5", borderRadius: 18, borderWidth: 1, borderColor: "#E8E8E8", paddingHorizontal: 13, paddingVertical: 4, marginBottom: 14 },
-  freeRow: { flexDirection: "row", alignItems: "center", paddingVertical: 9, borderBottomWidth: 1, borderBottomColor: "#EEEEEE", gap: 10 },
-  freeRowLast: { borderBottomWidth: 0 },
-  freeIconBubble: { width: 28, height: 28, borderRadius: 8, backgroundColor: "#EEEEEE", alignItems: "center", justifyContent: "center" },
-  freeLabel: { flex: 1, color: "#5B5672", fontSize: 13, fontWeight: "600" },
+  ctaNote: { color: "#837E96", fontSize: 11, fontWeight: "600", textAlign: "center", marginBottom: 2 },
+  ctaSecondaryNote: { color: "#A79ABF", fontSize: 11, fontWeight: "600", textAlign: "center", marginBottom: 20, fontStyle: "italic" },
+
+  groupCard: { backgroundColor: "#FFFFFF", borderRadius: 20, borderWidth: 1, borderColor: "#EFE4DC", padding: 16, marginBottom: 12, shadowColor: "#BFA99D", shadowOpacity: 0.06, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 2 },
+  groupHeader: { flexDirection: "row", alignItems: "flex-start", gap: 12, marginBottom: 12 },
+  groupIconBubble: { width: 38, height: 38, borderRadius: 12, backgroundColor: "#F0E2FF", alignItems: "center", justifyContent: "center" },
+  groupHeaderText: { flex: 1 },
+  groupTitle: { color: "#2B2463", fontSize: 15, fontWeight: "800", marginBottom: 2 },
+  groupSubtitle: { color: "#837E96", fontSize: 12, fontWeight: "600", lineHeight: 17 },
+  groupFeatureList: { gap: 8, paddingLeft: 2 },
+  groupFeatureRow: { flexDirection: "row", alignItems: "flex-start", gap: 8 },
+  groupFeatureText: { flex: 1, color: "#5B5672", fontSize: 12.5, fontWeight: "600", lineHeight: 18 },
+
+  freeCard: { backgroundColor: "#F5F5F5", borderRadius: 18, borderWidth: 1, borderColor: "#E8E8E8", padding: 14, marginBottom: 14 },
+  freeGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  freeChip: { flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: "#FFFFFF", borderRadius: 12, borderWidth: 1, borderColor: "#E8E8E8", paddingHorizontal: 10, paddingVertical: 7 },
+  freeChipText: { color: "#5B5672", fontSize: 11.5, fontWeight: "700" },
+
   promiseCard: { backgroundColor: "#FFF0F0", borderRadius: 16, borderWidth: 1, borderColor: "#FFD5D0", padding: 13, flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 16 },
   promiseText: { flex: 1, color: "#2B2463", fontSize: 12, lineHeight: 17, fontWeight: "700" },
+
   restoreButton: { height: 44, alignItems: "center", justifyContent: "center", marginBottom: 10 },
   restoreText: { color: "#7548D8", fontSize: 13, fontWeight: "700" },
   legalRow: { flexDirection: "row", justifyContent: "center", alignItems: "center", marginBottom: 10 },

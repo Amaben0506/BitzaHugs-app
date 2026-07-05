@@ -99,7 +99,6 @@ const breath = StyleSheet.create({
 export default function SupportModeScreen({ navigation }) {
   const [selectedSituation, setSelectedSituation] = useState(null);
   const [supportContacts, setSupportContacts] = useState(null);
-  const [isPremium, setIsPremium] = useState(false);
   const scrollRef = useRef(null);
 
   useEffect(() => {
@@ -107,9 +106,6 @@ export default function SupportModeScreen({ navigation }) {
       try {
         const saved = await AsyncStorage.getItem("bitzaSupportPerson");
         if (saved) setSupportContacts(JSON.parse(saved));
-
-        const premium = await AsyncStorage.getItem("bitzaIsPremium");
-        setIsPremium(premium === "true");
       } catch (e) {
         console.log("Error loading:", e);
       }
@@ -280,24 +276,13 @@ export default function SupportModeScreen({ navigation }) {
                 <TouchableOpacity
                   key={tool.title}
                   style={[styles.toolRow, i === selectedSituation.tools.length - 1 && styles.toolRowLast]}
-                  onPress={() => {
-                    if (tool.screen === "HugiChat" && !isPremium) {
-                      go("PremiumUpgrade");
-                    } else {
-                      go(tool.screen);
-                    }
-                  }}
+                  onPress={() => go(tool.screen)}
                   activeOpacity={0.86}
                 >
                   <View style={[styles.toolIconBubble, { backgroundColor: tool.bg }]}>
                     <Feather name={tool.icon} size={18} color={tool.color} />
                   </View>
                   <Text style={styles.toolTitle}>{tool.title}</Text>
-                  {tool.screen === "HugiChat" && !isPremium && (
-                    <View style={styles.toolPremiumBadge}>
-                      <Text style={styles.toolPremiumText}>✦ Premium</Text>
-                    </View>
-                  )}
                   <Feather name="chevron-right" size={16} color="#2B2463" />
                 </TouchableOpacity>
               ))}
@@ -305,16 +290,11 @@ export default function SupportModeScreen({ navigation }) {
 
             <TouchableOpacity
               style={styles.hugiButton}
-              onPress={() => isPremium ? go("HugiChat") : go("PremiumUpgrade")}
+              onPress={() => go("HugiChat")}
               activeOpacity={0.9}
             >
               <Feather name="message-circle" size={18} color="#FFFFFF" />
               <Text style={styles.hugiButtonText}>Talk to Hugi for more support</Text>
-              {!isPremium && (
-                <View style={styles.hugiPremiumBadge}>
-                  <Text style={styles.hugiPremiumText}>✦ Premium</Text>
-                </View>
-              )}
             </TouchableOpacity>
           </View>
         )}

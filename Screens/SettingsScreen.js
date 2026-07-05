@@ -5,71 +5,80 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Image,
-  ImageBackground,
   Alert,
-  Platform,
+  Linking,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
+import Constants from "expo-constants";
+import { isModerator } from "../src/lib/moderation";
+import Card from "../src/components/ui/Card";
+import PressableScale from "../src/components/ui/PressableScale";
+import ScreenHeader from "../src/components/ui/ScreenHeader";
+import { Colors, Type, Spacing, Radius } from "../src/theme/theme";
 
-const settingsBackground = require("../assets/icons/setting-background.png");
+const appVersion =
+  Constants.expoConfig?.version ?? Constants.manifest?.version ?? "1.0";
 
-// ─── Small Components ─────────────────────────────────────────────────────────
-function PremiumBadge({ onPress }) {
+// ─── Section overline label ───────────────────────────────────────────────────
+function SectionLabel({ title }) {
+  return <Text style={s.overline}>{title}</Text>;
+}
+
+// ─── Premium pill ─────────────────────────────────────────────────────────────
+function PremiumPill({ onPress }) {
   return (
-    <TouchableOpacity style={styles.premiumBadge} onPress={onPress} activeOpacity={0.85}>
-      <Ionicons name="sparkles" size={9} color="#7548D8" />
-      <Text style={styles.premiumBadgeText}>Premium</Text>
+    <TouchableOpacity style={s.premiumPill} onPress={onPress} activeOpacity={0.8}>
+      <Ionicons name="sparkles" size={9} color="#fff" />
+      <Text style={s.premiumPillText}>Premium</Text>
     </TouchableOpacity>
   );
 }
 
-function SectionHeader({ title, caption }) {
-  return (
-    <View style={styles.sectionHeader}>
-      <Text style={styles.sectionTitle}>{title}</Text>
-      {caption ? <Text style={styles.sectionCaption}>{caption}</Text> : null}
-    </View>
-  );
-}
-
+// ─── Settings row ─────────────────────────────────────────────────────────────
 function SettingsRow({ row, last, onPremiumPress, isPremium }) {
-  const Container = row.onPress || row.premium ? TouchableOpacity : View;
   const isLocked = row.premium && !isPremium;
-  return (
-    <Container
-      style={[styles.row, last && styles.rowLast]}
-      onPress={isLocked ? onPremiumPress : row.onPress}
-      activeOpacity={0.86}
-    >
-      <View style={[styles.iconBubble, { backgroundColor: row.bg }]}>
-        <Feather name={row.icon} size={18} color={row.accent || "#6F42D8"} />
+  const isDestructive = !!row.destructive;
+
+  const inner = (
+    <View style={[s.row, last && s.rowLast]}>
+      <View style={[s.iconBubble, { backgroundColor: row.bg }]}>
+        <Feather name={row.icon} size={17} color={row.accent || Colors.purple} />
       </View>
-      <View style={styles.rowTextWrap}>
-        <Text style={styles.rowTitle}>{row.title}</Text>
-        <Text style={styles.rowSubtitle}>{row.subtitle}</Text>
+      <View style={s.rowText}>
+        <Text style={[s.rowTitle, isDestructive && s.rowTitleDestructive]}>
+          {row.title}
+        </Text>
+        {row.subtitle ? (
+          <Text style={s.rowSubtitle} numberOfLines={2}>{row.subtitle}</Text>
+        ) : null}
       </View>
       {isLocked ? (
-        <PremiumBadge onPress={onPremiumPress} />
+        <PremiumPill onPress={onPremiumPress} />
       ) : row.pill ? (
-        <View style={styles.pill}>
-          <Text style={styles.pillTextGreen}>{row.pill}</Text>
+        <View style={s.pill}>
+          <Text style={s.pillText}>{row.pill}</Text>
         </View>
       ) : row.soon ? (
-        <View style={styles.pillAmber}>
-          <Text style={styles.pillTextAmber}>Soon</Text>
+        <View style={s.pillAmber}>
+          <Text style={s.pillAmberText}>Soon</Text>
         </View>
-      ) : row.onPress ? (
-        <Feather name="chevron-right" size={18} color="#2B2463" />
+      ) : !isDestructive && row.onPress ? (
+        <Feather name="chevron-right" size={16} color={Colors.grayLavender} />
       ) : null}
-    </Container>
+    </View>
   );
+
+  const handlePress = isLocked ? onPremiumPress : row.onPress;
+  if (!handlePress) return inner;
+
+  return <PressableScale onPress={handlePress}>{inner}</PressableScale>;
 }
 
-// ─── Main Screen ──────────────────────────────────────────────────────────────
+// ─── Main screen ──────────────────────────────────────────────────────────────
 export default function SettingsScreen({ navigation }) {
   const [childProfile, setChildProfile] = useState(null);
   const [supportPerson, setSupportPerson] = useState(null);
@@ -86,9 +95,7 @@ export default function SettingsScreen({ navigation }) {
           setChildProfile(cp ? JSON.parse(cp) : null);
           setSupportPerson(sp ? JSON.parse(sp) : null);
           setIsPremium(premium === "true");
-        } catch (e) {
-          console.log("Error loading settings:", e);
-        }
+        } catch (e) {}
       };
       load();
     }, [])
@@ -104,82 +111,45 @@ export default function SettingsScreen({ navigation }) {
 
   const goToPremium = () => nav("PremiumUpgrade");
 
-  const clearData = async (key, label, resetFn) => {
-    try {
-      await AsyncStorage.removeItem(key);
-      resetFn?.();
-      showStatus(`${label} cleared`);
-    } catch (e) {
-      console.log("Error:", e);
-    }
-  };
-
-  const clearAll = async () => {
-    Alert.alert(
-      "Clear All Prototype Data?",
-      "This will remove saved journal entries, routines, child profile, and support person info from this device.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Clear All",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await AsyncStorage.multiRemove([
-                "calmJournalEntries",
-                "bitzaRoutineItems",
-                "bitzaChildProfile",
-                "bitzaSupportPerson",
-                "bitzaChildProfiles",
-                "bitzaIsPremium",
-              ]);
-              setChildProfile(null);
-              setSupportPerson(null);
-              setIsPremium(false);
-              showStatus("All prototype data cleared");
-            } catch (e) {
-              console.log("Error clearing all:", e);
-            }
-          },
-        },
-      ]
-    );
-  };
-
   const childName = childProfile?.childName?.trim() || "Not set";
   const supportName = supportPerson?.name?.trim() || "Not set";
+
+  // ─── Tint shorthands ──────────────────────────────────────────────────────
+  const LAV   = { bg: Colors.lavenderSurface, accent: Colors.purple };
+  const BLUSH = { bg: Colors.blushSurface,    accent: Colors.blushText };
+  const SAGE  = { bg: Colors.sageSurface,     accent: Colors.sageText };
+  const GOLD  = { bg: "#FFF8EC",              accent: Colors.mutedGold };
+  const DEST  = { bg: "#FFF1F3",              accent: "#C03060" };
+
+  // ─── Row definitions — routing and logic unchanged ─────────────────────────
 
   const profileRows = [
     {
       title: "Parent Profile",
       subtitle: "Caregiver details and preferences",
       icon: "user-check",
-      bg: "#F0E2FF",
-      accent: "#6F42D8",
-      onPress: () => nav("ParentProfile"),
+      ...LAV,
+      onPress: () => nav("EditCaregiverProfile"),
     },
     {
       title: "Child Profile",
       subtitle: childName,
       icon: "user",
-      bg: "#F0E2FF",
-      accent: "#6F42D8",
-      onPress: () => nav("ChildProfile"),
+      ...LAV,
+      onPress: () => nav("EditProfile"),
     },
     {
-      title: "Support Person",
-      subtitle: supportName,
+      title: "Support Contacts",
+      subtitle: supportName || "Manage your support network",
       icon: "phone-call",
-      bg: "#FFE6E4",
-      accent: "#EF8F7D",
-      onPress: () => nav("SupportPerson"),
+      ...BLUSH,
+      onPress: () => nav("AllContacts"),
     },
     {
       title: "Appointment Tracker",
       subtitle: "Therapy, doctors, school & more",
       icon: "calendar",
-      bg: "#E7F4FF",
-      accent: "#4C9ED9",
+      ...LAV,
       premium: true,
       onPress: () => nav("AppointmentTracker"),
     },
@@ -187,8 +157,7 @@ export default function SettingsScreen({ navigation }) {
       title: "Journal History",
       subtitle: "View saved calm journal entries",
       icon: "book-open",
-      bg: "#EEF7E8",
-      accent: "#78A866",
+      ...SAGE,
       premium: true,
       onPress: () => nav("JournalHistory"),
     },
@@ -196,8 +165,7 @@ export default function SettingsScreen({ navigation }) {
       title: "Talk to Hugi",
       subtitle: "Your AI calm companion",
       icon: "message-circle",
-      bg: "#E7F4FF",
-      accent: "#4C9ED9",
+      ...LAV,
       premium: true,
       onPress: () => nav("HugiChat"),
     },
@@ -208,16 +176,14 @@ export default function SettingsScreen({ navigation }) {
       title: "Notification Preferences",
       subtitle: "Choose gentle reminders",
       icon: "bell",
-      bg: "#FFF0DF",
-      accent: "#D99A3D",
+      ...GOLD,
       onPress: () => nav("NotificationPreferences"),
     },
     {
       title: "Calm Theme",
       subtitle: "Soft cream and lavender active",
       icon: "moon",
-      bg: "#EEF7E8",
-      accent: "#78A866",
+      ...SAGE,
       pill: "On",
     },
   ];
@@ -227,58 +193,87 @@ export default function SettingsScreen({ navigation }) {
       title: "Account Settings",
       subtitle: "Sign in, create account, or manage your profile",
       icon: "user",
-      bg: "#F0E2FF",
-      accent: "#6F42D8",
+      ...LAV,
+      onPress: () => nav("Account"),
+    },
+    {
+      title: "Delete Account",
+      subtitle: "Permanently remove your account and data",
+      icon: "trash-2",
+      ...DEST,
+      destructive: true,
       onPress: () => nav("Account"),
     },
     {
       title: "Log Out",
       subtitle: "Sign out of your account",
       icon: "log-out",
-      bg: "#FFE7E1",
-      accent: "#D86A5B",
-      onPress: async () => {
-        const { signOutUser } = require("../src/lib/firebase");
+      ...DEST,
+      destructive: true,
+      onPress: () =>
         Alert.alert("Log Out", "Are you sure you want to log out?", [
           { text: "Cancel", style: "cancel" },
-          { text: "Log Out", style: "destructive", onPress: async () => {
-            await signOutUser();
-            await AsyncStorage.multiRemove(["bitzaIsPremium", "bitzaAccountCreated", "bitzaAccountPromptSeen"]);
-            showStatus("Logged out successfully");
-          }},
-        ]);
-      },
+          {
+            text: "Log Out",
+            style: "destructive",
+            onPress: async () => {
+              const { signOutUser } = require("../src/lib/firebase");
+              await signOutUser();
+              await AsyncStorage.multiRemove([
+                "bitzaIsPremium",
+                "bitzaAccountCreated",
+                "bitzaAccountPromptSeen",
+              ]);
+              showStatus("Logged out successfully");
+            },
+          },
+        ]),
     },
+    ...(isModerator()
+      ? [
+          {
+            title: "Moderation",
+            subtitle: "Review reports and moderate community content",
+            icon: "shield",
+            ...LAV,
+            onPress: () => nav("Moderation"),
+          },
+        ]
+      : []),
   ];
 
   const safetyRows = [
     {
-      title: "Hugi Safety Note",
+      title: "About Hugi",
       subtitle: "Hugi is supportive, not therapy or emergency care",
-      icon: "shield",
-      bg: "#F0E2FF",
-      accent: "#6F42D8",
+      icon: "alert-circle",
+      ...LAV,
       onPress: () =>
         Alert.alert(
           "About Hugi 💜",
           "Hugi is an AI companion designed to offer emotional support and gentle guidance to caregivers.\n\nHugi is NOT a therapist, crisis counselor, or medical professional. If you or someone you care for is in crisis, please contact a licensed professional or emergency services.",
-          [{ text: "Got it", style: "default" }]
+          [{ text: "Got it" }]
         ),
     },
     {
       title: "Privacy Policy",
       subtitle: "How we protect your family's data",
       icon: "lock",
-      bg: "#E7F4FF",
-      accent: "#4C9ED9",
+      ...LAV,
       onPress: () => nav("PrivacySafety"),
+    },
+    {
+      title: "Terms of Use",
+      subtitle: "Rules and guidelines for using BitzaHugs",
+      icon: "file-text",
+      ...GOLD,
+      onPress: () => Linking.openURL("https://bitzahugs.com/terms"),
     },
     {
       title: "Emergency Reminder",
       subtitle: "If there is danger, contact emergency services",
       icon: "alert-triangle",
-      bg: "#FFE6E4",
-      accent: "#D86A5B",
+      ...BLUSH,
       onPress: () =>
         Alert.alert(
           "⚠️ Emergency",
@@ -286,196 +281,248 @@ export default function SettingsScreen({ navigation }) {
           [{ text: "Understood" }]
         ),
     },
+    {
+      title: "Report a Problem",
+      subtitle: "Contact us at hello@bitzahugs.com",
+      icon: "mail",
+      ...LAV,
+      onPress: () =>
+        Linking.openURL(
+          "mailto:hello@bitzahugs.com?subject=BitzaHugs%20Support"
+        ),
+    },
   ];
 
-  const dataRows = [
-    {
-      label: "Clear Journal Entries",
-      icon: "book-open",
-      onPress: () => clearData("calmJournalEntries", "Journal entries"),
-    },
-    {
-      label: "Clear Routine Data",
-      icon: "calendar",
-      onPress: () => clearData("bitzaRoutineItems", "Routine data"),
-    },
-    {
-      label: "Clear Child Profile",
-      icon: "user",
-      onPress: () => clearData("bitzaChildProfile", "Child profile", () => setChildProfile(null)),
-    },
-    {
-      label: "Clear Support Person",
-      icon: "phone-call",
-      onPress: () => clearData("bitzaSupportPerson", "Support person", () => setSupportPerson(null)),
-    },
-  ];
+  // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <ImageBackground
-      source={settingsBackground}
-      style={styles.background}
-      resizeMode="cover"
-    >
-      <SafeAreaView style={styles.safeArea}>
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+    <SafeAreaView style={s.safe}>
+      <LinearGradient
+        colors={["#EEE8F5", "#F5F0FA", "#FDFBFF"]}
+        locations={[0, 0.4, 1]}
+        style={StyleSheet.absoluteFill}
+      />
 
-        {/* Header */}
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.screenTitle}>Settings</Text>
-            <Text style={styles.screenSubtitle}>Manage your support tools and saved info.</Text>
-          </View>
-          <View style={styles.headerIconButton}>
-            <Feather name="settings" size={20} color="#6F42D8" strokeWidth={2.2} />
-          </View>
-        </View>
+      <ScreenHeader title="Settings" onBack={() => navigation.goBack()} style={s.headerBg} />
 
-        {/* Hero */}
-        <View style={styles.heroCard}>
-          <Image source={require("../assets/icons/support-heart-hug.png")} style={styles.heroImage} resizeMode="contain" />
-          <View style={styles.heroTextWrap}>
-            <Text style={styles.heroTitle}>BitzaHugs is here to help.</Text>
-            <Text style={styles.heroText}>Keep your family support details organized in one calm place.</Text>
-          </View>
-        </View>
+      <ScrollView
+        style={s.scroll}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={s.content}
+      >
+        {/* Premium upgrade banner */}
+        <PressableScale onPress={goToPremium}>
+          <Card tint="lavender" style={s.upgradeCard}>
+            <View style={s.upgradeIconWrap}>
+              <Ionicons name="sparkles" size={18} color={Colors.purple} />
+            </View>
+            <View style={s.upgradeText}>
+              <Text style={s.upgradeTitle}>Unlock BitzaHugs Premium</Text>
+              <Text style={s.upgradeSub}>
+                Appointments, insights, unlimited journaling & more.
+              </Text>
+            </View>
+            <Feather name="chevron-right" size={16} color={Colors.grayLavender} />
+          </Card>
+        </PressableScale>
 
-        {/* Premium Banner */}
-        <TouchableOpacity style={styles.upgradeBanner} onPress={goToPremium} activeOpacity={0.88}>
-          <View style={styles.upgradeIconWrap}>
-            <Ionicons name="sparkles" size={18} color="#7548D8" />
-          </View>
-          <View style={styles.upgradeTextWrap}>
-            <Text style={styles.upgradeTitle}>Unlock BitzaHugs Premium</Text>
-            <Text style={styles.upgradeSub}>Appointments, insights, unlimited journaling & more.</Text>
-          </View>
-          <Feather name="chevron-right" size={16} color="#7548D8" />
-        </TouchableOpacity>
-
-        {/* Status Banner */}
+        {/* Status flash */}
         {statusMessage ? (
-          <View style={styles.statusBanner}>
-            <Feather name="check-circle" size={16} color="#6F42D8" />
-            <Text style={styles.statusText}>{statusMessage}</Text>
+          <View style={s.statusBanner}>
+            <Feather name="check-circle" size={15} color={Colors.purple} />
+            <Text style={s.statusText}>{statusMessage}</Text>
           </View>
         ) : null}
 
-        {/* Profile & Support */}
-        <SectionHeader title="Profile & Support" caption="Quick access to important info." />
-        <View style={styles.card}>
+        <SectionLabel title="Profile & Support" />
+        <Card>
           {profileRows.map((row, i) => (
-            <SettingsRow key={row.title} row={row} last={i === profileRows.length - 1} onPremiumPress={goToPremium} isPremium={isPremium} />
+            <SettingsRow
+              key={row.title}
+              row={row}
+              last={i === profileRows.length - 1}
+              onPremiumPress={goToPremium}
+              isPremium={isPremium}
+            />
           ))}
-        </View>
+        </Card>
 
-        {/* App Preferences */}
-        <SectionHeader title="App Preferences" caption="Customize your experience." />
-        <View style={styles.card}>
+        <SectionLabel title="App Preferences" />
+        <Card>
           {preferenceRows.map((row, i) => (
-            <SettingsRow key={row.title} row={row} last={i === preferenceRows.length - 1} onPremiumPress={goToPremium} isPremium={isPremium} />
+            <SettingsRow
+              key={row.title}
+              row={row}
+              last={i === preferenceRows.length - 1}
+              onPremiumPress={goToPremium}
+              isPremium={isPremium}
+            />
           ))}
-        </View>
+        </Card>
 
-        {/* Account */}
-        <SectionHeader title="Account" caption="Create an account to sync your data across devices." />
-        <View style={styles.card}>
+        <SectionLabel title="Account" />
+        <Card>
           {accountRows.map((row, i) => (
-            <SettingsRow key={row.title} row={row} last={i === accountRows.length - 1} onPremiumPress={goToPremium} isPremium={isPremium} />
+            <SettingsRow
+              key={row.title}
+              row={row}
+              last={i === accountRows.length - 1}
+              onPremiumPress={goToPremium}
+              isPremium={isPremium}
+            />
           ))}
-        </View>
+        </Card>
 
-        {/* Safety & Privacy */}
-        <SectionHeader title="Safety & Privacy" caption="Important notes for launch." />
-        <View style={styles.card}>
+        <SectionLabel title="Safety & Privacy" />
+        <Card>
           {safetyRows.map((row, i) => (
-            <SettingsRow key={row.title} row={row} last={i === safetyRows.length - 1} onPremiumPress={goToPremium} isPremium={isPremium} />
+            <SettingsRow
+              key={row.title}
+              row={row}
+              last={i === safetyRows.length - 1}
+              onPremiumPress={goToPremium}
+              isPremium={isPremium}
+            />
           ))}
+        </Card>
+
+        {/* About footer */}
+        <View style={s.footer}>
+          <Text style={s.footerVersion}>BitzaHugs v{appVersion}</Text>
+          <Text style={s.footerTagline}>Made with 💜 for caregivers</Text>
+          <TouchableOpacity
+            onPress={() =>
+              Linking.openURL(
+                "mailto:hello@bitzahugs.com?subject=BitzaHugs%20Support"
+              )
+            }
+            activeOpacity={0.7}
+          >
+            <Text style={s.footerContact}>hello@bitzahugs.com</Text>
+          </TouchableOpacity>
         </View>
-
-        {/* Prototype Data */}
-        <SectionHeader title="Prototype Data" caption="Clear saved test data from this device." />
-        <View style={styles.dangerCard}>
-          {dataRows.map((row, i) => (
-            <TouchableOpacity
-              key={row.label}
-              style={[styles.dataRow, i === dataRows.length - 1 && styles.dataRowLast]}
-              onPress={row.onPress}
-              activeOpacity={0.86}
-            >
-              <Feather name={row.icon} size={18} color="#D86A5B" />
-              <Text style={styles.dataRowText}>{row.label}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        <TouchableOpacity style={styles.clearAllButton} onPress={clearAll} activeOpacity={0.88}>
-          <Feather name="trash-2" size={18} color="#FFFFFF" />
-          <Text style={styles.clearAllText}>Clear All Prototype Data</Text>
-        </TouchableOpacity>
-
-        <Text style={styles.footerText}>
-          BitzaHugs Premium — $6.99/mo or $49.99/yr. Cancel anytime.
-        </Text>
-
       </ScrollView>
-      </SafeAreaView>
-    </ImageBackground>
+    </SafeAreaView>
   );
 }
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
-const styles = StyleSheet.create({
-  background: { flex: 1, width: "100%", height: "100%" },
-  safeArea: { flex: 1, backgroundColor: "transparent" },
-  content: { paddingHorizontal: 16, paddingTop: Platform.OS === "ios" ? 6 : 16, paddingBottom: 100 },
+const s = StyleSheet.create({
+  safe:   { flex: 1, backgroundColor: "#FDFBFF" },
+  headerBg: { backgroundColor: "transparent" },
+  scroll: { flex: 1, backgroundColor: "transparent" },
+  content: {
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.sm,
+    paddingBottom: 112,
+    gap: Spacing.sm,
+  },
 
-  sectionHeader: { marginTop: 4, marginBottom: 8 },
-  sectionTitle: { color: "#2B2463", fontSize: 15, fontWeight: "800" },
-  sectionCaption: { color: "#837E96", fontSize: 11, fontWeight: "600", marginTop: 1 },
+  // Overline section label
+  overline: {
+    ...Type.overline,
+    color: Colors.textMuted,
+    marginTop: Spacing.sm,
+    marginBottom: 2,
+    marginLeft: 4,
+  },
 
-  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 10 },
-  screenTitle: { color: "#2B2463", fontSize: 22, fontWeight: "800", letterSpacing: -0.3 },
-  screenSubtitle: { color: "#5B5672", fontSize: 12, fontWeight: "600", marginTop: 1 },
-  headerIconButton: { width: 38, height: 38, borderRadius: 13, backgroundColor: "#F0E2FF", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "#E3D2F8" },
+  // Upgrade banner (inside Card)
+  upgradeCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.md,
+    paddingVertical: Spacing.md,
+  },
+  upgradeIconWrap: {
+    width: 38,
+    height: 38,
+    borderRadius: Radius.sm,
+    backgroundColor: Colors.lavenderBorder,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  upgradeText:  { flex: 1 },
+  upgradeTitle: { ...Type.cardTitle, color: Colors.primaryPlum, marginBottom: 2 },
+  upgradeSub:   { ...Type.bodySmall, color: Colors.textMuted },
 
-  heroCard: { backgroundColor: "#FFFFFF", borderRadius: 18, borderWidth: 1, borderColor: "#EFE4DC", paddingHorizontal: 13, paddingVertical: 11, flexDirection: "row", alignItems: "center", marginBottom: 10, shadowColor: "#BFA99D", shadowOpacity: 0.07, shadowOffset: { width: 0, height: 3 }, shadowRadius: 8, elevation: 2 },
-  heroImage: { width: 48, height: 48, marginRight: 12 },
-  heroTextWrap: { flex: 1 },
-  heroTitle: { color: "#2B2463", fontSize: 14, fontWeight: "800", marginBottom: 3 },
-  heroText: { color: "#5B5672", fontSize: 11, lineHeight: 16, fontWeight: "600" },
+  // Status flash
+  statusBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+    backgroundColor: Colors.lavenderSurface,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 10,
+  },
+  statusText: { ...Type.caption, color: Colors.purple, fontWeight: "700" },
 
-  upgradeBanner: { backgroundColor: "#F6ECFF", borderRadius: 16, borderWidth: 1, borderColor: "#E3D2F8", paddingHorizontal: 13, paddingVertical: 11, flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 10 },
-  upgradeIconWrap: { width: 36, height: 36, borderRadius: 11, backgroundColor: "#EFE1FF", alignItems: "center", justifyContent: "center" },
-  upgradeTextWrap: { flex: 1 },
-  upgradeTitle: { color: "#2B2463", fontSize: 13, fontWeight: "800", marginBottom: 2 },
-  upgradeSub: { color: "#5B5672", fontSize: 11, fontWeight: "600" },
+  // Row
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    minHeight: 56,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.divider,
+    paddingVertical: 6,
+    gap: Spacing.md,
+  },
+  rowLast:            { borderBottomWidth: 0 },
+  iconBubble: {
+    width: 36,
+    height: 36,
+    borderRadius: Radius.sm,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  rowText:            { flex: 1 },
+  rowTitle:           { ...Type.cardTitle, color: Colors.textPrimary, marginBottom: 2 },
+  rowTitleDestructive:{ color: "#C03060" },
+  rowSubtitle:        { ...Type.bodySmall, color: Colors.textMuted },
 
-  statusBanner: { height: 40, borderRadius: 13, backgroundColor: "#F0E2FF", borderWidth: 1, borderColor: "#E3D2F8", flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 12, marginBottom: 10 },
-  statusText: { color: "#6F42D8", fontSize: 13, fontWeight: "800" },
+  // Premium pill
+  premiumPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    backgroundColor: Colors.purple,
+    borderRadius: Radius.pill,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  premiumPillText: { ...Type.caption, color: "#fff", fontWeight: "700" },
 
-  card: { backgroundColor: "#FFFFFF", borderRadius: 18, borderWidth: 1, borderColor: "#EFE4DC", paddingHorizontal: 12, paddingVertical: 4, marginBottom: 10, shadowColor: "#BFA99D", shadowOpacity: 0.06, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 2 },
-  row: { minHeight: 56, flexDirection: "row", alignItems: "center", borderBottomWidth: 1, borderBottomColor: "#F0E8E2", paddingVertical: 6 },
-  rowLast: { borderBottomWidth: 0 },
-  iconBubble: { width: 36, height: 36, borderRadius: 11, alignItems: "center", justifyContent: "center", marginRight: 11 },
-  rowTextWrap: { flex: 1 },
-  rowTitle: { color: "#2B2463", fontSize: 13, fontWeight: "800", marginBottom: 2 },
-  rowSubtitle: { color: "#837E96", fontSize: 11, lineHeight: 15, fontWeight: "600" },
+  // Status pills
+  pill: {
+    backgroundColor: Colors.sageSurface,
+    borderRadius: Radius.pill,
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+  },
+  pillText: { ...Type.caption, color: Colors.sageText, fontWeight: "700" },
+  pillAmber: {
+    backgroundColor: "#FFF8EC",
+    borderRadius: Radius.pill,
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+  },
+  pillAmberText: { ...Type.caption, color: Colors.mutedGold, fontWeight: "700" },
 
-  premiumBadge: { flexDirection: "row", alignItems: "center", gap: 3, backgroundColor: "#F0E2FF", borderRadius: 8, paddingHorizontal: 6, paddingVertical: 3, borderWidth: 1, borderColor: "#D8C3F7" },
-  premiumBadgeText: { color: "#7548D8", fontSize: 9, fontWeight: "800" },
-
-  pill: { borderRadius: 10, backgroundColor: "#EEF7E8", paddingHorizontal: 8, paddingVertical: 4 },
-  pillTextGreen: { color: "#78A866", fontSize: 10, fontWeight: "800" },
-  pillAmber: { borderRadius: 10, backgroundColor: "#FFF0DF", paddingHorizontal: 8, paddingVertical: 4 },
-  pillTextAmber: { color: "#D99A3D", fontSize: 10, fontWeight: "800" },
-
-  dangerCard: { backgroundColor: "#FFF1EC", borderRadius: 18, borderWidth: 1, borderColor: "#FFD0C0", paddingHorizontal: 12, paddingVertical: 4, marginBottom: 10 },
-  dataRow: { minHeight: 46, flexDirection: "row", alignItems: "center", gap: 10, borderBottomWidth: 1, borderBottomColor: "#FFD8CF" },
-  dataRowLast: { borderBottomWidth: 0 },
-  dataRowText: { color: "#D86A5B", fontSize: 13, fontWeight: "800" },
-
-  clearAllButton: { height: 48, borderRadius: 16, backgroundColor: "#D86A5B", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 12 },
-  clearAllText: { color: "#FFFFFF", fontSize: 14, fontWeight: "800" },
-
-  footerText: { color: "#837E96", fontSize: 11, lineHeight: 16, fontWeight: "600", textAlign: "center" },
+  // About footer
+  footer: {
+    alignItems: "center",
+    paddingTop: Spacing.xl,
+    paddingBottom: Spacing.lg,
+    gap: 5,
+  },
+  footerVersion: { ...Type.caption, color: Colors.textMuted },
+  footerTagline: { ...Type.caption, color: Colors.textMuted },
+  footerContact: {
+    ...Type.caption,
+    color: Colors.purple,
+    textDecorationLine: "underline",
+    marginTop: 4,
+  },
 });

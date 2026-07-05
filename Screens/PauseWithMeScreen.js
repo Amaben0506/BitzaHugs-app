@@ -115,7 +115,7 @@ export default function PauseWithMeScreen({ navigation }) {
 
   return (
     <Animated.View style={[styles.container, { opacity: opacityAnim }]}>
-      <StatusBar barStyle="light-content" backgroundColor="#1A1228" />
+      <StatusBar barStyle="dark-content" backgroundColor="#EDE3FF" />
       <SafeAreaView style={styles.safeArea}>
 
         {/* Close button */}
@@ -181,7 +181,7 @@ export default function PauseWithMeScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#1A1228",
+    backgroundColor: "#EDE3FF",
   },
   safeArea: {
     flex: 1,
@@ -197,10 +197,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: "rgba(255,255,255,0.1)",
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#9B7ACC",
   },
   closeText: {
-    color: "rgba(255,255,255,0.6)",
+    color: "#9B7ACC",
     fontSize: 13,
     fontWeight: "700",
   },
@@ -210,14 +212,14 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   titleText: {
-    color: "#FFFFFF",
+    color: "#3D2B6B",
     fontSize: 28,
     fontWeight: "900",
     letterSpacing: 0.3,
     marginBottom: 8,
   },
   subtitleText: {
-    color: "rgba(255,255,255,0.55)",
+    color: "#7B5EA7",
     fontSize: 15,
     fontWeight: "600",
     textAlign: "center",
@@ -233,34 +235,34 @@ const styles = StyleSheet.create({
     width: 240,
     height: 240,
     borderRadius: 120,
-    backgroundColor: "#9B7EC8",
+    backgroundColor: "rgba(155, 122, 204, 0.15)",
   },
   orbRing2: {
     position: "absolute",
     width: 200,
     height: 200,
     borderRadius: 100,
-    backgroundColor: "#9B7EC8",
+    backgroundColor: "rgba(155, 122, 204, 0.25)",
   },
   orbRing1: {
     position: "absolute",
     width: 165,
     height: 165,
     borderRadius: 82,
-    backgroundColor: "#9B7EC8",
+    backgroundColor: "rgba(155, 122, 204, 0.4)",
   },
   orb: {
     width: 130,
     height: 130,
     borderRadius: 65,
-    backgroundColor: "#7548D8",
+    backgroundColor: "#9B7ACC",
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#9B7EC8",
+    shadowColor: "#9B7ACC",
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 30,
-    elevation: 20,
+    shadowOpacity: 0.4,
+    shadowRadius: 20,
+    elevation: 10,
   },
   orbEmoji: {
     fontSize: 42,
@@ -268,7 +270,7 @@ const styles = StyleSheet.create({
   phaseText: {
     position: "absolute",
     bottom: 10,
-    color: "rgba(255,255,255,0.5)",
+    color: "#7B5EA7",
     fontSize: 14,
     fontWeight: "600",
     letterSpacing: 0.5,
@@ -279,7 +281,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   messageText: {
-    color: "#FFFFFF",
+    color: "#3D2B6B",
     fontSize: 22,
     fontWeight: "800",
     textAlign: "center",
@@ -291,7 +293,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   groundingText: {
-    color: "rgba(255,255,255,0.4)",
+    color: "#9B8AB8",
     fontSize: 13,
     fontWeight: "600",
     textAlign: "center",

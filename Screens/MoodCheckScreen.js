@@ -10,6 +10,7 @@ import {
   Platform,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import { scheduleStreakProtection } from "../utils/notifications";
 
 export default function MoodCheckScreen({ navigation, route }) {
   const startingMood = route?.params?.mood || null;
@@ -146,6 +147,7 @@ export default function MoodCheckScreen({ navigation, route }) {
   };
 
   const goToHelpfulSupport = () => {
+    scheduleStreakProtection().catch(() => {});
     navigation.getParent()?.navigate("MoodSupport", {
       mood: selectedMood || "okay",
     });

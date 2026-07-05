@@ -8,6 +8,7 @@ import { Feather, Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
 import { useTheme } from "../src/ThemeContext";
+import { usePremium } from "../src/lib/premium";
 
 const STORAGE_KEY = "bitzaChildProfile";
 const EXTRA_STORAGE_KEY = "bitzaChildProfiles";
@@ -48,7 +49,7 @@ export default function SupportSnapshotScreen({ navigation, route }) {
   const theme = useTheme();
   const childIndex = route?.params?.childIndex || 0;
   const [profile, setProfile] = useState(null);
-  const [isPremium, setIsPremium] = useState(false);
+  const { requirePremium } = usePremium();
 
   useFocusEffect(useCallback(() => {
     const load = async () => {
@@ -61,8 +62,6 @@ export default function SupportSnapshotScreen({ navigation, route }) {
           const p = childIndex === 0 ? parsed : parsed[childIndex - 1];
           setProfile(p || null);
         }
-        const premium = await AsyncStorage.getItem("bitzaIsPremium");
-        setIsPremium(premium === "true");
       } catch (e) { console.log("Error loading snapshot:", e); }
     };
     load();
@@ -92,10 +91,8 @@ export default function SupportSnapshotScreen({ navigation, route }) {
   };
 
   const handlePDFExport = () => {
-    if (isPremium) {
+    if (requirePremium({ feature: "pdf_exports" })) {
       Alert.alert("PDF Export", "PDF export is coming in the next update! 💜");
-    } else {
-      navigation.navigate("PremiumUpgrade");
     }
   };
 

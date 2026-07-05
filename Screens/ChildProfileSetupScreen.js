@@ -15,6 +15,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
+import { FREE_LIMITS, usePremium } from "../src/lib/premium";
 
 const CHILD_PROFILE_KEY = "bitzaChildProfile";
 const EXTRA_CHILD_PROFILES_KEY = "bitzaChildProfiles";
@@ -76,6 +77,7 @@ function calculateAgeFromDob(dob) {
 export default function ChildProfileSetupScreen({ navigation, route }) {
   const childIndex = route?.params?.childIndex || 0;
   const isAddingExtraChild = childIndex > 0;
+  const { isPremium, isLoading: premiumLoading, showPremiumUpgrade } = usePremium();
 
   const [childName, setChildName] = useState("");
   const [dob, setDob] = useState("");
@@ -250,6 +252,10 @@ export default function ChildProfileSetupScreen({ navigation, route }) {
 
     try {
       if (isAddingExtraChild) {
+        if (premiumLoading || (!isPremium && childIndex >= FREE_LIMITS.childProfiles)) {
+          showPremiumUpgrade({ feature: "multiple_children", isChecking: premiumLoading });
+          return;
+        }
         await saveExtraChildProfile(childProfile);
         navigation.navigate("ChildrenList");
         return;

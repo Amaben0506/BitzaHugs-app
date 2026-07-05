@@ -1,0 +1,141 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Moderator helper ──────────────────────────────────────────────────────
+    // Must match MODERATOR_UIDS in src/lib/moderation.ts exactly.
+    function isModerator() {
+      return request.auth != null
+        && request.auth.uid in ['ZQJ88OSFWyX9VZJnfmNwjuyHWU72'];
+    }
+
+    function isSelf(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    function premiumKeys() {
+      return [
+        'isPremium',
+        'premiumActivatedAt',
+        'premiumStatusUpdatedAt',
+        'premiumSource',
+        'premiumEntitlement',
+        'premiumExpiresAt',
+        'subscription'
+      ];
+    }
+
+    function clientIsNotChangingPremiumFields() {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(premiumKeys());
+    }
+
+    function clientIsNotCreatingPremiumFields() {
+      return !request.resource.data.keys().hasAny(premiumKeys());
+    }
+
+    // ── Per-user private data ─────────────────────────────────────────────────
+    // The root user document may contain backend-owned Premium entitlement
+    // fields. Clients can read their own document and update non-Premium fields,
+    // but may not grant or modify Premium access directly.
+    match /users/{uid} {
+      allow read: if isSelf(uid);
+      allow create: if isSelf(uid) && clientIsNotCreatingPremiumFields();
+      allow update: if isSelf(uid) && clientIsNotChangingPremiumFields();
+      allow delete: if isSelf(uid);
+    }
+
+    // Backend-managed subscription status. Clients may read their own status for
+    // UI hints, but only Admin SDK / trusted Functions may write it.
+    match /users/{uid}/subscription/{docId} {
+      allow read: if isSelf(uid);
+      allow write: if false;
+    }
+
+    // Covers profile, community profile, blockedUsers, blockedMeta, and all
+    // other per-user subtrees. Each user may only read/write their own subtree.
+    match /users/{uid}/{collectionId}/{document=**} {
+      allow read, write: if isSelf(uid) && collectionId != 'subscription';
+    }
+
+    // RevenueCat webhook audit log. Only backend/Admin SDK writes these events.
+    match /revenueCatWebhookEvents/{eventId} {
+      allow read, write: if false;
+    }
+
+    // ── Community posts ───────────────────────────────────────────────────────
+    match /communityPosts/{postId} {
+      allow read: if request.auth != null;
+
+      allow create: if request.auth != null
+        && request.resource.data.authorId == request.auth.uid
+        && request.resource.data.status == 'active';
+
+      // Three update paths:
+      //   1. Author edits their own post (body edits, soft-delete to 'removed').
+      //   2. Moderator may set any field (status changes, forced removal).
+      //   3. Any authenticated user may touch only counter/status fields:
+      //        togglePostReaction → reactionCount
+      //        addComment         → commentCount
+      //        reportContent      → reportCount + status (auto-hide)
+      allow update: if request.auth != null && (
+        resource.data.authorId == request.auth.uid
+        || isModerator()
+        || request.resource.data.diff(resource.data)
+             .affectedKeys().hasOnly(['reactionCount', 'commentCount', 'reportCount', 'status'])
+      );
+
+      // Authors may hard-delete their own posts; moderator may hard-delete any.
+      allow delete: if request.auth != null
+        && (resource.data.authorId == request.auth.uid || isModerator());
+
+      // ── Comments ─────────────────────────────────────────────────────────
+      match /comments/{commentId} {
+        allow read: if request.auth != null;
+
+        allow create: if request.auth != null
+          && request.resource.data.authorId == request.auth.uid;
+
+        // Same three-path rule as posts (no reactionCount / commentCount here).
+        allow update: if request.auth != null && (
+          resource.data.authorId == request.auth.uid
+          || isModerator()
+          || request.resource.data.diff(resource.data)
+               .affectedKeys().hasOnly(['reportCount', 'status'])
+        );
+
+        allow delete: if request.auth != null
+          && (resource.data.authorId == request.auth.uid || isModerator());
+      }
+
+      // ── Reactions ─────────────────────────────────────────────────────────
+      // Doc ID is the reacting user's UID — enforces one-per-user structurally.
+      match /reactions/{uid} {
+        allow read: if request.auth != null;
+        allow write: if request.auth != null && uid == request.auth.uid;
+      }
+    }
+
+    // Collection-group read for comments — required by loadHiddenContent() which
+    // uses collectionGroup(db, 'comments').where('status', '==', 'hidden').
+    // Restricted to moderators only: regular users read comments through the
+    // nested match /communityPosts/{postId}/comments/{commentId} rule above,
+    // which is sufficient for the per-post feed. Leaving this open to all
+    // authenticated users would let anyone enumerate hidden/removed comments
+    // across every post via a single collection-group query.
+    match /{path=**}/comments/{commentId} {
+      allow read: if isModerator();
+    }
+
+    // ── Reports ───────────────────────────────────────────────────────────────
+    // Regular users may only submit reports (create). The moderator may read
+    // open reports and mark them resolved (update). Hard-delete is blocked for
+    // everyone — the audit trail stays in Firestore permanently.
+    match /communityReports/{reportId} {
+      allow create: if request.auth != null
+        && request.resource.data.reporterId == request.auth.uid;
+      allow read, update: if isModerator();
+      allow delete: if false;
+    }
+
+  }
+}

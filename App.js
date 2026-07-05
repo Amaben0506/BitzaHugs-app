@@ -1,23 +1,31 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
 View,
 Text,
 StyleSheet,
 TouchableOpacity,
 StatusBar,
-Alert,
 LogBox,
 } from "react-native";
+import * as Notifications from "expo-notifications";
 
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createDrawerNavigator, DrawerContentScrollView, } from "@react-navigation/drawer";
-import Purchases from "react-native-purchases";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import * as Font from "expo-font";
+import {
+  useFonts,
+  Nunito_400Regular,
+  Nunito_500Medium,
+  Nunito_600SemiBold,
+  Nunito_700Bold,
+  Nunito_800ExtraBold,
+} from "@expo-google-fonts/nunito";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { FREE_LIMITS, PremiumProvider, usePremium } from "./src/lib/premium";
 
 
 // ─── Onboarding Screens ───────────────────────────────────────────────────────
@@ -29,13 +37,56 @@ import SensorySupportsScreen from "./Screens/SensorySupportsScreen";
 import CaregiverSupportScreen from "./Screens/CaregiverSupportScreen";
 import CalmSpaceReadyScreen from "./Screens/CalmSpaceReadyScreen";
 import CreateAccountScreen from "./Screens/CreateAccountScreen";
-import CommunityScreen from "./Screens/CommunityScreen";
-
 
 // ─── Main Tab Screens ─────────────────────────────────────────────────────────
-import HomeScreen from "./Screens/Homescreen";
+import HomeScreen from "./src/screens/HomeScreen";
+import MyChildScreen from "./src/screens/MyChildScreen";
+
+// ─── Onboarding ───────────────────────────────────────────────────────────────
+import OnboardingNavigator from "./src/screens/onboarding/OnboardingNavigator";
+
+// ─── Support Placeholder Screens ─────────────────────────────────────────────
+import AddContactScreen from "./src/screens/AddContactScreen";
+import AllContactsScreen from "./src/screens/AllContactsScreen";
+import PrintableResourcesScreen from "./src/screens/PrintableResourcesScreen";
+import CaregiverCommunityScreen from "./src/screens/CaregiverCommunityScreen";
+import CommunityGuidelinesScreen from "./src/screens/CommunityGuidelinesScreen";
+import CommunityPostDetailScreen from "./src/screens/CommunityPostDetailScreen";
+import CommunityComposerScreen from "./src/screens/CommunityComposerScreen";
+import BlockedUsersScreen from "./src/screens/BlockedUsersScreen";
+import ModerationScreen from "./src/screens/ModerationScreen";
+import SupportPlanScreen from "./src/screens/SupportPlanScreen";
+import HelpfulResourcesScreen from "./src/screens/HelpfulResourcesScreen";
+import SupportActivityScreen from "./src/screens/SupportActivityScreen";
+import SafetyInfoScreen from "./src/screens/SafetyInfoScreen";
+
+// ─── MyCare Placeholder Screens ──────────────────────────────────────────────
+import EditCaregiverProfileScreen from "./src/screens/EditCaregiverProfileScreen";
+import CaregiverMoodHistoryScreen from "./src/screens/CaregiverMoodHistoryScreen";
+import JournalWriteScreen from "./src/screens/JournalWriteScreen";
+import JournalPromptScreen from "./src/screens/JournalPromptScreen";
+import ToolsActivityScreen from "./src/screens/ToolsActivityScreen";
+import WellnessSummaryScreen from "./src/screens/WellnessSummaryScreen";
+
+// ─── MyChild Placeholder Screens ─────────────────────────────────────────────
+import EditProfileScreen from "./src/screens/EditProfileScreen";
+import ScheduleScreen from "./src/screens/ScheduleScreen";
+import AddActivityScreen from "./src/screens/AddActivityScreen";
+import MoodHistoryScreen from "./src/screens/MoodHistoryScreen";
+import DailyNoteScreen from "./src/screens/DailyNoteScreen";
+import PastNotesScreen from "./src/screens/PastNotesScreen";
+import TransitionTimerScreen from "./src/screens/TransitionTimerScreen";
+import CareTeamScreen from "./src/screens/CareTeamScreen";
+import AddCareTeamMemberScreen from "./src/screens/AddCareTeamMemberScreen";
+import AddWinScreen from "./src/screens/AddWinScreen";
+import ChildProgressScreen from "./src/screens/ChildProgressScreen";
+import WinsScreen from "./src/screens/WinsScreen";
+import MyCareScreen from "./src/screens/MyCareScreen";
+import NewHugiChatScreen from "./src/screens/HugiChatScreen";
+import NewImmediateSupportScreen from "./src/screens/ImmediateSupportScreen";
 import RoutineScreen from "./Screens/RoutineScreen";
-import SupportScreen from "./Screens/SupportScreen";
+import LegacySupportScreen from "./Screens/SupportScreen";
+import NewSupportScreen from "./src/screens/SupportScreen";
 import ProgressScreen from "./Screens/ProgressScreen";
 import SettingsScreen from "./Screens/SettingsScreen";
 
@@ -68,10 +119,9 @@ import AffirmationsScreen from "./Screens/AffirmationsScreen";
 // ─── Journal Screens ──────────────────────────────────────────────────────────
 import CalmJournalScreen from "./Screens/CalmJournalScreen";
 import JournalEntryDetailScreen from "./Screens/JournalEntryDetailScreen";
-import JournalHistoryScreen from "./Screens/JournalHistoryScreen";
+import JournalHistoryScreen from "./src/screens/JournalHistoryScreen";
 
 // ─── Other Screens ────────────────────────────────────────────────────────────
-import HugiChatScreen from "./Screens/HugiChatScreen";
 import MeltdownPlanScreen from "./Screens/MeltdownPlanScreen";
 import OnboardingScreen from "./Screens/OnboardingScreen";
 import AppointmentTrackerScreen from "./Screens/AppointmentTrackerScreen";
@@ -81,6 +131,11 @@ import ReturningUserScreen from "./Screens/ReturningUserScreen";
 import RecoveryRoutineScreen from "./Screens/RecoveryRoutineScreen";
 import ShowMeScreen from "./Screens/ShowMeScreen";
 import PauseWithMeScreen from "./Screens/PauseWithMeScreen";
+
+import {
+  setupNotificationChannel,
+  scheduleBitzaHugsNotifications,
+} from "./utils/notifications";
 
 LogBox.ignoreLogs([
 "[Reanimated] The `isReanimated3` function is deprecated.",
@@ -128,7 +183,7 @@ return ( <TouchableOpacity
 function CustomDrawerContent({ navigation }) {
 const [parentName, setParentName] = useState("there");
 const [children, setChildren] = useState([]);
-const [isPremium, setIsPremium] = useState(false);
+const { isPremium, isLoading: premiumLoading, showPremiumUpgrade } = usePremium();
 
 useEffect(() => {
 const loadDrawerData = async () => {
@@ -165,8 +220,6 @@ const parent = await AsyncStorage.getItem("bitzaParentProfile");
 
     setChildren(allChildren);
 
-    const premium = await AsyncStorage.getItem("bitzaIsPremium");
-    setIsPremium(premium === "true");
   } catch (error) {
     console.log("Drawer load error:", error);
   }
@@ -220,7 +273,6 @@ const toolItems = [
 { label: "Printable Resources", icon: "print-outline", screen: "Resources" },
 { label: "Water Reset", icon: "water-outline", screen: "WaterReminder" },
 { label: "Sensory Support", icon: "hand-left-outline", screen: "SensorySupports" },
-{ label: "Community", icon: "people-outline", screen: "Community" },
 ];
 
 const settingsItems = [
@@ -251,29 +303,15 @@ if (parentNav) {
 };
 
 const handleAddChild = () => {
-if (!isPremium) {
-navigation.closeDrawer();
+if (premiumLoading) {
+  navigation.closeDrawer();
+  showPremiumUpgrade({ feature: "multiple_children", isChecking: true });
+  return;
+}
 
-  Alert.alert(
-    "Premium Feature",
-    "Adding more than one child is a Premium feature. Upgrade to support your whole family!",
-    [
-      { text: "Not now", style: "cancel" },
-      {
-        text: "Upgrade",
-        onPress: () => {
-          const parentNav = navigation.getParent();
-
-          if (parentNav) {
-            parentNav.navigate("PremiumUpgrade");
-          } else {
-            navigation.navigate("PremiumUpgrade");
-          }
-        },
-      },
-    ]
-  );
-
+if (!isPremium && children.length >= FREE_LIMITS.childProfiles) {
+  navigation.closeDrawer();
+  showPremiumUpgrade({ feature: "multiple_children" });
   return;
 }
 
@@ -394,53 +432,68 @@ accessibilityLabel="Close menu"
 }
 
 // ─── Bottom Tabs ──────────────────────────────────────────────────────────────
+const TAB_ACTIVE_COLOR = "#7B3DC8";
+const TAB_INACTIVE_COLOR = "#C8B8E0";
+const TAB_ACTIVE_BG = "#EDE0FF";
+
+const TAB_ICONS = {
+  HomeTab:     { focused: "home",   outline: "home-outline" },
+  MyChildTab:  { focused: "person", outline: "person-outline" },
+  MyCareTab:   { focused: "heart",  outline: "heart-outline" },
+  SupportTab:  { focused: "people", outline: "people-outline" },
+};
+
 function MainTabs() {
 return (
 <Tab.Navigator
 screenOptions={({ route }) => ({
-headerShown: false,
-tabBarShowLabel: true,
-tabBarActiveTintColor: ACCENT,
-tabBarInactiveTintColor: "#8E87A0",
-tabBarStyle: {
-height: 82,
-paddingTop: 8,
-paddingBottom: 16,
-backgroundColor: "#FFFFFF",
-borderTopWidth: 1,
-borderTopColor: BORDER,
-borderTopLeftRadius: 26,
-borderTopRightRadius: 26,
-position: "absolute",
-shadowColor: "#000",
-shadowOpacity: 0.07,
-shadowRadius: 10,
-shadowOffset: { width: 0, height: -3 },
-elevation: 8,
-},
-tabBarLabelStyle: {
-fontSize: 11,
-fontWeight: "700",
-marginTop: 2,
-},
-tabBarIcon: ({ focused, color }) => {
-let iconName = "ellipse-outline";
-
-      if (route.name === "HomeTab") {
-        iconName = focused ? "home" : "home-outline";
-      } else if (route.name === "RoutineTab") {
-        iconName = focused ? "calendar" : "calendar-outline";
-      } else if (route.name === "SupportTab") {
-        iconName = focused ? "heart" : "heart-outline";
-      } else if (route.name === "ProgressTab") {
-        iconName = focused ? "bar-chart" : "bar-chart-outline";
-      } else if (route.name === "SettingsTab") {
-        iconName = focused ? "settings" : "settings-outline";
-      }
-
-      return <Ionicons name={iconName} size={24} color={color} />;
-    },
-  })}
+  headerShown: false,
+  tabBarShowLabel: true,
+  tabBarActiveTintColor: TAB_ACTIVE_COLOR,
+  tabBarInactiveTintColor: TAB_INACTIVE_COLOR,
+  tabBarStyle: {
+    position: "absolute",
+    left: 16,
+    right: 16,
+    bottom: 24,
+    height: 72,
+    borderRadius: 28,
+    backgroundColor: "#FFFFFF",
+    borderTopWidth: 0,
+    shadowColor: "#7B5EA7",
+    shadowOpacity: 0.12,
+    shadowRadius: 22,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 6,
+  },
+  tabBarLabelStyle: {
+    fontFamily: "Nunito_700Bold",
+    fontSize: 11,
+    marginTop: 1,
+    marginBottom: 4,
+  },
+  tabBarIcon: ({ focused }) => {
+    const icons = TAB_ICONS[route.name] || { focused: "ellipse", outline: "ellipse-outline" };
+    const iconName = focused ? icons.focused : icons.outline;
+    const color = focused ? TAB_ACTIVE_COLOR : TAB_INACTIVE_COLOR;
+    if (focused) {
+      return (
+        <View style={{
+          width: 48,
+          height: 32,
+          backgroundColor: TAB_ACTIVE_BG,
+          borderRadius: 16,
+          alignItems: "center",
+          justifyContent: "center",
+          marginTop: 6,
+        }}>
+          <Ionicons name={iconName} size={20} color={color} />
+        </View>
+      );
+    }
+    return <Ionicons name={iconName} size={20} color={color} style={{ marginTop: 6 }} />;
+  },
+})}
 >
   <Tab.Screen
     name="HomeTab"
@@ -448,24 +501,19 @@ let iconName = "ellipse-outline";
     options={{ tabBarLabel: "Home" }}
   />
   <Tab.Screen
-    name="RoutineTab"
-    component={RoutineScreen}
-    options={{ tabBarLabel: "Routines" }}
+    name="MyChildTab"
+    component={MyChildScreen}
+    options={{ tabBarLabel: "My Child" }}
+  />
+  <Tab.Screen
+    name="MyCareTab"
+    component={MyCareScreen}
+    options={{ tabBarLabel: "My Care" }}
   />
   <Tab.Screen
     name="SupportTab"
-    component={SupportScreen}
+    component={NewSupportScreen}
     options={{ tabBarLabel: "Support" }}
-  />
-  <Tab.Screen
-    name="ProgressTab"
-    component={ProgressScreen}
-    options={{ tabBarLabel: "Progress" }}
-  />
-  <Tab.Screen
-    name="SettingsTab"
-    component={SettingsScreen}
-    options={{ tabBarLabel: "Settings" }}
   />
 </Tab.Navigator>
 
@@ -488,8 +536,8 @@ swipeEnabled: true,
 >
 <Drawer.Screen name="DrawerHome" component={MainTabs} />
 <Drawer.Screen name="SupportMode" component={SupportModeScreen} />
-<Drawer.Screen name="HugiChat" component={HugiChatScreen} />
-<Drawer.Screen name="Community" component={CommunityScreen} />
+<Drawer.Screen name="HugiChat" component={NewHugiChatScreen} />
+
 </Drawer.Navigator>
 );
 }
@@ -497,31 +545,38 @@ swipeEnabled: true,
 // ─── Root App ─────────────────────────────────────────────────────────────────
 export default function App() {
 const [iconsReady, setIconsReady] = useState(false);
+const navigationRef = useRef(null);
+const [fontsLoaded] = useFonts({
+  Nunito_400Regular,
+  Nunito_500Medium,
+  Nunito_600SemiBold,
+  Nunito_700Bold,
+  Nunito_800ExtraBold,
+});
+
+// One-time migration: remove the obsolete bitzaCommunityUsername key that was
+// written by the retired Screens/CommunityScreen.js room-based chat. The flag
+// bitzaCleanedOldCommunity ensures this runs exactly once per device.
+useEffect(() => {
+  AsyncStorage.getItem('bitzaCleanedOldCommunity').then((done) => {
+    if (!done) {
+      AsyncStorage.removeItem('bitzaCommunityUsername');
+      AsyncStorage.setItem('bitzaCleanedOldCommunity', 'true');
+    }
+  });
+}, []);
 
 useEffect(() => {
-const setupRevenueCat = async () => {
-  try {
-    Purchases.setLogLevel(Purchases.LOG_LEVEL.DEBUG);
+  const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
+    const screen = response.notification.request.content.data?.screen;
+    if (screen && navigationRef.current?.isReady()) {
+      navigationRef.current.navigate(screen);
+    }
+  });
+  return () => subscription.remove();
+}, []);
 
-    Purchases.configure({
-      apiKey: "appl_nrdgYpwvNLPBLEIWXHsUpdPYFqy",
-    });
-
-    const customerInfo = await Purchases.getCustomerInfo();
-    const activeEntitlements = customerInfo?.entitlements?.active || {};
-    const isPremium = activeEntitlements["BitzaHugs Pro"] != null;
-
-    await AsyncStorage.setItem("bitzaIsPremium", isPremium ? "true" : "false");
-
-    console.log("RevenueCat ready. Premium:", isPremium);
-  } catch (error) {
-    console.log("RevenueCat setup error:", error);
-    // Don't overwrite premium on error — keep existing stored value
-  }
-};
-
-setupRevenueCat();
-
+useEffect(() => {
 const loadIconFonts = async () => {
   try {
     await Font.loadAsync({
@@ -537,22 +592,41 @@ const loadIconFonts = async () => {
 
 loadIconFonts();
 
+const setupNotifications = async () => {
+  try {
+    // Set up Android channel — no permission needed, safe on cold launch.
+    await setupNotificationChannel();
+    // If the user already granted permission, re-apply their saved schedule.
+    // Never call requestPermissionsAsync() here.
+    const { status } = await Notifications.getPermissionsAsync();
+    if (status === "granted") {
+      const raw = await AsyncStorage.getItem("bitzaNotificationPreferences");
+      if (raw) await scheduleBitzaHugsNotifications(JSON.parse(raw));
+    }
+  } catch (e) {
+    console.log("Notification setup error:", e);
+  }
+};
+setupNotifications();
+
 }, []);
 
-if (!iconsReady) return null;
+if (!iconsReady || !fontsLoaded) return null;
 
-return (<SafeAreaProvider><StatusBar
+return (<SafeAreaProvider><PremiumProvider><StatusBar
      barStyle="dark-content"
      backgroundColor="transparent"
      translucent
    />
 
-  <NavigationContainer>
+  <NavigationContainer ref={navigationRef}>
     <Stack.Navigator
-      initialRouteName={DEV_MODE ? "MainTabs" : "Splash"}
+      id="RootStack"
+      initialRouteName={DEV_MODE ? "MainTabs" : "OnboardingFlow"}
       screenOptions={{ headerShown: false }}
     >
       {/* Onboarding */}
+      <Stack.Screen name="OnboardingFlow" component={OnboardingNavigator} options={{ headerShown: false }} />
       <Stack.Screen name="Splash" component={SplashScreen} />
       <Stack.Screen name="Welcome" component={WelcomeScreen} />
       <Stack.Screen
@@ -583,7 +657,7 @@ return (<SafeAreaProvider><StatusBar
       {/* Main Screens */}
       <Stack.Screen name="Home" component={HomeScreen} />
       <Stack.Screen name="Routine" component={RoutineScreen} />
-      <Stack.Screen name="Support" component={SupportScreen} />
+      <Stack.Screen name="Support" component={LegacySupportScreen} />
       <Stack.Screen name="Progress" component={ProgressScreen} />
       <Stack.Screen name="Settings" component={SettingsScreen} />
 
@@ -653,8 +727,45 @@ return (<SafeAreaProvider><StatusBar
 
       {/* Other */}
       <Stack.Screen name="RecoveryRoutine" component={RecoveryRoutineScreen} />
-      <Stack.Screen name="HugiChat" component={HugiChatScreen} />
-      <Stack.Screen name="Community" component={CommunityScreen} />
+      <Stack.Screen name="HugiChat" component={NewHugiChatScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ImmediateSupport" component={NewImmediateSupportScreen} options={{ headerShown: false }} />
+
+      {/* Support Screens */}
+      <Stack.Screen name="AddContact" component={AddContactScreen} options={{ headerShown: false, presentation: 'modal' }} />
+      <Stack.Screen name="AllContacts" component={AllContactsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="PrintableResources" component={PrintableResourcesScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="CaregiverCommunity" component={CaregiverCommunityScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="CommunityGuidelines" component={CommunityGuidelinesScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="CommunityPostDetail" component={CommunityPostDetailScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="CommunityComposer" component={CommunityComposerScreen} options={{ headerShown: false, presentation: 'modal' }} />
+      <Stack.Screen name="BlockedUsers" component={BlockedUsersScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="Moderation" component={ModerationScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="SupportPlan" component={SupportPlanScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="HelpfulResources" component={HelpfulResourcesScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="SupportActivity" component={SupportActivityScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="SafetyInfo" component={SafetyInfoScreen} options={{ headerShown: false }} />
+
+      {/* MyCare Screens */}
+      <Stack.Screen name="EditCaregiverProfile" component={EditCaregiverProfileScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="CaregiverMoodHistory" component={CaregiverMoodHistoryScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="JournalWrite" component={JournalWriteScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="JournalPrompt" component={JournalPromptScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ToolsActivity" component={ToolsActivityScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="WellnessSummary" component={WellnessSummaryScreen} options={{ headerShown: false }} />
+
+      {/* MyChild Screens */}
+      <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="Schedule" component={ScheduleScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AddActivity" component={AddActivityScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="MoodHistory" component={MoodHistoryScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="DailyNote" component={DailyNoteScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="PastNotes" component={PastNotesScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="TransitionTimer" component={TransitionTimerScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="CareTeam" component={CareTeamScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AddCareTeamMember" component={AddCareTeamMemberScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AddWin" component={AddWinScreen} options={{ headerShown: false, presentation: 'modal' }} />
+      <Stack.Screen name="Wins" component={WinsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ChildProgress" component={ChildProgressScreen} options={{ headerShown: false }} />
       <Stack.Screen name="MeltdownPlan" component={MeltdownPlanScreen} />
       <Stack.Screen name="Onboarding" component={OnboardingScreen} />
       <Stack.Screen
@@ -670,7 +781,7 @@ return (<SafeAreaProvider><StatusBar
           <Stack.Screen name="PauseWithMe" component={PauseWithMeScreen} />
     </Stack.Navigator>
   </NavigationContainer>
-</SafeAreaProvider>
+</PremiumProvider></SafeAreaProvider>
 
 );
 }

@@ -1,310 +1,381 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Image,
-  Platform,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Feather, Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+  View, Text, StyleSheet, TouchableOpacity,
+  ActivityIndicator, ScrollView, Alert, Animated, Image
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Ionicons } from '@expo/vector-icons';
+import { Colors } from '../src/theme/colors';
 
-const AFFIRMATIONS = [
-  { text: "I am not failing. I am having a hard moment, and I can take one small step.", tag: "Hard moment", color: "#F6ECFF", accent: "#6F42D8" },
-  { text: "My child's big feelings do not mean I am a bad parent.", tag: "Parent guilt", color: "#FFE6E4", accent: "#EF8F7D" },
-  { text: "I can pause before I react. Softness is still strength.", tag: "Regulation", color: "#E7F4FF", accent: "#4C9ED9" },
-  { text: "I do not have to fix the whole day. I can help this moment feel safer.", tag: "Overwhelm", color: "#FFF0DF", accent: "#D99A3D" },
-  { text: "Routines can bend. Progress does not have to look perfect.", tag: "Routine", color: "#EEF7E8", accent: "#78A866" },
-  { text: "My needs matter too. I am allowed to need support.", tag: "Self-support", color: "#F6ECFF", accent: "#6F42D8" },
-  { text: "I can lower the pressure. I can choose calm over control.", tag: "Meltdown support", color: "#FFE6E4", accent: "#EF8F7D" },
-  { text: "One breath. One choice. One tiny step.", tag: "Grounding", color: "#E7F4FF", accent: "#4C9ED9" },
-  { text: "I am doing the best I can with what I have right now. That is enough.", tag: "Self-compassion", color: "#F6ECFF", accent: "#6F42D8" },
-  { text: "Hard days do not erase all the good I have done. I am still showing up.", tag: "Hard day", color: "#FFF0DF", accent: "#D99A3D" },
-  { text: "My child needs connection more than correction right now.", tag: "Connection", color: "#EEF7E8", accent: "#78A866" },
-  { text: "I am allowed to feel tired. Rest is not failure.", tag: "Burnout", color: "#FFE6E4", accent: "#EF8F7D" },
-  { text: "Every time I repair after a hard moment, I am teaching my child something powerful.", tag: "Repair", color: "#E7F4FF", accent: "#4C9ED9" },
-  { text: "I do not have to be calm perfectly. I just have to keep trying.", tag: "Regulation", color: "#F6ECFF", accent: "#6F42D8" },
-  { text: "This moment will pass. I can ride it out without making it worse.", tag: "Waiting it out", color: "#EEF7E8", accent: "#78A866" },
-  { text: "Asking for help is one of the bravest things a caregiver can do.", tag: "Asking for help", color: "#FFF0DF", accent: "#D99A3D" },
-  { text: "I am not alone in this. Other parents are in the trenches too.", tag: "Community", color: "#E7F4FF", accent: "#4C9ED9" },
-  { text: "My child is not giving me a hard time. They are having a hard time.", tag: "Perspective", color: "#F6ECFF", accent: "#6F42D8" },
-  { text: "I can set a boundary with love. Firm and gentle can coexist.", tag: "Boundaries", color: "#FFE6E4", accent: "#EF8F7D" },
-  { text: "Survival mode is still mode. I am still here.", tag: "Hard season", color: "#EEF7E8", accent: "#78A866" },
-  { text: "I am allowed to grieve the hard parts while still loving my child fiercely.", tag: "Grief", color: "#FFF0DF", accent: "#D99A3D" },
-  { text: "Small wins count. Getting through the day is a win.", tag: "Small wins", color: "#F6ECFF", accent: "#6F42D8" },
-  { text: "I know my child better than anyone. I can trust my instincts.", tag: "Trust yourself", color: "#E7F4FF", accent: "#4C9ED9" },
+const HUGI = require('../assets/icons/Hugi-Bunny.png');
+
+const MOODS = [
+  { emoji: '😰', label: 'Overwhelmed' },
+  { emoji: '😔', label: 'Struggling' },
+  { emoji: '😐', label: 'Okay' },
+  { emoji: '🌿', label: 'Hopeful' },
+  { emoji: '☀️', label: 'Good' },
 ];
 
-// Get today's affirmation based on day of year
-const getDailyIndex = () => {
-  const now = new Date();
-  const start = new Date(now.getFullYear(), 0, 0);
-  const diff = now - start;
-  const oneDay = 1000 * 60 * 60 * 24;
-  const dayOfYear = Math.floor(diff / oneDay);
-  return dayOfYear % AFFIRMATIONS.length;
-};
+export default function AffirmationsScreen() {
+  const navigation = useNavigation();
 
-const CATEGORIES = ["All", "Hard moment", "Parent guilt", "Regulation", "Overwhelm", "Self-compassion", "Grounding", "Burnout", "Connection"];
+  const [mode, setMode] = useState('mood'); // 'mood' | 'loading' | 'affirmation'
+  const [selectedMood, setSelectedMood] = useState(null);
+  const [affirmation, setAffirmation] = useState('');
+  const [caregiverName, setCaregiverName] = useState('');
+  const [childName, setChildName] = useState('');
+  const [savedAffirmations, setSavedAffirmations] = useState([]);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
-export default function AffirmationsScreen({ navigation }) {
-  const dailyIndex = getDailyIndex();
-  const dailyAffirmation = AFFIRMATIONS[dailyIndex];
+  useEffect(() => {
+    const loadProfiles = async () => {
+      const cp = await AsyncStorage.getItem('bitzaParentProfile');
+      const ch = await AsyncStorage.getItem('bitzaChildProfile');
+      if (cp) {
+        const p = JSON.parse(cp);
+        setCaregiverName(p.preferredGreeting || p.name || '');
+      }
+      if (ch) {
+        const c = JSON.parse(ch);
+        setChildName(c.childName || 'your child');
+      }
+      const saved = await AsyncStorage.getItem('bitzaSavedAffirmations');
+      if (saved) setSavedAffirmations(JSON.parse(saved));
+    };
+    loadProfiles();
+  }, []);
 
-  const [savedDaily, setSavedDaily] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState("All");
-  const [savedList, setSavedList] = useState([]);
+  const generateAffirmation = async (mood) => {
+    setMode('loading');
 
-  const today = new Date().toLocaleDateString("en-US", {
-    weekday: "long", month: "long", day: "numeric",
-  });
+    const ANTHROPIC_API_KEY = process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY || '';
 
-  const nav = (screen) =>
-    navigation.getParent()?.getParent()?.navigate(screen) ??
-    navigation.navigate(screen);
+    const prompt = `You are Hugi, a warm companion for caregivers of children with special needs. Generate ONE personalized affirmation for a caregiver who is feeling "${mood}" right now.
 
-  const toggleSaveDaily = () => setSavedDaily((s) => !s);
+Caregiver name: ${caregiverName || 'this caregiver'}
+Child name: ${childName || 'their child'}
 
-  const filteredAffirmations = selectedCategory === "All"
-    ? AFFIRMATIONS
-    : AFFIRMATIONS.filter((a) => a.tag === selectedCategory);
+Rules:
+- Exactly 1-3 sentences
+- Warm, grounded, and real — not toxic positivity
+- Address the specific feeling (${mood})
+- Use their name naturally if provided
+- Reference their child naturally if it feels right
+- Sound like a wise, caring friend — not a motivational poster
+- No hashtags, no "you've got this!" clichés
+- End with warmth, not pressure
+- Do not use quotation marks around the affirmation
+- Return ONLY the affirmation text, nothing else`;
+
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': ANTHROPIC_API_KEY,
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 150,
+          messages: [{ role: 'user', content: prompt }],
+        }),
+      });
+      const data = await response.json();
+      const text = data.content[0].text.trim();
+      setAffirmation(text);
+      setMode('affirmation');
+      fadeAnim.setValue(0);
+      Animated.timing(fadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }).start();
+    } catch (e) {
+      const fallbacks = {
+        'Overwhelmed': `${caregiverName ? caregiverName + ', you' : 'You'} are carrying more than most people will ever understand. That you are still here, still trying — that is not nothing. That is everything. 💜`,
+        'Struggling': `Hard days do not erase everything you have done right. You showed up for ${childName} today, even when it was hard. That counts. 💜`,
+        'Okay': `Okay is enough. Not every day has to be a breakthrough. You are steady, and steady is powerful. 💜`,
+        'Hopeful': `Hold onto that feeling. Hopeful days remind you what you are working toward — and you deserve more of them. 💜`,
+        'Good': `Let yourself feel this fully. Good days are not luck — they are also the result of everything you have put in. 💜`,
+      };
+      setAffirmation(fallbacks[mood] || `You are doing something incredibly hard with incredible love. 💜`);
+      setMode('affirmation');
+      fadeAnim.setValue(0);
+      Animated.timing(fadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }).start();
+    }
+  };
+
+  const saveAffirmation = async () => {
+    if (savedAffirmations.includes(affirmation)) {
+      Alert.alert('Already saved', 'This affirmation is already in your saved list.');
+      return;
+    }
+    const updated = [affirmation, ...savedAffirmations];
+    setSavedAffirmations(updated);
+    await AsyncStorage.setItem('bitzaSavedAffirmations', JSON.stringify(updated));
+    Alert.alert('Saved 💜', 'This affirmation has been saved to your journal.');
+  };
+
+  const selectedMoodObj = MOODS.find(m => m.label === selectedMood);
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+    <SafeAreaView style={s.safe} edges={['top', 'bottom']}>
+      {/* Header */}
+      <View style={s.header}>
+        <TouchableOpacity style={s.headerBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
+          <Ionicons name="chevron-back" size={20} color={Colors.textPrimary} />
+        </TouchableOpacity>
+        <Text style={s.headerTitle}>Affirmations</Text>
+        <View style={{ width: 34 }} />
+      </View>
 
-        {/* Header */}
-        <View style={styles.topBar}>
-          <TouchableOpacity style={styles.circleButton} onPress={() => navigation.goBack()} activeOpacity={0.85}>
-            <Feather name="chevron-left" size={22} color="#2B2463" />
-          </TouchableOpacity>
-          <Text style={styles.topTitle}>Daily Affirmation</Text>
-          <TouchableOpacity style={styles.circleButton} onPress={toggleSaveDaily} activeOpacity={0.85}>
-            <Ionicons
-              name={savedDaily ? "heart" : "heart-outline"}
-              size={20}
-              color={savedDaily ? "#EF8F7D" : "#2B2463"}
-            />
-          </TouchableOpacity>
-        </View>
+      <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
 
-        {/* Date */}
-        <Text style={styles.dateText}>{today}</Text>
+        {/* ── MODE: MOOD SELECTION ──────────────────────────────────── */}
+        {mode === 'mood' && (
+          <View style={s.moodWrap}>
+            <View style={s.hugiCircle}>
+              <Image source={HUGI} style={s.hugiImg} resizeMode="contain" />
+            </View>
+            <Text style={s.moodTitle}>How are you feeling right now?</Text>
+            <Text style={s.moodSubtitle}>Hugi will share something just for you.</Text>
 
-        {/* Daily Affirmation Card */}
-        <View style={[styles.dailyCard, { backgroundColor: dailyAffirmation.color, borderColor: dailyAffirmation.accent + "44" }]}>
-          <View style={styles.dailyBadge}>
-            <Ionicons name="sunny" size={12} color={dailyAffirmation.accent} />
-            <Text style={[styles.dailyBadgeText, { color: dailyAffirmation.accent }]}>Today's Affirmation</Text>
+            <View style={s.moodCards}>
+              {MOODS.map(mood => (
+                <TouchableOpacity
+                  key={mood.label}
+                  style={s.moodCard}
+                  onPress={() => {
+                    setSelectedMood(mood.label);
+                    generateAffirmation(mood.label);
+                  }}
+                  activeOpacity={0.85}
+                >
+                  <Text style={s.moodEmoji}>{mood.emoji}</Text>
+                  <Text style={s.moodLabel}>{mood.label}</Text>
+                  <Ionicons name="chevron-forward" size={16} color={Colors.grayLavender} />
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
+        )}
 
-          <Image
-            source={require("../assets/icons/decor-little-purple-heart.png")}
-            style={styles.cardHeart}
-            resizeMode="contain"
-          />
-
-          <Text style={styles.dailyText}>{dailyAffirmation.text}</Text>
-
-          <View style={[styles.tagPill, { backgroundColor: dailyAffirmation.accent + "22" }]}>
-            <Text style={[styles.tagText, { color: dailyAffirmation.accent }]}>{dailyAffirmation.tag}</Text>
+        {/* ── MODE: LOADING ─────────────────────────────────────────── */}
+        {mode === 'loading' && (
+          <View style={s.loadingWrap}>
+            <Image source={HUGI} style={s.hugiLarge} resizeMode="contain" />
+            <ActivityIndicator color={Colors.purple} size="large" style={{ marginTop: 16 }} />
+            <Text style={s.loadingText}>Hugi is thinking of something just for you...</Text>
           </View>
+        )}
 
-          <TouchableOpacity
-            style={[styles.saveBtn, { borderColor: dailyAffirmation.accent }]}
-            onPress={toggleSaveDaily}
-            activeOpacity={0.85}
-          >
-            <Ionicons
-              name={savedDaily ? "heart" : "heart-outline"}
-              size={16}
-              color={dailyAffirmation.accent}
-            />
-            <Text style={[styles.saveBtnText, { color: dailyAffirmation.accent }]}>
-              {savedDaily ? "Saved to favorites" : "Save this affirmation"}
-            </Text>
-          </TouchableOpacity>
-        </View>
+        {/* ── MODE: AFFIRMATION ─────────────────────────────────────── */}
+        {mode === 'affirmation' && (
+          <Animated.View style={[s.affirmWrap, { opacity: fadeAnim }]}>
+            <View style={s.hugiCircle}>
+              <Image source={HUGI} style={s.hugiImg} resizeMode="contain" />
+            </View>
 
-        {/* Encouragement */}
-        <View style={styles.encourageCard}>
-          <Image
-            source={require("../assets/icons/support-positive-reminder.png")}
-            style={styles.encourageIcon}
-            resizeMode="contain"
-          />
-          <View style={styles.encourageTextWrap}>
-            <Text style={styles.encourageTitle}>A new affirmation every day.</Text>
-            <Text style={styles.encourageText}>Read it once. Breathe. Let it be enough for right now.</Text>
-          </View>
-        </View>
+            {selectedMoodObj && (
+              <View style={s.moodChip}>
+                <Text style={s.moodChipText}>{selectedMoodObj.emoji} {selectedMoodObj.label}</Text>
+              </View>
+            )}
 
-        {/* Browse More */}
-        <Text style={styles.sectionTitle}>Browse all affirmations</Text>
-        <Text style={styles.sectionSub}>Filter by what you need most right now.</Text>
+            <View style={s.affirmCard}>
+              <Text style={s.quoteMark}>"</Text>
+              <Text style={s.affirmText}>{affirmation}</Text>
+              <Text style={s.hugiSig}>— Hugi 💜</Text>
+            </View>
 
-        {/* Category Filter */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.categoryScroll}
-        >
-          {CATEGORIES.map((cat) => (
-            <TouchableOpacity
-              key={cat}
-              style={[styles.categoryChip, selectedCategory === cat && styles.categoryChipActive]}
-              onPress={() => setSelectedCategory(cat)}
-              activeOpacity={0.8}
-            >
-              <Text style={[styles.categoryText, selectedCategory === cat && styles.categoryTextActive]}>
-                {cat}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+            <Text style={s.breatheText}>Read it once. Breathe. Let it be enough.</Text>
 
-        {/* Affirmation List */}
-        <View style={styles.listCard}>
-          {filteredAffirmations.map((item, index) => {
-            const isDaily = AFFIRMATIONS.indexOf(item) === dailyIndex;
-            return (
-              <View
-                key={index}
-                style={[
-                  styles.listRow,
-                  index === filteredAffirmations.length - 1 && styles.listRowLast,
-                  isDaily && { backgroundColor: item.color },
-                ]}
+            <View style={s.actionBtns}>
+              <TouchableOpacity style={s.saveBtn} onPress={saveAffirmation} activeOpacity={0.85}>
+                <Text style={s.saveBtnText}>Save this one 💜</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={s.anotherBtn}
+                onPress={() => generateAffirmation(selectedMood)}
+                activeOpacity={0.85}
               >
-                <View style={[styles.listDot, { backgroundColor: item.accent }]} />
-                <View style={styles.listTextWrap}>
-                  <View style={styles.listTagRow}>
-                    <Text style={[styles.listTag, { color: item.accent }]}>{item.tag}</Text>
-                    {isDaily && (
-                      <View style={[styles.todayBadge, { backgroundColor: item.accent }]}>
-                        <Text style={styles.todayBadgeText}>Today</Text>
-                      </View>
-                    )}
-                  </View>
-                  <Text style={styles.listText}>{item.text}</Text>
-                </View>
-              </View>
-            );
-          })}
-        </View>
+                <Text style={s.anotherBtnText}>Give me another</Text>
+              </TouchableOpacity>
+            </View>
 
-        {/* Need More Support */}
-        <View style={styles.toolsCard}>
-          <Text style={styles.toolsTitle}>Need more support?</Text>
-          {[
-            { label: "Talk to Hugi", icon: "message-circle", bg: "#F0E2FF", color: "#6F42D8", route: "HugiChat" },
-            { label: "Try a breathing exercise", icon: "wind", bg: "#E7F4FF", color: "#4C9ED9", route: "Breathing" },
-            { label: "Write this feeling out", icon: "edit-3", bg: "#FFE3DA", color: "#EF8F7D", route: "CalmJournal" },
-          ].map((tool, i, arr) => (
-            <TouchableOpacity
-              key={tool.label}
-              style={[styles.toolRow, i === arr.length - 1 && styles.toolRowLast]}
-              onPress={() => nav(tool.route)}
-              activeOpacity={0.85}
-            >
-              <View style={[styles.toolIconBubble, { backgroundColor: tool.bg }]}>
-                <Feather name={tool.icon} size={18} color={tool.color} />
-              </View>
-              <Text style={styles.toolRowText}>{tool.label}</Text>
-              <Feather name="chevron-right" size={17} color="#2B2463" />
+            <TouchableOpacity style={s.changeMoodLink} onPress={() => setMode('mood')} activeOpacity={0.7}>
+              <Text style={s.changeMoodText}>Choose a different mood</Text>
             </TouchableOpacity>
-          ))}
-        </View>
-
-        <Text style={styles.footerText}>You deserve support in the middle of the hard stuff too.</Text>
+          </Animated.View>
+        )}
 
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#FFF9F2" },
-  content: { paddingHorizontal: 16, paddingTop: Platform.OS === "ios" ? 6 : 16, paddingBottom: 100 },
+const s = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: Colors.pageBg },
 
-  topBar: { height: 46, flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 4 },
-  circleButton: { width: 38, height: 38, borderRadius: 19, backgroundColor: "#F0E2FF", alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "#E3D2F8" },
-  topTitle: { color: "#2B2463", fontSize: 17, fontWeight: "800" },
-
-  dateText: { color: "#837E96", fontSize: 12, fontWeight: "700", textAlign: "center", marginBottom: 14 },
-
-  dailyCard: {
-    borderRadius: 24, borderWidth: 1, paddingHorizontal: 20,
-    paddingTop: 16, paddingBottom: 20, marginBottom: 12, alignItems: "center",
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: '#fff',
+    borderBottomWidth: 0.5,
+    borderBottomColor: Colors.cardBorder,
   },
-  dailyBadge: { flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 14 },
-  dailyBadgeText: { fontSize: 12, fontWeight: "800" },
-  cardHeart: { width: 48, height: 48, marginBottom: 12 },
-  dailyText: { color: "#2B2463", fontSize: 20, lineHeight: 29, fontWeight: "800", textAlign: "center", letterSpacing: -0.3, marginBottom: 14 },
-  tagPill: { borderRadius: 12, paddingHorizontal: 12, paddingVertical: 5, marginBottom: 14 },
-  tagText: { fontSize: 11, fontWeight: "800" },
+  headerBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: Colors.navActiveBg,
+    borderWidth: 0.5,
+    borderColor: Colors.cardBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: Colors.textPrimary,
+    flex: 1,
+    textAlign: 'center',
+    marginHorizontal: 8,
+  },
+
+  scroll: { padding: 20, paddingBottom: 48 },
+
+  // ── Mood mode ──────────────────────────────────────────────────────
+  moodWrap: { alignItems: 'center' },
+  hugiCircle: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: Colors.purple,
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 6,
+  },
+  hugiImg: { width: 80, height: 80 },
+  moodTitle: {
+    fontSize: 20,
+    fontWeight: '500',
+    color: Colors.textPrimary,
+    textAlign: 'center',
+    marginTop: 16,
+  },
+  moodSubtitle: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    marginTop: 6,
+  },
+  moodCards: { width: '100%', marginTop: 24, gap: 10 },
+  moodCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderWidth: 0.5,
+    borderColor: Colors.cardBorder,
+    borderRadius: 16,
+    padding: 14,
+    paddingHorizontal: 20,
+    gap: 12,
+  },
+  moodEmoji: { fontSize: 24 },
+  moodLabel: { flex: 1, fontSize: 15, fontWeight: '500', color: Colors.textPrimary },
+
+  // ── Loading mode ────────────────────────────────────────────────────
+  loadingWrap: { alignItems: 'center', paddingTop: 48 },
+  hugiLarge: { width: 100, height: 100 },
+  loadingText: {
+    fontSize: 14,
+    fontStyle: 'italic',
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    marginTop: 12,
+  },
+
+  // ── Affirmation mode ────────────────────────────────────────────────
+  affirmWrap: { alignItems: 'center' },
+  moodChip: {
+    backgroundColor: Colors.navActiveBg,
+    borderRadius: 99,
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    marginTop: 8,
+  },
+  moodChipText: { fontSize: 12, color: Colors.purple, fontWeight: '500' },
+
+  affirmCard: {
+    width: '100%',
+    backgroundColor: '#EDE3FF',
+    borderWidth: 0.5,
+    borderColor: '#D0B8F8',
+    borderRadius: 24,
+    padding: 28,
+    paddingHorizontal: 24,
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  quoteMark: {
+    fontSize: 48,
+    color: Colors.purple,
+    opacity: 0.3,
+    lineHeight: 44,
+    alignSelf: 'flex-start',
+    marginBottom: 4,
+  },
+  affirmText: {
+    fontSize: 20,
+    color: Colors.textPrimary,
+    lineHeight: 30,
+    fontWeight: '400',
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
+  hugiSig: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    marginTop: 16,
+  },
+
+  breatheText: {
+    fontSize: 12,
+    fontStyle: 'italic',
+    color: Colors.textMuted,
+    textAlign: 'center',
+    marginTop: 12,
+  },
+
+  actionBtns: { width: '100%', marginTop: 24, gap: 10 },
   saveBtn: {
-    flexDirection: "row", alignItems: "center", gap: 6,
-    borderWidth: 1.5, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 8,
-    backgroundColor: "#FFFFFF",
+    width: '100%',
+    backgroundColor: '#fff',
+    borderWidth: 0.5,
+    borderColor: Colors.purple,
+    borderRadius: 14,
+    paddingVertical: 12,
+    alignItems: 'center',
   },
-  saveBtnText: { fontSize: 12, fontWeight: "800" },
-
-  encourageCard: {
-    backgroundColor: "#FFFFFF", borderRadius: 16, borderWidth: 1, borderColor: "#EFE4DC",
-    paddingHorizontal: 13, paddingVertical: 11, flexDirection: "row", alignItems: "center",
-    gap: 11, marginBottom: 18, shadowColor: "#BFA99D", shadowOpacity: 0.06,
-    shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 2,
+  saveBtnText: { fontSize: 13, fontWeight: '500', color: Colors.purple },
+  anotherBtn: {
+    width: '100%',
+    backgroundColor: Colors.navActiveBg,
+    borderRadius: 14,
+    paddingVertical: 12,
+    alignItems: 'center',
   },
-  encourageIcon: { width: 46, height: 46 },
-  encourageTextWrap: { flex: 1 },
-  encourageTitle: { color: "#2B2463", fontSize: 13, fontWeight: "800", marginBottom: 3 },
-  encourageText: { color: "#5B5672", fontSize: 11, lineHeight: 16, fontWeight: "600" },
+  anotherBtnText: { fontSize: 13, fontWeight: '500', color: Colors.purple },
 
-  sectionTitle: { color: "#2B2463", fontSize: 16, fontWeight: "800", marginBottom: 3 },
-  sectionSub: { color: "#837E96", fontSize: 11, fontWeight: "600", marginBottom: 10 },
-
-  categoryScroll: { paddingBottom: 12, gap: 8 },
-  categoryChip: {
-    paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20,
-    backgroundColor: "#F0E2FF", borderWidth: 1.5, borderColor: "#E3D2F8",
-  },
-  categoryChipActive: { backgroundColor: "#7548D8", borderColor: "#7548D8" },
-  categoryText: { color: "#7548D8", fontSize: 12, fontWeight: "700" },
-  categoryTextActive: { color: "#FFFFFF" },
-
-  listCard: {
-    backgroundColor: "#FFFFFF", borderRadius: 18, borderWidth: 1, borderColor: "#EFE4DC",
-    paddingHorizontal: 12, paddingVertical: 4, marginBottom: 12,
-    shadowColor: "#BFA99D", shadowOpacity: 0.06, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 2,
-  },
-  listRow: {
-    flexDirection: "row", alignItems: "flex-start", paddingVertical: 11,
-    borderBottomWidth: 1, borderBottomColor: "#F0E8E2", gap: 10, borderRadius: 10,
-    paddingHorizontal: 6,
-  },
-  listRowLast: { borderBottomWidth: 0 },
-  listDot: { width: 8, height: 8, borderRadius: 4, marginTop: 5, flexShrink: 0 },
-  listTextWrap: { flex: 1 },
-  listTagRow: { flexDirection: "row", alignItems: "center", gap: 7, marginBottom: 3 },
-  listTag: { fontSize: 10, fontWeight: "800" },
-  todayBadge: { borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
-  todayBadgeText: { color: "#FFFFFF", fontSize: 9, fontWeight: "800" },
-  listText: { color: "#2B2463", fontSize: 12, lineHeight: 17, fontWeight: "600" },
-
-  toolsCard: {
-    backgroundColor: "#FFFFFF", borderRadius: 18, borderWidth: 1, borderColor: "#EFE4DC",
-    paddingHorizontal: 12, paddingVertical: 12, marginBottom: 12,
-    shadowColor: "#BFA99D", shadowOpacity: 0.06, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8, elevation: 2,
-  },
-  toolsTitle: { color: "#2B2463", fontSize: 13, fontWeight: "800", marginBottom: 8 },
-  toolRow: { minHeight: 46, flexDirection: "row", alignItems: "center", borderBottomWidth: 1, borderBottomColor: "#F0E8E2", gap: 10 },
-  toolRowLast: { minHeight: 46, flexDirection: "row", alignItems: "center", gap: 10 },
-  toolIconBubble: { width: 32, height: 32, borderRadius: 10, alignItems: "center", justifyContent: "center" },
-  toolRowText: { flex: 1, color: "#2B2463", fontSize: 13, fontWeight: "700" },
-
-  footerText: { color: "#837E96", fontSize: 11, lineHeight: 16, fontWeight: "600", textAlign: "center" },
+  changeMoodLink: { marginTop: 16 },
+  changeMoodText: { fontSize: 12, color: Colors.textMuted, textAlign: 'center' },
 });

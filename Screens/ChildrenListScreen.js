@@ -7,6 +7,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
+import { FREE_LIMITS, usePremium } from "../src/lib/premium";
 
 const AVATARS = {
   "01": require("../assets/icons/child-profile-01.png"),
@@ -25,7 +26,7 @@ const AVATARS = {
 
 export default function ChildrenListScreen({ navigation }) {
   const [children, setChildren] = useState([]);
-  const [isPremium, setIsPremium] = useState(false);
+  const { isPremium, isLoading: premiumLoading, showPremiumUpgrade } = usePremium();
 
   useFocusEffect(
     useCallback(() => {
@@ -41,8 +42,6 @@ export default function ChildrenListScreen({ navigation }) {
           extraList.forEach((c, i) => all.push({ ...c, index: i + 1, isPrimary: false }));
           setChildren(all);
 
-          const premium = await AsyncStorage.getItem("bitzaIsPremium");
-          setIsPremium(premium === "true");
         } catch (e) {
           console.log("Error loading children:", e);
         }
@@ -52,15 +51,8 @@ export default function ChildrenListScreen({ navigation }) {
   );
 
   const handleAddChild = () => {
-    if (!isPremium) {
-      Alert.alert(
-        "Premium Feature",
-        "Adding more than one child requires a Premium subscription. Upgrade to support your whole family!",
-        [
-          { text: "Not now", style: "cancel" },
-          { text: "Upgrade", onPress: () => navigation.navigate("PremiumUpgrade") },
-        ]
-      );
+    if (premiumLoading || (!isPremium && children.length >= FREE_LIMITS.childProfiles)) {
+      showPremiumUpgrade({ feature: "multiple_children", isChecking: premiumLoading });
       return;
     }
     navigation.navigate("ChildProfileSetup", { childIndex: children.length });
@@ -109,8 +101,8 @@ export default function ChildrenListScreen({ navigation }) {
         </View>
 
         {/* Premium note for free users */}
-        {!isPremium && (
-          <TouchableOpacity style={styles.premiumBanner} onPress={() => navigation.navigate("PremiumUpgrade")} activeOpacity={0.88}>
+        {!isPremium && children.length >= FREE_LIMITS.childProfiles && (
+          <TouchableOpacity style={styles.premiumBanner} onPress={() => showPremiumUpgrade({ feature: "multiple_children" })} activeOpacity={0.88}>
             <Ionicons name="sparkles" size={16} color="#7548D8" />
             <View style={styles.premiumBannerText}>
               <Text style={styles.premiumBannerTitle}>1 child profile included free</Text>
@@ -180,7 +172,7 @@ export default function ChildrenListScreen({ navigation }) {
           </View>
           <View style={styles.addTextWrap}>
             <Text style={styles.addTitle}>Add Another Child</Text>
-            <Text style={styles.addSubtitle}>{isPremium ? "Add a new child profile" : "Premium feature"}</Text>
+            <Text style={styles.addSubtitle}>{isPremium || children.length < FREE_LIMITS.childProfiles ? "Add a new child profile" : "Premium feature"}</Text>
           </View>
           {!isPremium && (
             <View style={styles.premiumTag}>

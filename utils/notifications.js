@@ -206,12 +206,15 @@ export async function scheduleBitzaHugsNotifications(preferences) {
       };
     }
 
-    const allowed = await requestNotificationPermission();
-
-    if (!allowed) {
+    // Check permission without requesting. Permission is requested only from
+    // the master toggle in NotificationPreferencesScreen, never buried here.
+    const NCheck = await getNotificationsModule();
+    if (!NCheck) return { success: false, message: "Preferences saved." };
+    const { status } = await NCheck.getPermissionsAsync();
+    if (status !== "granted") {
       return {
         success: false,
-        message: "Preferences saved. Notifications were not enabled.",
+        message: "Preferences saved. Enable notifications to receive reminders.",
       };
     }
 
@@ -327,9 +330,9 @@ export async function sendTestNotification() {
 
     if (!Notifications) return false;
 
-    const allowed = await requestNotificationPermission();
-
-    if (!allowed) {
+    // Check only — never request. If master toggle is on, permission is already granted.
+    const { status } = await Notifications.getPermissionsAsync();
+    if (status !== "granted") {
       return false;
     }
 
@@ -355,6 +358,53 @@ export async function sendTestNotification() {
     console.log("Error sending test notification:", error);
     return false;
   }
+}
+
+export async function scheduleTrialNudges() {
+  if (isExpoGoAndroid) return;
+  const Notifications = await getNotificationsModule();
+  if (!Notifications) return;
+  const { status } = await Notifications.getPermissionsAsync();
+  if (status !== "granted") return;
+  const channelId = Platform.OS === "android" ? "bitzahugs-reminders" : undefined;
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title: "Hugi has something for you 💜",
+      body: "Open BitzaHugs to see what Hugi wants to share.",
+      sound: "default",
+      data: { screen: "Support" },
+    },
+    trigger: { channelId, seconds: 36 * 60 * 60 },
+  });
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title: "Your free trial ends in 2 days",
+      body: "Keep access to Hugi and all premium features.",
+      sound: "default",
+      data: { screen: "PremiumUpgrade" },
+    },
+    trigger: { channelId, seconds: 5 * 24 * 60 * 60 },
+  });
+}
+
+export async function scheduleStreakProtection() {
+  if (isExpoGoAndroid) return null;
+  const Notifications = await getNotificationsModule();
+  if (!Notifications) return null;
+  const { status } = await Notifications.getPermissionsAsync();
+  if (status !== "granted") return null;
+  return Notifications.scheduleNotificationAsync({
+    content: {
+      title: "Don't lose your streak 🔥",
+      body: "Check in with BitzaHugs to keep your streak going.",
+      sound: "default",
+      data: { screen: "Home" },
+    },
+    trigger: {
+      channelId: Platform.OS === "android" ? "bitzahugs-reminders" : undefined,
+      seconds: 22 * 60 * 60,
+    },
+  });
 }
 
 // ─── Backward-compatible old function names ───────────────────────────────────
