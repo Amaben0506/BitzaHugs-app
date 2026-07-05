@@ -4,7 +4,6 @@ import {
   ScrollView,
   View,
   StyleSheet,
-  useWindowDimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -199,8 +198,6 @@ const buildRecentActivity = (
 export default function HomeScreen() {
   const navigation = useNavigation<any>();
   const rootNav = navigation.getParent("RootStack") ?? navigation;
-  const { width } = useWindowDimensions();
-  const stackMoodCards = width < 430;
   const [caregiverName, setCaregiverName] = useState("there");
   const [child, setChild] = useState({
     name: "Your child",
@@ -416,10 +413,8 @@ export default function HomeScreen() {
             onHugiPress={() => rootNav.navigate("HugiChat")}
             onSupportPress={() => rootNav.navigate("CalmingSounds")}
           />
-          <View
-            style={[styles.moodGrid, stackMoodCards && styles.moodGridStacked]}
-          >
-            <View style={!stackMoodCards && styles.childMoodColumn}>
+          <View style={styles.moodStack}>
+            <View style={styles.moodCardFullWidth}>
               <RecentProgress
                 mode="mood"
                 childName={child.name}
@@ -432,7 +427,7 @@ export default function HomeScreen() {
                 onViewAll={() => rootNav.navigate("MoodHistory")}
               />
             </View>
-            <View style={!stackMoodCards && styles.caregiverColumn}>
+            <View style={styles.moodCardFullWidth}>
               <CaregiverCheckIn
                 selectedMood={caregiverMood?.mood}
                 noteValue={caregiverNote}
@@ -483,18 +478,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     gap: 12,
   },
-  moodGrid: {
-    flexDirection: "row",
-    gap: 12,
-    alignItems: "stretch",
-  },
-  moodGridStacked: {
+  moodStack: {
     flexDirection: "column",
+    gap: 12,
   },
-  childMoodColumn: {
-    flex: 0.95,
-  },
-  caregiverColumn: {
-    flex: 1.45,
+  moodCardFullWidth: {
+    width: "100%",
   },
 });
