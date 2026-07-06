@@ -2,9 +2,9 @@ import { useState, useCallback } from 'react';
 import { ScrollView, View, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { saveCaregiverMood } from '../lib/dataService';
+import { loadCaregiverProfile, saveCaregiverMood } from '../lib/dataService';
 import { Colors } from '../theme/colors';
 import MyCareHeader from '../components/mycare/MyCareHeader';
 import CaregiverProfileCard from '../components/mycare/CaregiverProfileCard';
@@ -23,22 +23,85 @@ const TOOL_ROUTES: Record<string, string> = {
   grounding: 'GroundingSteps',
 };
 
+type CaregiverProfile = {
+  name?: string;
+  preferredGreeting?: string;
+  focusNote?: string;
+  calmingStrategies?: string;
+  photoUri?: string | null;
+};
+
+const getInitials = (name: string) => {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) return parts[0][0].toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+};
+
+const formatEntryTime = (iso?: string) => {
+  if (!iso) return '';
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+};
+
 export default function MyCareScreen() {
   const navigation = useNavigation<any>();
   const rootNav = navigation.getParent('RootStack') ?? navigation;
 
   const [selectedMood, setSelectedMood] = useState<string | undefined>(undefined);
   const [moodNote, setMoodNote] = useState('');
+  const [caregiverProfile, setCaregiverProfile] = useState<CaregiverProfile | null>(null);
+  const [caregiverMood, setCaregiverMood] = useState<any>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+
+      const loadScreenData = async () => {
+        const [profile, moodRaw] = await Promise.all([
+          loadCaregiverProfile(),
+          AsyncStorage.getItem('bitzaCaregiverMood'),
+        ]);
+
+        if (!active) return;
+        setCaregiverProfile(profile as CaregiverProfile | null);
+        const mood = moodRaw ? JSON.parse(moodRaw) : null;
+        setCaregiverMood(mood);
+        setSelectedMood(mood?.mood);
+        setMoodNote(mood?.note || '');
+      };
+
+      loadScreenData().catch(e => console.log('MyCare data load error:', e));
+      return () => {
+        active = false;
+      };
+    }, [])
+  );
 
   const handleMoodSelect = useCallback(async (mood: string) => {
     setSelectedMood(mood);
-    await saveCaregiverMood(mood, '');
-  }, []);
+    const nextMood = { mood, note: moodNote, time: new Date().toISOString() };
+    setCaregiverMood(nextMood);
+    await saveCaregiverMood(mood, moodNote);
+  }, [moodNote]);
 
   const handleToolPress = useCallback((toolId: string) => {
     const route = TOOL_ROUTES[toolId];
     if (route) rootNav.navigate(route);
   }, [rootNav]);
+
+  const displayName =
+    caregiverProfile?.preferredGreeting?.trim() ||
+    caregiverProfile?.name?.trim() ||
+    'friend';
+  const initials = getInitials(displayName);
+  const currentMood = caregiverMood?.mood || 'Not checked in';
+  const lastCheckin = formatEntryTime(caregiverMood?.time);
+  const focusNote =
+    caregiverProfile?.focusNote?.trim() ||
+    caregiverProfile?.calmingStrategies?.trim() ||
+    'Add a focus note in your profile.';
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -53,23 +116,24 @@ export default function MyCareScreen() {
         />
         <View style={styles.content}>
           <CaregiverProfileCard
-            name="Amanda"
-            initials="AM"
-            currentMood="Hopeful"
-            moodEmoji="🌿"
-            lastCheckin="8:30 AM"
-            weeklyCheckins={4}
-            focusNote="Focusing on taking one pause at a time."
+            name={displayName}
+            initials={initials}
+            photoUri={caregiverProfile?.photoUri}
+            currentMood={currentMood}
+            moodEmoji={caregiverMood?.mood ? '🌿' : '♡'}
+            lastCheckin={lastCheckin}
+            weeklyCheckins={caregiverMood?.mood ? 1 : 0}
+            focusNote={focusNote}
             onEditProfile={() => rootNav.navigate('EditCaregiverProfile')}
           />
           <CaregiverMoodTracker
             selectedMood={selectedMood}
-            lastEntry={{
-              mood: 'Hopeful',
+            lastEntry={caregiverMood?.mood ? {
+              mood: caregiverMood.mood,
               emoji: '🌿',
-              note: 'Taking deep breaths and focusing on one moment at a time.',
-              time: 'Today at 8:30 AM',
-            }}
+              note: caregiverMood.note,
+              time: lastCheckin ? `Today at ${lastCheckin}` : 'Today',
+            } : undefined}
             onMoodSelect={handleMoodSelect}
             onNoteChange={setMoodNote}
             onViewHistory={() => rootNav.navigate('CaregiverMoodHistory')}

@@ -196,7 +196,7 @@ export default function EditCaregiverProfileScreen() {
                 style={s.input}
                 value={name}
                 onChangeText={setName}
-                placeholder="Amanda"
+                placeholder="friend"
                 placeholderTextColor={Colors.textMuted}
                 autoCapitalize="words"
                 returnKeyType="next"
@@ -215,7 +215,7 @@ export default function EditCaregiverProfileScreen() {
                 style={s.input}
                 value={preferredGreeting}
                 onChangeText={setPreferredGreeting}
-                placeholder="Amanda, Mom, Mama..."
+                placeholder="friend, Mom, Mama..."
                 placeholderTextColor={Colors.textMuted}
                 autoCapitalize="words"
                 returnKeyType="next"

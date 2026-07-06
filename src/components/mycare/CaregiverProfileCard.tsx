@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { Image, View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../theme/colors';
 import { Fonts, Shadows } from '../../theme/theme';
@@ -8,6 +8,7 @@ import PressableScale from '../ui/PressableScale';
 interface CaregiverProfileCardProps {
   name: string;
   initials: string;
+  photoUri?: string | null;
   currentMood: string;
   moodEmoji: string;
   lastCheckin: string;
@@ -19,6 +20,7 @@ interface CaregiverProfileCardProps {
 export default function CaregiverProfileCard({
   name,
   initials,
+  photoUri,
   currentMood,
   moodEmoji,
   lastCheckin,
@@ -33,7 +35,11 @@ export default function CaregiverProfileCard({
           <View style={styles.avatarRow}>
             <View style={styles.avatarWrap}>
               <View style={styles.avatar}>
-                <Text style={styles.initials}>{initials}</Text>
+                {photoUri ? (
+                  <Image source={{ uri: photoUri }} style={styles.avatarPhoto} />
+                ) : (
+                  <Text style={styles.initials}>{initials}</Text>
+                )}
               </View>
               <View style={styles.cameraBadge}>
                 <Ionicons name="camera-outline" size={10} color={Colors.textRose} />
@@ -54,7 +60,9 @@ export default function CaregiverProfileCard({
             </Text>
           </View>
 
-          <Text style={styles.checkinTime}>Checked in today at {lastCheckin}</Text>
+          <Text style={styles.checkinTime}>
+            {lastCheckin ? `Checked in today at ${lastCheckin}` : 'No care check-in yet today'}
+          </Text>
         </View>
 
         <View style={styles.rightCol}>
@@ -116,6 +124,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF0F4',
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
+  },
+  avatarPhoto: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
   },
   initials: {
     fontSize: 16,

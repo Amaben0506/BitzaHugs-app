@@ -111,7 +111,7 @@ export default function CaregiverSetupScreen() {
               label="Your name"
               value={name}
               onChangeText={setName}
-              placeholder="Amanda"
+              placeholder="friend"
             />
 
             <View style={s.divider} />
@@ -121,7 +121,7 @@ export default function CaregiverSetupScreen() {
               hint="Can be a nickname"
               value={greeting}
               onChangeText={setGreeting}
-              placeholder="Amanda, Mom, Mama..."
+              placeholder="friend, Mom, Mama..."
             />
 
             <View style={s.divider} />
