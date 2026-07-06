@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -8,13 +8,24 @@ import {
   Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getAuth } from '@firebase/auth';
+import { getFirestore, collection, getDocs } from '@firebase/firestore';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../theme/colors';
 
 type Path = 'calm' | 'child' | 'meltdown' | 'contact' | 'emergency' | null;
 type CalmTool = 'breathing' | 'cold_water' | 'outside' | 'hugi' | null;
 type ChildSit = 'meltdown' | 'shutdown' | 'aggression' | 'anxiety' | null;
+type SupportContact = {
+  id: string;
+  name: string;
+  role: string;
+  initials: string;
+  phone?: string;
+  isOnline?: boolean;
+};
 
 // ─── Shared ──────────────────────────────────────────────────────────────────
 
@@ -33,6 +44,50 @@ function SecondaryBtn({ label, onPress }: { label: string; onPress: () => void }
     </TouchableOpacity>
   );
 }
+
+const getInitials = (name: string) => {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+};
+
+const toSupportContact = (id: string, data: any): SupportContact | null => {
+  const name = data.name?.trim();
+  if (!name) return null;
+  return {
+    id,
+    name,
+    role: data.role?.trim() || 'Support contact',
+    initials: data.initials || getInitials(name),
+    phone: data.phone?.trim(),
+    isOnline: false,
+  };
+};
+
+const loadContacts = async (): Promise<SupportContact[]> => {
+  const uid = getAuth().currentUser?.uid;
+
+  if (uid) {
+    try {
+      const snap = await getDocs(collection(getFirestore(), 'users', uid, 'contacts'));
+      const contacts: SupportContact[] = [];
+      snap.forEach(d => {
+        const contact = toSupportContact(d.id, d.data());
+        if (contact) contacts.push(contact);
+      });
+      if (contacts.length > 0) return contacts;
+    } catch (e) {
+      console.log('Immediate support contacts Firestore load error:', e);
+    }
+  }
+
+  const local = await AsyncStorage.getItem('bitzaContacts');
+  if (!local) return [];
+  return JSON.parse(local)
+    .map((contact: any) => toSupportContact(contact.id, contact))
+    .filter((contact: SupportContact | null): contact is SupportContact => !!contact);
+};
 
 function StepCard({ children }: { children: React.ReactNode }) {
   return <View style={s.stepCard}>{children}</View>;
@@ -359,52 +414,65 @@ function StepMeltdownPlan({ onDone }: { onDone: () => void }) {
 
 // ─── Path: contact ───────────────────────────────────────────────────────────
 
-const PLACEHOLDER_CONTACTS = [
-  { id: '1', name: 'Bret', role: 'Partner', initials: 'BR', phone: '+15555550001', isOnline: true },
-  { id: '2', name: 'Mom', role: 'Family', initials: 'MO', phone: '+15555550002' },
-  { id: '3', name: 'Mrs. Lopez', role: 'Teacher', initials: 'ML', phone: '+15555550003' },
-  { id: '4', name: 'Sarah T.', role: 'Speech Therapist', initials: 'ST', phone: '+15555550004' },
-];
-
-function StepContact({ onDone }: { onDone: () => void }) {
+function StepContact({
+  contacts,
+  onDone,
+  onAddContact,
+}: {
+  contacts: SupportContact[];
+  onDone: () => void;
+  onAddContact: () => void;
+}) {
   return (
     <View style={s.stepRoot}>
       <Text style={s.stepHeading}>Contact Your Support Person</Text>
       <Text style={s.stepSub}>Reach out to someone on your team. You don't have to do this alone.</Text>
-      <View style={s.optionList}>
-        {PLACEHOLDER_CONTACTS.map(c => (
-          <View key={c.id} style={s.contactCard}>
-            <View style={s.contactLeft}>
-              <View style={s.initialsCircle}>
-                <Text style={s.initialsText}>{c.initials}</Text>
-              </View>
-              <View>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <Text style={s.contactName}>{c.name}</Text>
-                  {c.isOnline && <View style={s.onlineDot} />}
+      {contacts.length === 0 ? (
+        <View style={s.emptyCard}>
+          <Text style={s.emptyTitle}>No contacts added yet</Text>
+          <Text style={s.emptyText}>Add someone safe to reach when things feel hard.</Text>
+          <PrimaryBtn label="Add a support contact" onPress={onAddContact} />
+        </View>
+      ) : (
+        <View style={s.optionList}>
+          {contacts.map(c => (
+            <View key={c.id} style={s.contactCard}>
+              <View style={s.contactLeft}>
+                <View style={s.initialsCircle}>
+                  <Text style={s.initialsText}>{c.initials}</Text>
                 </View>
-                <Text style={s.contactRole}>{c.role}</Text>
+                <View>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Text style={s.contactName}>{c.name}</Text>
+                    {c.isOnline && <View style={s.onlineDot} />}
+                  </View>
+                  <Text style={s.contactRole}>{c.role}</Text>
+                </View>
+              </View>
+              <View style={s.contactActions}>
+                {c.phone ? (
+                  <>
+                    <TouchableOpacity
+                      style={s.contactBtn}
+                      onPress={() => Linking.openURL(`tel:${c.phone}`)}
+                      activeOpacity={0.85}
+                    >
+                      <Ionicons name="call-outline" size={16} color={Colors.purple} />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={s.contactBtn}
+                      onPress={() => Linking.openURL(`sms:${c.phone}`)}
+                      activeOpacity={0.85}
+                    >
+                      <Ionicons name="chatbubble-outline" size={16} color={Colors.purple} />
+                    </TouchableOpacity>
+                  </>
+                ) : null}
               </View>
             </View>
-            <View style={s.contactActions}>
-              <TouchableOpacity
-                style={s.contactBtn}
-                onPress={() => Linking.openURL(`tel:${c.phone}`)}
-                activeOpacity={0.85}
-              >
-                <Ionicons name="call-outline" size={16} color={Colors.purple} />
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={s.contactBtn}
-                onPress={() => Linking.openURL(`sms:${c.phone}`)}
-                activeOpacity={0.85}
-              >
-                <Ionicons name="chatbubble-outline" size={16} color={Colors.purple} />
-              </TouchableOpacity>
-            </View>
-          </View>
-        ))}
-      </View>
+          ))}
+        </View>
+      )}
       <View style={{ height: 16 }} />
       <SecondaryBtn label="I'm okay — go back" onPress={onDone} />
     </View>
@@ -506,6 +574,21 @@ export default function ImmediateSupportScreen() {
   const [step, setStep] = useState(0);
   const [calmTool, setCalmTool] = useState<CalmTool>(null);
   const [childSit, setChildSit] = useState<ChildSit>(null);
+  const [contacts, setContacts] = useState<SupportContact[]>([]);
+
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      loadContacts()
+        .then(data => {
+          if (active) setContacts(data);
+        })
+        .catch(e => console.log('Immediate support contacts load error:', e));
+      return () => {
+        active = false;
+      };
+    }, [])
+  );
 
   const goToPath = (p: Path) => {
     setPath(p);
@@ -570,7 +653,16 @@ export default function ImmediateSupportScreen() {
     }
 
     if (path === 'meltdown' && step === 1) return <StepMeltdownPlan onDone={goToRoot} />;
-    if (path === 'contact' && step === 1) return <StepContact onDone={goToRoot} />;
+    if (path === 'contact' && step === 1) {
+      const rootNav = navigation.getParent('RootStack') ?? navigation;
+      return (
+        <StepContact
+          contacts={contacts}
+          onDone={goToRoot}
+          onAddContact={() => rootNav.navigate('AddContact')}
+        />
+      );
+    }
     if (path === 'emergency' && step === 1) return <StepEmergency onDone={goToRoot} />;
 
     return null;
@@ -828,6 +920,25 @@ const s = StyleSheet.create({
     fontSize: 13,
     color: Colors.textSecondary,
     lineHeight: 20,
+  },
+  emptyCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 0.5,
+    borderColor: Colors.cardBorder,
+    padding: 16,
+    marginTop: 16,
+  },
+  emptyTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: Colors.textPrimary,
+  },
+  emptyText: {
+    fontSize: 13,
+    color: Colors.textMuted,
+    lineHeight: 19,
+    marginTop: 4,
   },
 
   contactCard: {

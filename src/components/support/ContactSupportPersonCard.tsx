@@ -57,46 +57,56 @@ export default function ContactSupportPersonCard({
 
       <Text style={styles.subtitle}>Reach out to someone you trust.</Text>
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-        style={styles.scroll}
-      >
-        {contacts.map((contact) => (
-          <View key={contact.id} style={styles.contactCol}>
-            <View style={styles.avatarWrap}>
-              <View style={styles.avatar}>
-                <Text style={styles.initials}>{contact.initials}</Text>
-              </View>
-              {contact.isOnline && <View style={styles.onlineDot} />}
-            </View>
-
-            <Text style={styles.contactName} numberOfLines={1}>{contact.name}</Text>
-            <Text style={styles.contactRole} numberOfLines={1}>{contact.role}</Text>
-
-            <View style={styles.actionRow}>
-              {contact.hasPhone && (
-                <ActionBtn icon="call-outline" onPress={() => onCall(contact.id)} />
-              )}
-              {contact.hasMessage && (
-                <ActionBtn icon="chatbubble-outline" onPress={() => onMessage(contact.id)} />
-              )}
-              {contact.hasEmail && (
-                <ActionBtn icon="mail-outline" onPress={() => onEmail(contact.id)} />
-              )}
-            </View>
-          </View>
-        ))}
-
-        <View style={styles.contactCol}>
-          <TouchableOpacity style={styles.addCircle} onPress={onAddContact} activeOpacity={0.75}>
-            <Text style={styles.addPlus}>+</Text>
+      {contacts.length === 0 ? (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyTitle}>No contacts added yet</Text>
+          <Text style={styles.emptyText}>Add someone you trust so they are easy to reach.</Text>
+          <TouchableOpacity style={styles.emptyButton} onPress={onAddContact} activeOpacity={0.75}>
+            <Text style={styles.emptyButtonText}>+ Add contact</Text>
           </TouchableOpacity>
-          <Text style={styles.contactName} numberOfLines={1}> </Text>
-          <Text style={styles.addLabel}>Add Contact</Text>
         </View>
-      </ScrollView>
+      ) : (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+          style={styles.scroll}
+        >
+          {contacts.map((contact) => (
+            <View key={contact.id} style={styles.contactCol}>
+              <View style={styles.avatarWrap}>
+                <View style={styles.avatar}>
+                  <Text style={styles.initials}>{contact.initials}</Text>
+                </View>
+                {contact.isOnline && <View style={styles.onlineDot} />}
+              </View>
+
+              <Text style={styles.contactName} numberOfLines={1}>{contact.name}</Text>
+              <Text style={styles.contactRole} numberOfLines={1}>{contact.role}</Text>
+
+              <View style={styles.actionRow}>
+                {contact.hasPhone && (
+                  <ActionBtn icon="call-outline" onPress={() => onCall(contact.id)} />
+                )}
+                {contact.hasMessage && (
+                  <ActionBtn icon="chatbubble-outline" onPress={() => onMessage(contact.id)} />
+                )}
+                {contact.hasEmail && (
+                  <ActionBtn icon="mail-outline" onPress={() => onEmail(contact.id)} />
+                )}
+              </View>
+            </View>
+          ))}
+
+          <View style={styles.contactCol}>
+            <TouchableOpacity style={styles.addCircle} onPress={onAddContact} activeOpacity={0.75}>
+              <Text style={styles.addPlus}>+</Text>
+            </TouchableOpacity>
+            <Text style={styles.contactName} numberOfLines={1}> </Text>
+            <Text style={styles.addLabel}>Add Contact</Text>
+          </View>
+        </ScrollView>
+      )}
     </View>
   );
 }
@@ -138,6 +148,37 @@ const styles = StyleSheet.create({
   scrollContent: {
     gap: 12,
     paddingRight: 4,
+  },
+  emptyState: {
+    backgroundColor: Colors.navActiveBg,
+    borderRadius: 12,
+    padding: 12,
+    marginTop: 12,
+  },
+  emptyTitle: {
+    fontSize: 12,
+    fontFamily: Fonts.medium,
+    color: Colors.textPrimary,
+  },
+  emptyText: {
+    fontSize: 11,
+    fontFamily: Fonts.regular,
+    color: Colors.textMuted,
+    lineHeight: 16,
+    marginTop: 2,
+  },
+  emptyButton: {
+    alignSelf: 'flex-start',
+    backgroundColor: Colors.cardBg,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginTop: 10,
+  },
+  emptyButtonText: {
+    fontSize: 12,
+    fontFamily: Fonts.medium,
+    color: Colors.purple,
   },
   contactCol: {
     width: 72,

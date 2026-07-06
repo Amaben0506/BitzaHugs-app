@@ -9,6 +9,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getAuth } from "@firebase/auth";
+import { getFirestore, collection, getDocs } from "@firebase/firestore";
 import {
   loadCaregiverProfile,
   loadChildProfile,
@@ -50,14 +52,6 @@ const DEFAULT_SCHEDULE: ScheduleItem[] = [
     status: "pending",
   },
   {
-    id: "3",
-    time: "10:00",
-    title: "Speech Therapy",
-    subtitle: "with Sarah T.",
-    type: "appointment",
-    status: "pending",
-  },
-  {
     id: "4",
     time: "12:30",
     title: "Lunch",
@@ -96,6 +90,38 @@ const AVATARS: Record<string, ImageSourcePropType> = {
 };
 
 const toDateKey = (d: Date) => d.toISOString().split("T")[0];
+
+const loadScheduleItems = async (date: string): Promise<ScheduleItem[]> => {
+  const uid = getAuth().currentUser?.uid;
+
+  if (uid) {
+    try {
+      const snap = await getDocs(collection(getFirestore(), "users", uid, "schedule", date, "items"));
+      const items: ScheduleItem[] = [];
+      snap.forEach(d => {
+        const data = d.data() as any;
+        if (data.title?.trim()) {
+          items.push({
+            id: d.id,
+            time: data.time || "00:00",
+            title: data.title.trim(),
+            subtitle: data.subtitle,
+            type: data.type === "appointment" ? "appointment" : "routine",
+            status: data.status || "pending",
+            emoji: data.emoji,
+            date,
+          });
+        }
+      });
+      if (items.length > 0) return items;
+    } catch (error) {
+      console.log("Home schedule Firestore load error:", error);
+    }
+  }
+
+  const local = await AsyncStorage.getItem(`bitzaSchedule_${date}`);
+  return local ? JSON.parse(local) : DEFAULT_SCHEDULE;
+};
 
 const getTimeOfDay = (): TimeOfDay => {
   const hour = new Date().getHours();
@@ -224,14 +250,14 @@ export default function HomeScreen() {
 
           const today = toDateKey(new Date());
           const [
-            scheduleRaw,
+            scheduleItems,
             childMoodRaw,
             caregiverMoodRaw,
             calmToolUsesRaw,
             noteStatusRaw,
             winsRaw,
           ] = await Promise.all([
-            AsyncStorage.getItem(`bitzaSchedule_${today}`),
+            loadScheduleItems(today),
             AsyncStorage.getItem("bitzaChildMood"),
             AsyncStorage.getItem("bitzaCaregiverMood"),
             AsyncStorage.getItem("bitzaCalmToolUses"),
@@ -258,7 +284,7 @@ export default function HomeScreen() {
             avatarSource: AVATARS[avatarId] || AVATARS["01"],
           });
 
-          setSchedule(scheduleRaw ? JSON.parse(scheduleRaw) : DEFAULT_SCHEDULE);
+          setSchedule(scheduleItems);
           setChildMood(childMoodRaw ? JSON.parse(childMoodRaw) : null);
 
           const parsedCaregiverMood = caregiverMoodRaw

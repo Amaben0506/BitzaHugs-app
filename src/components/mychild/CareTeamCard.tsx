@@ -30,25 +30,38 @@ export default function CareTeamCard({ members, onViewAll, onAddMember }: CareTe
         </TouchableOpacity>
       </View>
 
-      <View style={styles.members}>
-        {members.map((member) => (
-          <View key={member.id} style={styles.memberItem}>
-            <View style={styles.avatar}>
-              <Text style={styles.initials}>{member.initials}</Text>
+      {members.length === 0 ? (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyTitle}>No care team members yet</Text>
+          <Text style={styles.emptyText}>Add teachers, therapists, or helpers when you are ready.</Text>
+        </View>
+      ) : (
+        <View style={styles.members}>
+          {members.map((member) => (
+            <View key={member.id} style={styles.memberItem}>
+              <View style={styles.avatar}>
+                <Text style={styles.initials}>{member.initials}</Text>
+              </View>
+              <Text style={styles.memberName} numberOfLines={1}>{member.name}</Text>
+              <Text style={styles.memberRole} numberOfLines={1}>{member.role}</Text>
             </View>
-            <Text style={styles.memberName} numberOfLines={1}>{member.name}</Text>
-            <Text style={styles.memberRole} numberOfLines={1}>{member.role}</Text>
-          </View>
-        ))}
+          ))}
 
-        <PressableScale style={styles.memberItem} onPress={onAddMember}>
-          <View style={styles.addCircle}>
-            <Text style={styles.addPlus}>+</Text>
-          </View>
-          <Text style={styles.memberName} numberOfLines={1}> </Text>
-          <Text style={styles.memberRole} numberOfLines={1}> </Text>
+          <PressableScale style={styles.memberItem} onPress={onAddMember}>
+            <View style={styles.addCircle}>
+              <Text style={styles.addPlus}>+</Text>
+            </View>
+            <Text style={styles.memberName} numberOfLines={1}> </Text>
+            <Text style={styles.memberRole} numberOfLines={1}> </Text>
+          </PressableScale>
+        </View>
+      )}
+
+      {members.length === 0 ? (
+        <PressableScale style={styles.emptyAddBtn} onPress={onAddMember}>
+          <Text style={styles.emptyAddText}>+ Add care team member</Text>
         </PressableScale>
-      </View>
+      ) : null}
     </View>
   );
 }
@@ -84,6 +97,36 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 8,
     marginTop: 10,
+  },
+  emptyState: {
+    backgroundColor: Colors.navActiveBg,
+    borderRadius: 12,
+    padding: 12,
+    marginTop: 10,
+  },
+  emptyTitle: {
+    fontSize: 12,
+    fontFamily: Fonts.medium,
+    color: Colors.textPrimary,
+  },
+  emptyText: {
+    fontSize: 11,
+    fontFamily: Fonts.regular,
+    color: Colors.textMuted,
+    marginTop: 2,
+    lineHeight: 16,
+  },
+  emptyAddBtn: {
+    backgroundColor: Colors.navActiveBg,
+    borderRadius: 12,
+    paddingVertical: 10,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  emptyAddText: {
+    fontSize: 12,
+    fontFamily: Fonts.medium,
+    color: Colors.purple,
   },
   memberItem: {
     alignItems: 'center',

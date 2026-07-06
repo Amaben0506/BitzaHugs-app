@@ -1,8 +1,12 @@
+import { useCallback, useState } from 'react';
 import { Alert, Linking } from 'react-native';
 import { ScrollView, View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getAuth } from '@firebase/auth';
+import { getFirestore, collection, getDocs } from '@firebase/firestore';
 import { Colors } from '../theme/colors';
 import SupportHeader from '../components/support/SupportHeader';
 import HugiSupportCards from '../components/support/HugiSupportCards';
@@ -18,21 +22,87 @@ const NAV_GRID_ROUTES: Record<string, string> = {
   resources: 'HelpfulResources',
 };
 
-function confirmCall(phone: string) {
+type SupportContact = {
+  id: string;
+  name: string;
+  role: string;
+  initials: string;
+  phone?: string;
+  email?: string;
+  hasPhone: boolean;
+  hasMessage: boolean;
+  hasEmail: boolean;
+  isOnline?: boolean;
+};
+
+const getInitials = (name: string) => {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+};
+
+const toSupportContact = (id: string, data: any): SupportContact | null => {
+  const name = data.name?.trim();
+  if (!name) return null;
+  const phone = data.phone?.trim();
+  const email = data.email?.trim();
+  return {
+    id,
+    name,
+    role: data.role?.trim() || 'Support contact',
+    initials: data.initials || getInitials(name),
+    phone,
+    email,
+    hasPhone: !!phone,
+    hasMessage: !!phone,
+    hasEmail: !!email,
+    isOnline: false,
+  };
+};
+
+const loadContacts = async (): Promise<SupportContact[]> => {
+  const uid = getAuth().currentUser?.uid;
+
+  if (uid) {
+    try {
+      const snap = await getDocs(collection(getFirestore(), 'users', uid, 'contacts'));
+      const contacts: SupportContact[] = [];
+      snap.forEach(d => {
+        const contact = toSupportContact(d.id, d.data());
+        if (contact) contacts.push(contact);
+      });
+      if (contacts.length > 0) return contacts;
+    } catch (e) {
+      console.log('Support contacts Firestore load error:', e);
+    }
+  }
+
+  const local = await AsyncStorage.getItem('bitzaContacts');
+  if (!local) return [];
+  return JSON.parse(local)
+    .map((contact: any) => toSupportContact(contact.id, contact))
+    .filter((contact: SupportContact | null): contact is SupportContact => !!contact);
+};
+
+function confirmCall(phone?: string) {
+  if (!phone) return;
   Alert.alert('Call', 'This will call your support person. Continue?', [
     { text: 'Cancel', style: 'cancel' },
     { text: 'Call', onPress: () => Linking.openURL(`tel:${phone}`) },
   ]);
 }
 
-function confirmMessage(phone: string) {
+function confirmMessage(phone?: string) {
+  if (!phone) return;
   Alert.alert('Message', 'This will open a text message to your support person. Continue?', [
     { text: 'Cancel', style: 'cancel' },
     { text: 'Message', onPress: () => Linking.openURL(`sms:${phone}`) },
   ]);
 }
 
-function confirmEmail(email: string) {
+function confirmEmail(email?: string) {
+  if (!email) return;
   Alert.alert('Email', 'This will open an email to your support person. Continue?', [
     { text: 'Cancel', style: 'cancel' },
     { text: 'Email', onPress: () => Linking.openURL(`mailto:${email}`) },
@@ -42,6 +112,23 @@ function confirmEmail(email: string) {
 export default function SupportScreen() {
   const navigation = useNavigation<any>();
   const rootNav = navigation.getParent('RootStack') ?? navigation;
+  const [contacts, setContacts] = useState<SupportContact[]>([]);
+
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      loadContacts()
+        .then(data => {
+          if (active) setContacts(data);
+        })
+        .catch(e => console.log('Support contacts load error:', e));
+      return () => {
+        active = false;
+      };
+    }, [])
+  );
+
+  const findContact = (id: string) => contacts.find(contact => contact.id === id);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -62,15 +149,10 @@ export default function SupportScreen() {
             onViewSupportOptions={() => rootNav.navigate('ImmediateSupport')}
           />
           <ContactSupportPersonCard
-            contacts={[
-              { id: '1', name: 'Bret', role: 'Partner', initials: 'BR', hasPhone: true, hasMessage: true, hasEmail: false, isOnline: true },
-              { id: '2', name: 'Mom', role: 'Family', initials: 'MO', hasPhone: true, hasMessage: true, hasEmail: false },
-              { id: '3', name: 'Mrs. Lopez', role: 'Teacher', initials: 'ML', hasPhone: true, hasMessage: false, hasEmail: true },
-              { id: '4', name: 'Sarah T.', role: 'Speech Therapist', initials: 'ST', hasPhone: true, hasMessage: true, hasEmail: false },
-            ]}
-            onCall={() => confirmCall('+15550000000')}
-            onMessage={() => confirmMessage('+15550000000')}
-            onEmail={() => confirmEmail('support@example.com')}
+            contacts={contacts}
+            onCall={(id) => confirmCall(findContact(id)?.phone)}
+            onMessage={(id) => confirmMessage(findContact(id)?.phone)}
+            onEmail={(id) => confirmEmail(findContact(id)?.email)}
             onAddContact={() => rootNav.navigate('AddContact')}
             onViewAll={() => rootNav.navigate('AllContacts')}
           />
@@ -86,7 +168,6 @@ export default function SupportScreen() {
               { id: '2', emoji: '🤝', label: 'Used support', sublabel: 'Today at 7:45 AM', backgroundColor: '#FFF0F4' },
               { id: '3', emoji: '🖨️', label: 'Downloaded schedule', sublabel: 'Yesterday', backgroundColor: '#F0EAFF' },
               { id: '4', emoji: '👥', label: 'Community post', sublabel: 'May 12', backgroundColor: '#F0F8F0' },
-              { id: '5', emoji: '📞', label: 'Contacted Bret', sublabel: 'May 11', backgroundColor: '#EEF4FF' },
             ]}
             onViewAll={() => rootNav.navigate('SupportActivity')}
           />

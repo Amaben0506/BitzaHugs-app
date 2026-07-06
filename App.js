@@ -622,7 +622,7 @@ return (<SafeAreaProvider><PremiumProvider><StatusBar
   <NavigationContainer ref={navigationRef}>
     <Stack.Navigator
       id="RootStack"
-      initialRouteName={DEV_MODE ? "MainTabs" : "OnboardingFlow"}
+      initialRouteName="Splash"
       screenOptions={{ headerShown: false }}
     >
       {/* Onboarding */}

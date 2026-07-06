@@ -4,16 +4,14 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  ImageBackground,
   Animated,
- 
+  ScrollView,
   Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
-
-const splashBackground = require("../assets/icons/sunrise-background.png");
+import { Colors, Fonts, Radius, Shadows, Type } from "../src/theme/theme";
 
 const getGreeting = () => {
   const hour = new Date().getHours();
@@ -112,175 +110,283 @@ const slideAnim = useRef(new Animated.Value(30)).current;
   const displayName = parentName || "Welcome back";
 
   return (
-    <ImageBackground source={splashBackground} style={styles.background} resizeMode="cover">
+    <View style={styles.background}>
       <SafeAreaView style={styles.safeArea}>
-        <Animated.View style={[styles.content, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
-
-          {/* Greeting */}
-          <View style={styles.greetingSection}>
-            <Text style={styles.greeting}>{greeting},</Text>
-            <Text style={styles.name}>{displayName} 💜</Text>
-            <Text style={styles.dayMessage}>{getDayMessage()}</Text>
-          </View>
-
-          {/* Quick Stats */}
-          <View style={styles.statsCard}>
-            {streak > 0 && (
-              <View style={styles.statRow}>
-                <View style={[styles.statIconBubble, { backgroundColor: "#FFF0DF" }]}>
-                  <Text style={styles.statEmoji}>🔥</Text>
-                </View>
-                <View style={styles.statTextWrap}>
-                  <Text style={styles.statTitle}>{streak}-day streak</Text>
-                  <Text style={styles.statSub}>{getStreakMessage(streak)}</Text>
-                </View>
-              </View>
-            )}
-
-            {routinePercent > 0 && (
-              <View style={[styles.statRow, streak > 0 && styles.statRowBorder]}>
-                <View style={[styles.statIconBubble, { backgroundColor: "#F0E2FF" }]}>
-                  <Text style={styles.statEmoji}>📅</Text>
-                </View>
-                <View style={styles.statTextWrap}>
-                  <Text style={styles.statTitle}>Today's routine</Text>
-                  <Text style={styles.statSub}>{routinePercent}% complete{routinePercent === 100 ? " 🎉" : " — keep going!"}</Text>
-                </View>
-              </View>
-            )}
-
-            {childName && (
-              <View style={[styles.statRow, (streak > 0 || routinePercent > 0) && styles.statRowBorder]}>
-                <View style={[styles.statIconBubble, { backgroundColor: "#FFE6E4" }]}>
-                  <Text style={styles.statEmoji}>💜</Text>
-                </View>
-                <View style={styles.statTextWrap}>
-                  <Text style={styles.statTitle}>Supporting {childName}</Text>
-                  <Text style={styles.statSub}>Your tools are ready when you need them.</Text>
-                </View>
-              </View>
-            )}
-
-            {isPremium && (
-              <View style={[styles.statRow, styles.statRowBorder]}>
-                <View style={[styles.statIconBubble, { backgroundColor: "#EEF7E8" }]}>
-                  <Text style={styles.statEmoji}>✨</Text>
-                </View>
-                <View style={styles.statTextWrap}>
-                  <Text style={styles.statTitle}>Premium active</Text>
-                  <Text style={styles.statSub}>All features unlocked. Hugi is ready for you.</Text>
-                </View>
-              </View>
-            )}
-          </View>
-
-          {/* Affirmation */}
-          <View style={styles.affirmationCard}>
-            <Text style={styles.affirmationText}>
-              You showed up again today.{"\n"}That is not nothing. 💜
-            </Text>
-          </View>
-
-          {/* Enter Button */}
-          <TouchableOpacity style={styles.enterButton} onPress={goToApp} activeOpacity={0.9}>
-            <Text style={styles.enterButtonText}>Open BitzaHugs</Text>
-            <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
+        <View style={styles.topBar}>
+          <TouchableOpacity
+            style={styles.settingsButton}
+            onPress={() => navigation.navigate("Settings")}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel="Open settings"
+          >
+            <Ionicons name="settings-outline" size={18} color={Colors.textMuted} />
           </TouchableOpacity>
+        </View>
 
-          {/* Quick Actions */}
-          <View style={styles.quickActions}>
-            <TouchableOpacity
-              style={styles.quickAction}
-              onPress={() => { goToApp(); }}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.quickActionEmoji}>🫁</Text>
-              <Text style={styles.quickActionText}>Breathe</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.quickAction}
-              onPress={() => { goToApp(); }}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.quickActionEmoji}>📔</Text>
-              <Text style={styles.quickActionText}>Journal</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.quickAction}
-              onPress={() => { goToApp(); }}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.quickActionEmoji}>🆘</Text>
-              <Text style={styles.quickActionText}>Support</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.quickAction}
-              onPress={() => { goToApp(); }}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.quickActionEmoji}>📅</Text>
-              <Text style={styles.quickActionText}>Routine</Text>
-            </TouchableOpacity>
-          </View>
+        <ScrollView
+          style={styles.mainScroll}
+          contentContainerStyle={styles.mainScrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <Animated.View style={[styles.content, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
 
-        </Animated.View>
+            {/* Greeting */}
+            <View style={styles.greetingSection}>
+              <Text style={styles.greeting}>{greeting},</Text>
+              <Text style={styles.name}>{displayName} 💜</Text>
+              <Text style={styles.dayMessage}>{getDayMessage()}</Text>
+            </View>
+
+            {/* Quick Stats */}
+            <View style={styles.statsCard}>
+              {streak > 0 && (
+                <View style={styles.statRow}>
+                  <View style={[styles.statIconBubble, { backgroundColor: "#FFF0DF" }]}>
+                    <Text style={styles.statEmoji}>🔥</Text>
+                  </View>
+                  <View style={styles.statTextWrap}>
+                    <Text style={styles.statTitle}>{streak}-day streak</Text>
+                    <Text style={styles.statSub}>{getStreakMessage(streak)}</Text>
+                  </View>
+                </View>
+              )}
+
+              {routinePercent > 0 && (
+                <View style={[styles.statRow, streak > 0 && styles.statRowBorder]}>
+                  <View style={[styles.statIconBubble, { backgroundColor: "#F0E2FF" }]}>
+                    <Text style={styles.statEmoji}>📅</Text>
+                  </View>
+                  <View style={styles.statTextWrap}>
+                    <Text style={styles.statTitle}>Today's routine</Text>
+                    <Text style={styles.statSub}>{routinePercent}% complete{routinePercent === 100 ? " 🎉" : " — keep going!"}</Text>
+                  </View>
+                </View>
+              )}
+
+              {childName && (
+                <View style={[styles.statRow, (streak > 0 || routinePercent > 0) && styles.statRowBorder]}>
+                  <View style={[styles.statIconBubble, { backgroundColor: "#FFE6E4" }]}>
+                    <Text style={styles.statEmoji}>💜</Text>
+                  </View>
+                  <View style={styles.statTextWrap}>
+                    <Text style={styles.statTitle}>Supporting {childName}</Text>
+                    <Text style={styles.statSub}>Your tools are ready when you need them.</Text>
+                  </View>
+                </View>
+              )}
+
+              {isPremium && (
+                <View style={[styles.statRow, styles.statRowBorder]}>
+                  <View style={[styles.statIconBubble, { backgroundColor: "#EEF7E8" }]}>
+                    <Text style={styles.statEmoji}>✨</Text>
+                  </View>
+                  <View style={styles.statTextWrap}>
+                    <Text style={styles.statTitle}>Premium active</Text>
+                    <Text style={styles.statSub}>All features unlocked. Hugi is ready for you.</Text>
+                  </View>
+                </View>
+              )}
+            </View>
+
+            {/* Affirmation */}
+            <View style={styles.affirmationCard}>
+              <Text style={styles.affirmationText}>
+                You showed up again today.{"\n"}That is not nothing. 💜
+              </Text>
+            </View>
+
+            {/* Enter Button */}
+            <TouchableOpacity style={styles.enterButton} onPress={goToApp} activeOpacity={0.9}>
+              <Text style={styles.enterButtonText}>Open BitzaHugs</Text>
+              <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
+            </TouchableOpacity>
+
+            {/* Quick Actions */}
+            <View style={styles.quickActions}>
+              <TouchableOpacity
+                style={styles.quickAction}
+                onPress={() => { goToApp(); }}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.quickActionEmoji}>🫁</Text>
+                <Text style={styles.quickActionText}>Breathe</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.quickAction}
+                onPress={() => { goToApp(); }}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.quickActionEmoji}>📔</Text>
+                <Text style={styles.quickActionText}>Journal</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.quickAction}
+                onPress={() => { goToApp(); }}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.quickActionEmoji}>🆘</Text>
+                <Text style={styles.quickActionText}>Support</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.quickAction}
+                onPress={() => { goToApp(); }}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.quickActionEmoji}>📅</Text>
+                <Text style={styles.quickActionText}>Routine</Text>
+              </TouchableOpacity>
+            </View>
+
+          </Animated.View>
+        </ScrollView>
       </SafeAreaView>
-    </ImageBackground>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  background: { flex: 1, width: "100%", height: "100%" },
-  safeArea: { flex: 1 },
-  content: {
+  background: { flex: 1, width: "100%", height: "100%", backgroundColor: Colors.pageBg },
+  safeArea: {
     flex: 1,
-    paddingHorizontal: 22,
-    paddingTop: Platform.OS === "ios" ? 20 : 30,
-    paddingBottom: 30,
+    paddingHorizontal: 16,
+  },
+  topBar: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 2,
+    height: 46,
+    alignItems: "flex-end",
     justifyContent: "center",
+  },
+  settingsButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: Colors.cardBg,
+    borderWidth: 1,
+    borderColor: Colors.lavenderBorder,
+    alignItems: "center",
+    justifyContent: "center",
+    ...Shadows.card,
+  },
+  mainScroll: {
+    flex: 1,
+  },
+  mainScrollContent: {
+    flexGrow: 1,
+    justifyContent: "center",
+    paddingTop: 64,
+    paddingBottom: 88,
+  },
+  content: {
+    paddingTop: Platform.OS === "ios" ? 0 : 4,
   },
 
   greetingSection: { marginBottom: 20 },
-  greeting: { fontSize: 18, fontWeight: "700", color: "#2B2463", opacity: 0.8 },
-  name: { fontSize: 32, fontWeight: "900", color: "#2B2463", letterSpacing: -0.5, marginBottom: 6 },
-  dayMessage: { fontSize: 14, fontWeight: "600", color: "#5B5672" },
+  greeting: {
+    ...Type.heading,
+    color: Colors.textSecondary,
+  },
+  name: {
+    ...Type.hero,
+    color: Colors.textPrimary,
+    marginTop: 2,
+    marginBottom: 6,
+  },
+  dayMessage: {
+    ...Type.bodySmall,
+    fontFamily: Fonts.semibold,
+    color: Colors.textSecondary,
+  },
 
   statsCard: {
-    backgroundColor: "rgba(255,255,255,0.92)",
-    borderRadius: 22, borderWidth: 1, borderColor: "#EFE4DC",
-    paddingHorizontal: 14, paddingVertical: 6, marginBottom: 14,
-    shadowColor: "#BFA99D", shadowOpacity: 0.08, shadowOffset: { width: 0, height: 3 },
-    shadowRadius: 10, elevation: 3,
+    backgroundColor: "rgba(255,255,255,0.94)",
+    borderRadius: Radius.xl,
+    borderWidth: 1,
+    borderColor: Colors.lavenderBorder,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    marginBottom: 14,
+    ...Shadows.card,
   },
   statRow: { flexDirection: "row", alignItems: "center", paddingVertical: 11, gap: 12 },
-  statRowBorder: { borderTopWidth: 1, borderTopColor: "#F0E8E2" },
-  statIconBubble: { width: 38, height: 38, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  statRowBorder: { borderTopWidth: 1, borderTopColor: Colors.divider },
+  statIconBubble: {
+    width: 38,
+    height: 38,
+    borderRadius: Radius.md,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.72)",
+  },
   statEmoji: { fontSize: 20 },
   statTextWrap: { flex: 1 },
-  statTitle: { color: "#2B2463", fontSize: 13, fontWeight: "800", marginBottom: 2 },
-  statSub: { color: "#5B5672", fontSize: 11, fontWeight: "600" },
+  statTitle: {
+    ...Type.cardTitle,
+    color: Colors.textPrimary,
+    marginBottom: 2,
+  },
+  statSub: {
+    ...Type.caption,
+    color: Colors.textSecondary,
+  },
 
   affirmationCard: {
-    backgroundColor: "rgba(246,236,255,0.95)", borderRadius: 18,
-    borderWidth: 1, borderColor: "#E3D2F8", padding: 16, marginBottom: 16,
+    backgroundColor: "rgba(242,234,251,0.96)",
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    borderColor: Colors.lavenderBorder,
+    padding: 16,
+    marginBottom: 16,
     alignItems: "center",
+    ...Shadows.card,
   },
-  affirmationText: { color: "#2B2463", fontSize: 15, fontWeight: "800", textAlign: "center", lineHeight: 22 },
+  affirmationText: {
+    ...Type.heading,
+    color: Colors.textPrimary,
+    textAlign: "center",
+  },
 
   enterButton: {
-    height: 54, borderRadius: 18, backgroundColor: "#7548D8",
-    flexDirection: "row", alignItems: "center", justifyContent: "center",
-    gap: 10, marginBottom: 14,
-    shadowColor: "#7548D8", shadowOpacity: 0.3, shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 10, elevation: 4,
+    height: 54,
+    borderRadius: Radius.lg,
+    backgroundColor: Colors.primaryPlum,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    marginBottom: 14,
+    ...Shadows.button,
   },
-  enterButtonText: { color: "#FFFFFF", fontSize: 17, fontWeight: "800" },
+  enterButtonText: {
+    ...Type.button,
+    color: "#FFFFFF",
+  },
 
   quickActions: { flexDirection: "row", justifyContent: "space-between", gap: 8 },
   quickAction: {
-    flex: 1, backgroundColor: "rgba(255,255,255,0.88)", borderRadius: 16,
-    borderWidth: 1, borderColor: "#EFE4DC", paddingVertical: 10, alignItems: "center", gap: 4,
+    flex: 1,
+    minHeight: 74,
+    backgroundColor: "rgba(255,255,255,0.92)",
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: Colors.lavenderBorder,
+    paddingVertical: 10,
+    paddingHorizontal: 4,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+    ...Shadows.card,
   },
   quickActionEmoji: { fontSize: 22 },
-  quickActionText: { color: "#2B2463", fontSize: 10, fontWeight: "800" },
+  quickActionText: {
+    ...Type.caption,
+    fontFamily: Fonts.semibold,
+    color: Colors.primaryPlum,
+    textAlign: "center",
+  },
 });

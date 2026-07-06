@@ -70,8 +70,14 @@ export default function TodaysScheduleCard({
         </TouchableOpacity>
       </View>
 
-      <View style={styles.timeline}>
-        {items.map((item, index) => {
+      {items.length === 0 ? (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyTitle}>No schedule items today</Text>
+          <Text style={styles.emptyText}>Add routines or appointments when you are ready.</Text>
+        </View>
+      ) : (
+        <View style={styles.timeline}>
+          {items.map((item, index) => {
           const isFirst = index === 0;
           const isLast = index === items.length - 1;
           const isDone = item.status === 'completed';
@@ -110,8 +116,9 @@ export default function TodaysScheduleCard({
               />
             </View>
           );
-        })}
-      </View>
+          })}
+        </View>
+      )}
 
       <PressableScale style={styles.addBtn} onPress={onAddActivity}>
         <Text style={styles.addBtnText}>+ Add activity</Text>
@@ -149,6 +156,22 @@ const styles = StyleSheet.create({
   },
   timeline: {
     gap: 0,
+  },
+  emptyState: {
+    backgroundColor: Colors.navActiveBg,
+    borderRadius: 12,
+    padding: 12,
+  },
+  emptyTitle: {
+    fontSize: 12,
+    fontFamily: Fonts.medium,
+    color: Colors.textPrimary,
+  },
+  emptyText: {
+    fontSize: 11,
+    fontFamily: Fonts.regular,
+    color: Colors.textMuted,
+    marginTop: 2,
   },
   row: {
     flexDirection: 'row',

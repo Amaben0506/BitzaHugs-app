@@ -2,9 +2,11 @@ import { useState, useCallback } from 'react';
 import { ScrollView, View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { saveChildMood } from '../lib/dataService';
+import { getAuth } from '@firebase/auth';
+import { getFirestore, collection, getDocs } from '@firebase/firestore';
+import { loadChildProfile, saveChildMood } from '../lib/dataService';
 import { Colors } from '../theme/colors';
 import MyChildHeader from '../components/mychild/MyChildHeader';
 import ChildProfileSnapshot from '../components/mychild/ChildProfileSnapshot';
@@ -27,22 +29,144 @@ type ScheduleItem = {
   icon: string;
 };
 
-const INITIAL_SCHEDULE: ScheduleItem[] = [
-  { id: '1', time: '7:00 AM', title: 'Morning Routine', type: 'routine', status: 'completed', icon: '🌅' },
-  { id: '2', time: '8:30 AM', title: 'School / Learning', type: 'routine', status: 'completed', icon: '📚' },
-  { id: '3', time: '10:00 AM', title: 'Speech Therapy', subtitle: 'with Sarah T.', type: 'appointment', status: 'pending', icon: '🗣️' },
-  { id: '4', time: '12:30 PM', title: 'Lunch', type: 'routine', status: 'pending', icon: '🍽️' },
-  { id: '5', time: '3:00 PM', title: 'Play / Break Time', type: 'routine', status: 'pending', icon: '☀️' },
-  { id: '6', time: '7:00 PM', title: 'Bedtime Routine', type: 'routine', status: 'pending', icon: '🌙' },
-];
+type ChildProfile = {
+  childName?: string;
+  age?: string | number;
+  avatarEmoji?: string;
+  communication?: string;
+  triggers?: string;
+  calmingStrategies?: string;
+  sensory?: string;
+  todaysFocus?: string;
+};
+
+type CareTeamMember = {
+  id: string;
+  name: string;
+  role: string;
+  initials: string;
+};
+
+const toDateKey = (d: Date) => d.toISOString().split('T')[0];
+
+const formatScheduleTime = (time: string) => {
+  if (/[AP]M/i.test(time)) return time;
+  const [h = 0, m = 0] = time.split(':').map(Number);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const hour = h % 12 || 12;
+  return `${hour}:${String(m).padStart(2, '0')} ${ampm}`;
+};
+
+const getInitials = (name: string) => {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+};
+
+const loadScheduleItems = async (): Promise<ScheduleItem[]> => {
+  const today = toDateKey(new Date());
+  const uid = getAuth().currentUser?.uid;
+
+  if (uid) {
+    try {
+      const snap = await getDocs(collection(getFirestore(), 'users', uid, 'schedule', today, 'items'));
+      const items: ScheduleItem[] = [];
+      snap.forEach(d => {
+        const data = d.data() as any;
+        items.push({
+          id: d.id,
+          time: formatScheduleTime(data.time || ''),
+          title: data.title || 'Untitled activity',
+          subtitle: data.subtitle,
+          type: data.type === 'appointment' ? 'appointment' : 'routine',
+          status: data.status || 'pending',
+          icon: data.icon || data.emoji || (data.type === 'appointment' ? '📅' : '•'),
+        });
+      });
+      if (items.length > 0) return items.sort((a, b) => a.time.localeCompare(b.time));
+    } catch (e) {
+      console.log('MyChild schedule load error:', e);
+    }
+  }
+
+  const local = await AsyncStorage.getItem(`bitzaSchedule_${today}`);
+  if (!local) return [];
+  return JSON.parse(local).map((item: any) => ({
+    ...item,
+    time: formatScheduleTime(item.time || ''),
+    icon: item.icon || item.emoji || (item.type === 'appointment' ? '📅' : '•'),
+  }));
+};
+
+const loadCareTeam = async (): Promise<CareTeamMember[]> => {
+  const uid = getAuth().currentUser?.uid;
+
+  if (uid) {
+    try {
+      const snap = await getDocs(collection(getFirestore(), 'users', uid, 'careTeam'));
+      const members: CareTeamMember[] = [];
+      snap.forEach(d => {
+        const data = d.data() as any;
+        if (data.name?.trim()) {
+          members.push({
+            id: d.id,
+            name: data.name.trim(),
+            role: data.role || 'Care team',
+            initials: data.initials || getInitials(data.name),
+          });
+        }
+      });
+      if (members.length > 0) return members;
+    } catch (e) {
+      console.log('MyChild care team load error:', e);
+    }
+  }
+
+  const local = await AsyncStorage.getItem('bitzaCareTeam');
+  return local ? JSON.parse(local).filter((member: CareTeamMember) => member.name?.trim()) : [];
+};
 
 export default function MyChildScreen() {
   const navigation = useNavigation<any>();
   const rootNav = navigation.getParent('RootStack') ?? navigation;
 
-  const [scheduleItems, setScheduleItems] = useState<ScheduleItem[]>(INITIAL_SCHEDULE);
+  const [childProfile, setChildProfile] = useState<ChildProfile | null>(null);
+  const [scheduleItems, setScheduleItems] = useState<ScheduleItem[]>([]);
+  const [careTeam, setCareTeam] = useState<CareTeamMember[]>([]);
   const [selectedMood, setSelectedMood] = useState<string | undefined>(undefined);
+  const [lastMood, setLastMood] = useState<any>(null);
   const [moodNote, setMoodNote] = useState('');
+
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+
+      const loadScreenData = async () => {
+        const [profile, schedule, team, moodRaw] = await Promise.all([
+          loadChildProfile(),
+          loadScheduleItems(),
+          loadCareTeam(),
+          AsyncStorage.getItem('bitzaChildMood'),
+        ]);
+
+        if (!active) return;
+        setChildProfile(profile as ChildProfile | null);
+        setScheduleItems(schedule);
+        setCareTeam(team);
+        setLastMood(moodRaw ? JSON.parse(moodRaw) : null);
+      };
+
+      loadScreenData().catch(e => console.log('MyChild data load error:', e));
+      return () => {
+        active = false;
+      };
+    }, [])
+  );
+
+  const childName = childProfile?.childName?.trim() || 'Your child';
+  const childAge = childProfile?.age ? String(childProfile.age) : '';
+  const avatarEmoji = childProfile?.avatarEmoji || '♡';
 
   const toggleComplete = useCallback((id: string) => {
     setScheduleItems(prev =>
@@ -69,19 +193,19 @@ export default function MyChildScreen() {
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
           <MyChildHeader
-            child={{ name: 'Zachariah', age: 5, avatarEmoji: '🦕' }}
+            child={{ name: childName, age: childAge, avatarEmoji }}
             onSettingsPress={() => rootNav.navigate('Settings')}
             onChildSelectorPress={() => console.log('child selector')}
           />
           <ChildProfileSnapshot
             child={{
-              name: 'Zachariah',
-              age: 5,
-              avatarEmoji: '🦕',
-              communication: 'Gestures, PECS, Single words',
-              supportNeeds: 'Transitions, Loud noises, Change',
-              sensory: 'Deep pressure, Visual supports',
-              todaysFocus: 'Transitions may be difficult today. Visual supports and extra warning time may help.',
+              name: childName,
+              age: Number(childProfile?.age) || 0,
+              avatarEmoji,
+              communication: childProfile?.communication?.trim() || 'Add communication style',
+              supportNeeds: childProfile?.triggers?.trim() || 'Add support needs',
+              sensory: childProfile?.sensory?.trim() || childProfile?.calmingStrategies?.trim() || 'Add sensory supports',
+              todaysFocus: childProfile?.todaysFocus?.trim() || 'Add a focus note for today.',
             }}
             onEditProfile={() => rootNav.navigate('EditProfile')}
           />
@@ -92,37 +216,28 @@ export default function MyChildScreen() {
             onToggleComplete={toggleComplete}
           />
           <ChildMoodTracker
-            childName="Zachariah"
+            childName={childName}
             selectedMood={selectedMood}
-            lastMood={{
-              mood: 'Hopeful',
-              emoji: '😊',
-              time: 'Today at 8:30 AM',
-              note: 'Had some trouble with the morning transition but did great after using the timer and deep pressure.',
-            }}
+            lastMood={lastMood}
             onMoodSelect={handleMoodSelect}
             onViewHistory={() => rootNav.navigate('MoodHistory')}
             onNoteChange={setMoodNote}
           />
           <DailyProgressNote
             status="not-started"
-            childName="Zachariah"
+            childName={childName}
             onStartNote={() => rootNav.navigate('DailyNote')}
             onContinueNote={() => rootNav.navigate('DailyNote')}
             onViewPastNotes={() => rootNav.navigate('PastNotes')}
           />
           <HelpfulToolsCard
-            childName="Zachariah"
+            childName={childName}
             onTransitionTimer={() => rootNav.navigate('TransitionTimer')}
             onShowMe={() => rootNav.navigate('ShowMe')}
             onMeltdownSupport={() => rootNav.navigate('ImmediateSupport')}
           />
           <CareTeamCard
-            members={[
-              { id: '1', name: 'You', role: 'Parent', initials: 'ME' },
-              { id: '2', name: 'Mrs. Lopez', role: 'Teacher', initials: 'ML' },
-              { id: '3', name: 'Sarah T.', role: 'Speech', initials: 'ST' },
-            ]}
+            members={careTeam}
             onViewAll={() => rootNav.navigate('CareTeam')}
             onAddMember={() => rootNav.navigate('AddCareTeamMember')}
           />

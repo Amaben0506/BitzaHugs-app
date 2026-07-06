@@ -6,7 +6,7 @@ import { Fonts, Shadows } from '../../theme/theme';
 import PressableScale from '../ui/PressableScale';
 
 interface MyChildHeaderProps {
-  child: { name: string; age: number; avatarEmoji: string };
+  child: { name: string; age?: string | number; avatarEmoji: string };
   onSettingsPress: () => void;
   onChildSelectorPress: () => void;
 }
@@ -42,7 +42,7 @@ export default function MyChildHeader({
         </View>
         <View style={styles.pillInfo}>
           <Text style={styles.pillName}>{child.name}</Text>
-          <Text style={styles.pillAge}>Age {child.age}</Text>
+          {child.age ? <Text style={styles.pillAge}>Age {child.age}</Text> : null}
         </View>
         <Ionicons name="chevron-down" size={18} color={Colors.grayLavender} style={styles.chevron} />
       </PressableScale>
