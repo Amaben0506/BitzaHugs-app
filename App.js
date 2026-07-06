@@ -181,7 +181,7 @@ return ( <TouchableOpacity
 
 // ─── Custom Drawer Content ────────────────────────────────────────────────────
 function CustomDrawerContent({ navigation }) {
-const [parentName, setParentName] = useState("there");
+const [parentName, setParentName] = useState("friend");
 const [children, setChildren] = useState([]);
 const { isPremium, isLoading: premiumLoading, showPremiumUpgrade } = usePremium();
 
@@ -194,9 +194,9 @@ const parent = await AsyncStorage.getItem("bitzaParentProfile");
     if (parent) {
       const parsedParent = JSON.parse(parent);
       setParentName(
-        parsedParent.preferredGreeting?.trim() ||
+          parsedParent.preferredGreeting?.trim() ||
           parsedParent.name?.trim() ||
-          "there"
+          "friend"
       );
     }
 

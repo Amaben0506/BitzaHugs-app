@@ -108,6 +108,7 @@ const slideAnim = useRef(new Animated.Value(30)).current;
 
   const greeting = getGreeting();
   const displayName = parentName || "Welcome back";
+  const hasStats = streak > 0 || routinePercent > 0 || !!childName || isPremium;
 
   return (
     <View style={styles.background}>
@@ -184,6 +185,18 @@ const slideAnim = useRef(new Animated.Value(30)).current;
                   <View style={styles.statTextWrap}>
                     <Text style={styles.statTitle}>Premium active</Text>
                     <Text style={styles.statSub}>All features unlocked. Hugi is ready for you.</Text>
+                  </View>
+                </View>
+              )}
+
+              {!hasStats && (
+                <View style={styles.statRow}>
+                  <View style={[styles.statIconBubble, { backgroundColor: "#F0E2FF" }]}>
+                    <Text style={styles.statEmoji}>💜</Text>
+                  </View>
+                  <View style={styles.statTextWrap}>
+                    <Text style={styles.statTitle}>Ready when you are</Text>
+                    <Text style={styles.statSub}>Your tools are here for today.</Text>
                   </View>
                 </View>
               )}

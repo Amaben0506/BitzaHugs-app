@@ -9,6 +9,14 @@ interface SupportNavGridProps {
   onItemPress: (id: string) => void;
 }
 
+const COMMUNITY_ITEM = {
+  id: 'community',
+  icon: 'people-outline' as React.ComponentProps<typeof Ionicons>['name'],
+  title: 'Caregiver Community',
+  description: 'Connect with caregivers who understand what you\u2019re going through.',
+  linkLabel: 'Go to community →',
+};
+
 const NAV_ITEMS: Array<{
   id: string;
   icon: React.ComponentProps<typeof Ionicons>['name'];
@@ -26,15 +34,6 @@ const NAV_ITEMS: Array<{
     linkLabel: 'Browse printables →',
     circleBg: '#EDE0FF',
     iconColor: Colors.purple,
-  },
-  {
-    id: 'community',
-    icon: 'people-outline',
-    title: 'Caregiver Community',
-    description: 'Connect with caregivers who understand.',
-    linkLabel: 'Go to community →',
-    circleBg: '#E8F3EC',
-    iconColor: '#3A8A3A',
   },
   {
     id: 'plan',
@@ -59,6 +58,20 @@ const NAV_ITEMS: Array<{
 export default function SupportNavGrid({ onItemPress }: SupportNavGridProps) {
   return (
     <View style={styles.stack}>
+      <PressableScale
+        style={styles.communityCard}
+        onPress={() => onItemPress(COMMUNITY_ITEM.id)}
+      >
+        <View style={styles.communityIconCircle}>
+          <Ionicons name={COMMUNITY_ITEM.icon} size={30} color="#FFFFFF" />
+        </View>
+        <View style={styles.textBlock}>
+          <Text style={styles.communityTitle}>{COMMUNITY_ITEM.title}</Text>
+          <Text style={styles.communityDescription}>{COMMUNITY_ITEM.description}</Text>
+          <Text style={styles.communityLink}>{COMMUNITY_ITEM.linkLabel}</Text>
+        </View>
+      </PressableScale>
+
       {NAV_ITEMS.map((item) => (
         <PressableScale
           key={item.id}
@@ -82,6 +95,44 @@ export default function SupportNavGrid({ onItemPress }: SupportNavGridProps) {
 const styles = StyleSheet.create({
   stack: {
     gap: 12,
+  },
+  communityCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#4B2E7E',
+    borderRadius: 24,
+    padding: 20,
+    shadowColor: '#2D1B4E',
+    shadowOpacity: 0.18,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 5,
+  },
+  communityIconCircle: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: 'rgba(255,255,255,0.22)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexShrink: 0,
+  },
+  communityTitle: {
+    ...Type.cardTitle,
+    fontSize: 19,
+    lineHeight: 26,
+    color: '#FFFFFF',
+  },
+  communityDescription: {
+    ...Type.bodySmall,
+    color: 'rgba(255,255,255,0.9)',
+    marginTop: 3,
+  },
+  communityLink: {
+    fontSize: 13,
+    fontFamily: Fonts.semibold,
+    color: '#FFFFFF',
+    marginTop: 8,
   },
   card: {
     flexDirection: 'row',

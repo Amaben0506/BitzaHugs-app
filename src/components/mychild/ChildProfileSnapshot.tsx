@@ -55,7 +55,7 @@ export default function ChildProfileSnapshot({ child, onEditProfile }: ChildProf
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#F3EDFF',
+    backgroundColor: Colors.primaryPlum,
     borderRadius: 20,
     paddingVertical: 16,
     paddingHorizontal: 16,
@@ -71,24 +71,24 @@ const styles = StyleSheet.create({
   colLabel: {
     fontSize: 10,
     fontFamily: Fonts.regular,
-    color: Colors.textMuted,
+    color: '#CFC2E4',
     letterSpacing: 0.3,
     marginBottom: 4,
   },
   colValue: {
     fontSize: 11,
     fontFamily: Fonts.regular,
-    color: Colors.textPrimary,
+    color: '#FFFFFF',
     lineHeight: 15,
   },
   verticalDivider: {
     width: 0.5,
-    backgroundColor: Colors.cardBorder,
+    backgroundColor: 'rgba(255,255,255,0.18)',
     marginHorizontal: 8,
   },
   horizontalDivider: {
     height: 0.5,
-    backgroundColor: Colors.cardBorder,
+    backgroundColor: 'rgba(255,255,255,0.18)',
     marginTop: 10,
   },
   focusSection: {
@@ -106,13 +106,13 @@ const styles = StyleSheet.create({
   focusLabel: {
     fontSize: 11,
     fontFamily: Fonts.medium,
-    color: Colors.textSecondary,
+    color: '#E9DFFC',
   },
   focusText: {
     fontSize: 12,
     fontFamily: Fonts.regular,
     fontStyle: 'italic',
-    color: Colors.textPrimary,
+    color: '#FFFFFF',
     lineHeight: 18,
   },
   editRow: {
@@ -122,6 +122,6 @@ const styles = StyleSheet.create({
   editLink: {
     fontSize: 11,
     fontFamily: Fonts.regular,
-    color: Colors.purple,
+    color: '#E9DFFC',
   },
 });

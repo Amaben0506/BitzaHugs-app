@@ -224,7 +224,7 @@ const buildRecentActivity = (
 export default function HomeScreen() {
   const navigation = useNavigation<any>();
   const rootNav = navigation.getParent("RootStack") ?? navigation;
-  const [caregiverName, setCaregiverName] = useState("there");
+  const [caregiverName, setCaregiverName] = useState("friend");
   const [child, setChild] = useState({
     name: "Your child",
     age: "",
@@ -270,7 +270,7 @@ export default function HomeScreen() {
           setCaregiverName(
             firstName(parentProfile?.preferredGreeting) ||
               firstName(parentProfile?.name) ||
-              "there"
+              "friend"
           );
 
           const avatarId = String(childProfile?.avatar || "01").padStart(
