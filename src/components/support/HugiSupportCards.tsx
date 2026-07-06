@@ -30,9 +30,10 @@ export default function HugiSupportCards({
           Share what's happening and get gentle, practical support from Hugi.
         </Text>
         <PressableScale style={styles.hugiBtn} onPress={onTalkToHugi}>
-          <Ionicons name="chatbubble-outline" size={14} color="#FFFFFF" />
-          <Text style={styles.primaryBtnText}>Chat with Hugi</Text>
-          <View style={styles.btnSpacer} />
+          <View style={styles.primaryBtnContent}>
+            <Ionicons name="chatbubble-outline" size={14} color="#FFFFFF" />
+            <Text style={styles.primaryBtnText}>Chat with Hugi</Text>
+          </View>
         </PressableScale>
         <PressableScale
           onPress={onContinueChat}
@@ -54,9 +55,10 @@ export default function HugiSupportCards({
           Get help through this moment.
         </Text>
         <PressableScale style={styles.supportBtn} onPress={onGetHelpNow}>
-          <Ionicons name="radio-button-on-outline" size={14} color="#FFFFFF" />
-          <Text style={styles.primaryBtnText}>Get help now</Text>
-          <View style={styles.btnSpacer} />
+          <View style={styles.primaryBtnContent}>
+            <Ionicons name="radio-button-on-outline" size={14} color="#FFFFFF" />
+            <Text style={styles.primaryBtnText}>Get help now</Text>
+          </View>
         </PressableScale>
         <PressableScale
           onPress={onViewSupportOptions}
@@ -77,9 +79,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "stretch",
     gap: 12,
+    width: "100%",
   },
   hugiCard: {
-    flex: 1,
+    flexBasis: 0,
+    flexGrow: 1,
+    flexShrink: 1,
+    minWidth: 0,
     backgroundColor: "#EDE0FF",
     borderRadius: 20,
     padding: 14,
@@ -87,7 +93,10 @@ const styles = StyleSheet.create({
     ...Shadows.card,
   },
   supportCard: {
-    flex: 1,
+    flexBasis: 0,
+    flexGrow: 1,
+    flexShrink: 1,
+    minWidth: 0,
     backgroundColor: "#FFF0F4",
     borderRadius: 20,
     padding: 14,
@@ -104,12 +113,14 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.semibold,
     color: Colors.textPrimary,
     textAlign: "center",
+    width: "100%",
   },
   supportTitle: {
     fontSize: 14,
     fontFamily: Fonts.semibold,
     color: "#C03060",
     textAlign: "center",
+    width: "100%",
   },
   cardDescription: {
     fontSize: 11,
@@ -118,38 +129,42 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 15.5,
     marginTop: 4,
+    minHeight: 47,
+    width: "100%",
   },
   hugiBtn: {
-    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: Colors.primaryPlum,
     borderRadius: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-    gap: 6,
+    minHeight: 44,
+    paddingHorizontal: 14,
     marginTop: 10,
     width: "100%",
   },
   supportBtn: {
-    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#C03060",
     borderRadius: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-    gap: 6,
+    minHeight: 44,
+    paddingHorizontal: 14,
     marginTop: 10,
     width: "100%",
   },
-  btnSpacer: {
-    width: 14,
+  primaryBtnContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    alignSelf: "center",
+    gap: 6,
   },
   primaryBtnText: {
     fontSize: 12,
     fontFamily: Fonts.semibold,
     color: "#FFFFFF",
+    flexShrink: 1,
+    textAlign: "center",
   },
   secondaryRow: {
     marginTop: 6,

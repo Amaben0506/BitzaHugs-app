@@ -33,6 +33,7 @@ function ProgressDots({ total, active }: { total: number; active: number }) {
 
 export default function WelcomeScreen() {
   const navigation = useNavigation<any>();
+  const rootNavigation = navigation.getParent('RootStack') ?? navigation;
 
   return (
     <SafeAreaView style={s.safe} edges={['top', 'bottom']}>
@@ -73,7 +74,7 @@ export default function WelcomeScreen() {
         </TouchableOpacity>
         <TouchableOpacity
           style={s.linkRow}
-          onPress={() => console.log('existing account')}
+          onPress={() => rootNavigation.navigate('Account', { initialMode: 'signin' })}
           activeOpacity={0.7}
         >
           <Text style={s.link}>I already have an account</Text>
@@ -148,7 +149,7 @@ const s = StyleSheet.create({
     backgroundColor: Colors.grayLavender,
   },
   primaryBtn: {
-    backgroundColor: Colors.purple,
+    backgroundColor: Colors.primaryPlum,
     borderRadius: 14,
     paddingVertical: 14,
     alignItems: 'center',

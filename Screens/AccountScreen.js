@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Alert,
   TextInput,
+  Platform,
   KeyboardAvoidingView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -51,9 +52,9 @@ const deleteAccountAndData = async () => {
   return result.data;
 };
 
-export default function AccountScreen({ navigation }) {
+export default function AccountScreen({ navigation, route }) {
   const [user, setUser] = useState(auth.currentUser);
-  const [mode, setMode] = useState("main");
+  const [mode, setMode] = useState(route?.params?.initialMode === "signin" ? "signin" : "main");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -104,6 +105,12 @@ export default function AccountScreen({ navigation }) {
     setShowPassword(false);
     setStatusMsg("");
   };
+
+  useEffect(() => {
+    if (route?.params?.initialMode === "signin") {
+      changeMode("signin");
+    }
+  }, [route?.params?.initialMode]);
 
   const handleSignIn = async () => {
     const cleanEmail = email.trim();
@@ -1370,7 +1377,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  formSubmitButton: { marginTop: Spacing.md },
+  formSubmitButton: {
+    marginTop: Spacing.md,
+    backgroundColor: Colors.primaryPlum,
+  },
   forgotPasswordButton: {
     minHeight: 40,
     flexDirection: "row",
