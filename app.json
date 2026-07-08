@@ -27,7 +27,7 @@
         "android.permission.FOREGROUND_SERVICE",
         "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
       ],
-      "kotlinVersion": "2.1.20"
+      "kotlinVersion": "2.1.21"
     },
     "web": {
       "favicon": "./assets/icons/Bitzahugs-App-Icon.png"
