@@ -276,7 +276,7 @@ export default function ProgressScreen({ navigation }) {
               {streak === 0 && (
                 <TouchableOpacity
                   style={styles.streakBtn}
-                  onPress={() => navigation.navigate("MoodSupport")}
+                  onPress={() => navigation.navigate("MoodCheck")}
                   activeOpacity={0.85}
                 >
                   <Text style={styles.streakBtnText}>Check in now →</Text>
@@ -320,7 +320,7 @@ export default function ProgressScreen({ navigation }) {
               <View style={styles.newUserActions}>
                 <TouchableOpacity
                   style={styles.newUserBtn}
-                  onPress={() => navigation.navigate("MoodSupport")}
+                  onPress={() => navigation.navigate("MoodCheck")}
                   activeOpacity={0.85}
                 >
                   <Feather name="heart" size={14} color="#FFFFFF" />
@@ -564,7 +564,7 @@ export default function ProgressScreen({ navigation }) {
               <Image source={require("../assets/icons/progress-plant-growth.png")} style={styles.emptyIcon} resizeMode="contain" />
               <Text style={styles.emptyTitle}>No mood entries yet</Text>
               <Text style={styles.emptyText}>Mood check-ins from the home screen will appear here over time.</Text>
-              <TouchableOpacity style={styles.emptyButton} onPress={() => navigation?.navigate("MoodSupport")}>
+              <TouchableOpacity style={styles.emptyButton} onPress={() => navigation?.navigate("MoodCheck")}>
                 <Text style={styles.emptyButtonText}>Do a check-in now</Text>
               </TouchableOpacity>
             </View>

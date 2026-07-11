@@ -27,17 +27,6 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { FREE_LIMITS, PremiumProvider, usePremium } from "./src/lib/premium";
 
-
-// ─── Onboarding Screens ───────────────────────────────────────────────────────
-import SplashScreen from "./Screens/SplashScreen";
-import WelcomeScreen from "./Screens/WelcomeScreen";
-import ChildProfileSetupScreen from "./Screens/ChildProfileSetupScreen";
-import SensorySupportScreen from "./Screens/SensorySupportScreen";
-import SensorySupportsScreen from "./Screens/SensorySupportsScreen";
-import CaregiverSupportScreen from "./Screens/CaregiverSupportScreen";
-import CalmSpaceReadyScreen from "./Screens/CalmSpaceReadyScreen";
-import CreateAccountScreen from "./Screens/CreateAccountScreen";
-
 // ─── Main Tab Screens ─────────────────────────────────────────────────────────
 import HomeScreen from "./src/screens/HomeScreen";
 import MyChildScreen from "./src/screens/MyChildScreen";
@@ -96,6 +85,7 @@ import AddRoutineActivityScreen from "./Screens/AddRoutineActivityScreen";
 // ─── Profile / Settings Screens ───────────────────────────────────────────────
 import ChildProfileScreen from "./Screens/ChildProfileScreen";
 import ChildrenListScreen from "./Screens/ChildrenListScreen";
+import ChildProfileSetupScreen from "./Screens/ChildProfileSetupScreen";
 import ParentProfileScreen from "./Screens/ParentProfileScreen";
 import NotificationPreferencesScreen from "./Screens/NotificationPreferencesScreen";
 import PrivacySafetyScreen from "./Screens/PrivacySafetyScreen";
@@ -115,6 +105,7 @@ import SoundsScreen from "./Screens/SoundsScreen";
 import TransitionsScreen from "./Screens/TransitionsScreen";
 import WaterReminderScreen from "./Screens/WaterReminderScreen";
 import AffirmationsScreen from "./Screens/AffirmationsScreen";
+import SensorySupportsScreen from "./Screens/SensorySupportsScreen";
 
 // ─── Journal Screens ──────────────────────────────────────────────────────────
 import CalmJournalScreen from "./Screens/CalmJournalScreen";
@@ -123,11 +114,9 @@ import JournalHistoryScreen from "./src/screens/JournalHistoryScreen";
 
 // ─── Other Screens ────────────────────────────────────────────────────────────
 import MeltdownPlanScreen from "./Screens/MeltdownPlanScreen";
-import OnboardingScreen from "./Screens/OnboardingScreen";
 import AppointmentTrackerScreen from "./Screens/AppointmentTrackerScreen";
 import PremiumUpgradeScreen from "./Screens/PremiumUpgradeScreen";
 import ResourcesScreen from "./Screens/ResourcesScreen";
-import ReturningUserScreen from "./Screens/ReturningUserScreen";
 import RecoveryRoutineScreen from "./Screens/RecoveryRoutineScreen";
 import ShowMeScreen from "./Screens/ShowMeScreen";
 import PauseWithMeScreen from "./Screens/PauseWithMeScreen";
@@ -247,7 +236,7 @@ drawerRoute: true,
 {
 label: "Emotional Check-In",
 icon: "heart-outline",
-screen: "MoodSupport",
+screen: "MoodCheck",
 },
 {
 label: "Support Right Now",
@@ -620,39 +609,16 @@ return (<SafeAreaProvider><PremiumProvider><StatusBar
    />
 
   <NavigationContainer ref={navigationRef}>
-    <Stack.Navigator
-      id="RootStack"
-      initialRouteName="Splash"
-      screenOptions={{ headerShown: false }}
-    >
-      {/* Onboarding */}
-      <Stack.Screen name="OnboardingFlow" component={OnboardingNavigator} options={{ headerShown: false }} />
-      <Stack.Screen name="Splash" component={SplashScreen} />
-      <Stack.Screen name="Welcome" component={WelcomeScreen} />
-      <Stack.Screen
-        name="ChildProfileSetup"
-        component={ChildProfileSetupScreen}
-      />
-      <Stack.Screen
-        name="SensorySupport"
-        component={SensorySupportScreen}
-      />
-      <Stack.Screen
-        name="CaregiverSupport"
-        component={CaregiverSupportScreen}
-      />
-      <Stack.Screen
-        name="CalmSpaceReady"
-        component={CalmSpaceReadyScreen}
-      />
-      <Stack.Screen
-        name="CreateAccount"
-        component={CreateAccountScreen}
-      />
+	    <Stack.Navigator
+	      id="RootStack"
+	      initialRouteName="OnboardingFlow"
+	      screenOptions={{ headerShown: false }}
+	    >
+	      {/* Onboarding */}
+	      <Stack.Screen name="OnboardingFlow" component={OnboardingNavigator} options={{ headerShown: false }} />
 
-      {/* Main App */}
-      <Stack.Screen name="MainTabs" component={DrawerNavigator} />
-      <Stack.Screen name="ReturningUser" component={ReturningUserScreen} />
+	      {/* Main App */}
+	      <Stack.Screen name="MainTabs" component={DrawerNavigator} />
 
       {/* Main Screens */}
       <Stack.Screen name="Home" component={HomeScreen} />
@@ -667,10 +633,14 @@ return (<SafeAreaProvider><PremiumProvider><StatusBar
         component={AddRoutineActivityScreen}
       />
 
-      {/* Profiles */}
-      <Stack.Screen name="ChildProfile" component={ChildProfileScreen} />
-      <Stack.Screen name="ChildrenList" component={ChildrenListScreen} />
-      <Stack.Screen name="ParentProfile" component={ParentProfileScreen} />
+	      {/* Profiles */}
+	      <Stack.Screen name="ChildProfile" component={ChildProfileScreen} />
+	      <Stack.Screen name="ChildrenList" component={ChildrenListScreen} />
+	      <Stack.Screen
+	        name="ChildProfileSetup"
+	        component={ChildProfileSetupScreen}
+	      />
+	      <Stack.Screen name="ParentProfile" component={ParentProfileScreen} />
       <Stack.Screen
         name="Notifications"
         component={NotificationPreferencesScreen}
@@ -765,10 +735,9 @@ return (<SafeAreaProvider><PremiumProvider><StatusBar
       <Stack.Screen name="AddCareTeamMember" component={AddCareTeamMemberScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AddWin" component={AddWinScreen} options={{ headerShown: false, presentation: 'modal' }} />
       <Stack.Screen name="Wins" component={WinsScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="ChildProgress" component={ChildProgressScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="MeltdownPlan" component={MeltdownPlanScreen} />
-      <Stack.Screen name="Onboarding" component={OnboardingScreen} />
-      <Stack.Screen
+	      <Stack.Screen name="ChildProgress" component={ChildProgressScreen} options={{ headerShown: false }} />
+	      <Stack.Screen name="MeltdownPlan" component={MeltdownPlanScreen} />
+	      <Stack.Screen
         name="AppointmentTracker"
         component={AppointmentTrackerScreen}
       />

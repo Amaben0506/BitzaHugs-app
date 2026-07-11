@@ -360,6 +360,9 @@ Created with BitzaHugs · A support app for caregivers
             ? "Changes are saved locally on this device."
             : "Share this plan with teachers, therapists, or anyone supporting your child."}
         </Text>
+        <Text style={styles.footerText}>
+          Based on trauma-informed and occupational therapy caregiving practices.
+        </Text>
       </ScrollView>
     </SafeAreaView>
   );

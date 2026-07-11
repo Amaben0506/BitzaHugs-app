@@ -266,7 +266,7 @@ export default function ChildProfileSetupScreen({ navigation, route }) {
         JSON.stringify(childProfile)
       );
 
-      navigation.navigate("SensorySupport");
+      navigation.replace("SensorySupports");
     } catch (error) {
       console.log("Error saving child profile:", error);
       Alert.alert("Oops", "Something went wrong. Please try again.");
@@ -296,10 +296,10 @@ export default function ChildProfileSetupScreen({ navigation, route }) {
         JSON.stringify(childProfile)
       );
 
-      navigation.navigate("SensorySupport");
+      navigation.replace("SensorySupports");
     } catch (error) {
       console.log("Error skipping child profile:", error);
-      navigation.navigate("SensorySupport");
+      navigation.replace("SensorySupports");
     }
   };
 

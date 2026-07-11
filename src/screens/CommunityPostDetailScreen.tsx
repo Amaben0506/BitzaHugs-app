@@ -36,6 +36,7 @@ import { Fonts, Type, Shadows, Spacing, Radius } from '../theme/theme';
 import ScreenHeader from '../components/ui/ScreenHeader';
 import Card from '../components/ui/Card';
 import ReportSheet from '../components/community/ReportSheet';
+import CrisisResourceCard from '../components/community/CrisisResourceCard';
 
 type RouteParams = {
   post?: CommunityPost;
@@ -65,6 +66,7 @@ export default function CommunityPostDetailScreen() {
   const [commentText, setCommentText] = useState('');
   const [sending, setSending] = useState(false);
   const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
+  const [showCrisisResources, setShowCrisisResources] = useState(false);
   const [localReacted, setLocalReacted] = useState<boolean>(routeReacted ?? false);
   const [localCount, setLocalCount] = useState<number>(routePost?.reactionCount ?? 0);
   const inFlight = useRef(false);
@@ -153,6 +155,7 @@ export default function CommunityPostDetailScreen() {
       if (result.ok) {
         setCommentText('');
         inputRef.current?.blur();
+        if (result.crisisFlagged) setShowCrisisResources(true);
       } else {
         Alert.alert('Please revise', result.reason ?? 'Something went wrong.');
       }
@@ -474,6 +477,10 @@ export default function CommunityPostDetailScreen() {
           onBlock={handleBlockComplete}
         />
       )}
+      <CrisisResourceCard
+        visible={showCrisisResources}
+        onClose={() => setShowCrisisResources(false)}
+      />
     </SafeAreaView>
   );
 }

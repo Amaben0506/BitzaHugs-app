@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const admin = require('firebase-admin');
 const { onCall, HttpsError, onRequest } = require('firebase-functions/v2/https');
+const { onDocumentCreated } = require('firebase-functions/v2/firestore');
 const { defineSecret } = require('firebase-functions/params');
 const logger = require('firebase-functions/logger');
 const {
@@ -16,6 +17,7 @@ admin.initializeApp();
 const db = admin.firestore();
 const revenueCatWebhookAuthToken = defineSecret('REVENUECAT_WEBHOOK_AUTH_TOKEN');
 const revenueCatRestApiKey = defineSecret('REVENUECAT_REST_API_KEY');
+const resendApiKey = defineSecret('RESEND_API_KEY');
 
 function hashBody(body) {
   return crypto.createHash('sha256').update(JSON.stringify(body || {})).digest('hex');
@@ -308,6 +310,290 @@ exports.deleteAccountAndData = onCall(
     } catch (error) {
       logger.error('Account deletion failed', { uid, message: error?.message });
       throw new HttpsError('internal', 'Could not delete account. Please try again or contact support.');
+    }
+  },
+);
+
+exports.notifyOnCommunityReport = onDocumentCreated(
+  {
+    document: 'communityReports/{reportId}',
+    secrets: [resendApiKey],
+  },
+  async (event) => {
+    try {
+      const report = event.data?.data() || {};
+      const {
+        targetType,
+        postId,
+        targetId,
+        reporterId,
+        reason,
+        detail,
+        createdAt,
+      } = report;
+
+      const createdAtText =
+        createdAt?.toDate ? createdAt.toDate().toISOString() : String(createdAt || 'unknown');
+      const reasonText = reason || 'unspecified';
+
+      const text = [
+        'A new community report was submitted in BitzaHugs.',
+        '',
+        `Report ID: ${event.params.reportId}`,
+        `Target type: ${targetType || 'unknown'}`,
+        `Post ID: ${postId || 'unknown'}`,
+        `Target ID: ${targetId || 'unknown'}`,
+        `Reporter ID: ${reporterId || 'unknown'}`,
+        `Reason: ${reasonText}`,
+        `Detail: ${detail || 'none provided'}`,
+        `Created at: ${createdAtText}`,
+        '',
+        'Please review this routine community report in the Moderation screen.',
+      ].join('\n');
+
+      const response = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${resendApiKey.value()}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: 'BitzaHugs <hello@bitzahugs.com>',
+          to: ['hello@bitzahugs.com'],
+          subject: `New community report: ${reasonText}`,
+          text,
+        }),
+      });
+
+      if (!response.ok) {
+        const body = await response.text().catch(() => '');
+        logger.error('Community report notification email failed', {
+          reportId: event.params.reportId,
+          status: response.status,
+          body: body.slice(0, 300),
+        });
+        return;
+      }
+
+      logger.info('Community report notification email sent', {
+        reportId: event.params.reportId,
+        targetType,
+        postId,
+        targetId,
+        reason: reasonText,
+      });
+    } catch (error) {
+      logger.error('Community report notification failed', {
+        reportId: event.params.reportId,
+        message: error?.message,
+      });
+    }
+  },
+);
+
+exports.notifyOnCrisisFlag = onDocumentCreated(
+  {
+    document: 'crisisFlags/{flagId}',
+    secrets: [resendApiKey],
+  },
+  async (event) => {
+    try {
+      const flag = event.data?.data() || {};
+      const {
+        targetType,
+        postId,
+        targetId,
+        authorId,
+        createdAt,
+      } = flag;
+
+      const createdAtText =
+        createdAt?.toDate ? createdAt.toDate().toISOString() : String(createdAt || 'unknown');
+
+      const text = [
+        'Crisis language was flagged in the BitzaHugs community.',
+        '',
+        `Flag ID: ${event.params.flagId}`,
+        `Target type: ${targetType || 'unknown'}`,
+        `Post ID: ${postId || 'unknown'}`,
+        `Target ID: ${targetId || 'unknown'}`,
+        `Author ID: ${authorId || 'unknown'}`,
+        `Created at: ${createdAtText}`,
+        '',
+        'Please check on this post/comment in the Moderation screen as a priority item, not a routine queue item.',
+      ].join('\n');
+
+      const response = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${resendApiKey.value()}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: 'BitzaHugs <hello@bitzahugs.com>',
+          to: ['hello@bitzahugs.com'],
+          subject: '⚠️ Crisis language flagged in community post',
+          text,
+        }),
+      });
+
+      if (!response.ok) {
+        const body = await response.text().catch(() => '');
+        logger.error('Crisis flag notification email failed', {
+          flagId: event.params.flagId,
+          status: response.status,
+          body: body.slice(0, 300),
+        });
+        return;
+      }
+
+      logger.info('Crisis flag notification email sent', {
+        flagId: event.params.flagId,
+        targetType,
+        postId,
+        targetId,
+      });
+    } catch (error) {
+      logger.error('Crisis flag notification failed', {
+        flagId: event.params.flagId,
+        message: error?.message,
+      });
+    }
+  },
+);
+
+// ── Share code redemption (Stage B) ──────────────────────────────────────────
+// Firestore rules deliberately grant no public read on shareCodes or on
+// users/{uid}/... (owner-only). This is the sole path an anonymous teacher/
+// therapist has to redeem a code from the web team portal — it bypasses
+// rules by design via the Admin SDK.
+
+const SHARE_CODE_ALLOWED_ORIGINS = new Set([
+  'https://bitzahugs.com',
+  'https://www.bitzahugs.com',
+]);
+
+function applyShareCodeCors(req, res) {
+  const origin = req.get('origin');
+  if (origin && SHARE_CODE_ALLOWED_ORIGINS.has(origin)) {
+    res.set('Access-Control-Allow-Origin', origin);
+  }
+  res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type');
+  res.set('Vary', 'Origin');
+}
+
+function getClientIp(req) {
+  const forwarded = req.get('x-forwarded-for');
+  if (forwarded) return forwarded.split(',')[0].trim();
+  return req.ip || 'unknown';
+}
+
+// Best-effort and per-instance only: this counter lives in memory, so it
+// resets on cold start and is not shared across concurrent instances. It
+// raises the cost of casual guessing; it is not a hard rate-limit guarantee.
+// If this collection ever needs a real guarantee, put App Check / Cloud
+// Armor in front of it instead.
+const SHARE_CODE_FAILURE_WINDOW_MS = 10 * 60 * 1000;
+const SHARE_CODE_FAILURE_LIMIT = 10;
+const shareCodeFailuresByIp = new Map();
+
+function isShareCodeRateLimited(ip) {
+  const now = Date.now();
+  const attempts = (shareCodeFailuresByIp.get(ip) || []).filter(
+    (t) => now - t < SHARE_CODE_FAILURE_WINDOW_MS,
+  );
+  shareCodeFailuresByIp.set(ip, attempts);
+  return attempts.length >= SHARE_CODE_FAILURE_LIMIT;
+}
+
+function recordShareCodeFailure(ip) {
+  const attempts = shareCodeFailuresByIp.get(ip) || [];
+  attempts.push(Date.now());
+  shareCodeFailuresByIp.set(ip, attempts);
+}
+
+const SHARE_CODE_INVALID_RESPONSE = { error: 'Invalid or expired code' };
+
+exports.redeemShareCode = onRequest(
+  { timeoutSeconds: 15, maxInstances: 20 },
+  async (req, res) => {
+    applyShareCodeCors(req, res);
+
+    if (req.method === 'OPTIONS') {
+      res.status(204).send('');
+      return;
+    }
+
+    if (req.method !== 'POST') {
+      res.status(405).json({ error: 'Method not allowed' });
+      return;
+    }
+
+    const ip = getClientIp(req);
+    if (isShareCodeRateLimited(ip)) {
+      logger.warn('redeemShareCode rate limited', { ip });
+      res.status(429).json({ error: 'Too many attempts. Please try again later.' });
+      return;
+    }
+
+    const code = req.body?.code;
+    if (typeof code !== 'string' || !/^\d{6}$/.test(code)) {
+      recordShareCodeFailure(ip);
+      logger.warn('redeemShareCode rejected malformed code', { ip });
+      res.status(400).json({ error: 'Code must be exactly 6 digits.' });
+      return;
+    }
+
+    try {
+      const querySnap = await db.collection('shareCodes').where('code', '==', code).limit(1).get();
+      if (querySnap.empty) {
+        recordShareCodeFailure(ip);
+        logger.warn('redeemShareCode: no matching code', { ip });
+        res.status(404).json(SHARE_CODE_INVALID_RESPONSE);
+        return;
+      }
+
+      const shareCodeDoc = querySnap.docs[0];
+      const shareCode = shareCodeDoc.data();
+      const expiresAtMs = Date.parse(shareCode?.expires);
+      const isValid = shareCode?.active === true
+        && !Number.isNaN(expiresAtMs)
+        && expiresAtMs > Date.now();
+
+      if (!isValid) {
+        recordShareCodeFailure(ip);
+        logger.warn('redeemShareCode: code inactive or expired', { ip });
+        res.status(404).json(SHARE_CODE_INVALID_RESPONSE);
+        return;
+      }
+
+      const uid = shareCodeDoc.id;
+      const [childProfileSnap, routinesSnap, moodHistorySnap, calmToolUsesSnap] = await Promise.all([
+        db.doc(`users/${uid}/childProfile/data`).get(),
+        db.doc(`users/${uid}/routines/data`).get(),
+        db.doc(`users/${uid}/moodHistory/data`).get(),
+        db.doc(`users/${uid}/calmToolUses/data`).get(),
+      ]);
+
+      logger.info('redeemShareCode: code redeemed', { ip });
+
+      // Every doc here is written as { data: <payload>, updatedAt, migratedAt }
+      // by the app's syncService.js (and matching web writes) — unwrap the
+      // outer envelope so the response is the payload itself, matching what
+      // team-view.html rendered when it read these documents directly.
+      res.status(200).json({
+        ok: true,
+        data: {
+          childProfile: childProfileSnap.exists ? (childProfileSnap.data()?.data ?? null) : null,
+          routines: routinesSnap.exists ? (routinesSnap.data()?.data ?? null) : null,
+          moodHistory: moodHistorySnap.exists ? (moodHistorySnap.data()?.data ?? null) : null,
+          calmToolUses: calmToolUsesSnap.exists ? (calmToolUsesSnap.data()?.data ?? null) : null,
+        },
+      });
+    } catch (error) {
+      logger.error('redeemShareCode failed', { ip, message: error?.message });
+      res.status(500).json({ error: 'Something went wrong. Please try again.' });
     }
   },
 );

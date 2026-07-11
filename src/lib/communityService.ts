@@ -8,6 +8,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ensureAuth } from './dataService';
 import { containsBlockedContent } from './contentFilter';
+import { detectsCrisisLanguage } from './crisisDetection';
 import '../lib/firebase';
 
 const db = getFirestore();
@@ -53,6 +54,7 @@ export interface CommunityComment {
 export interface WriteResult {
   ok: boolean;
   reason?: string;
+  crisisFlagged?: true;
 }
 
 export type ReportReason =
@@ -177,6 +179,26 @@ export const getPost = async (postId: string): Promise<CommunityPost | null> => 
 
 // ── Post / comment writes ──────────────────────────────────────────────────────
 
+const writeCrisisFlag = async (
+  targetType: 'post' | 'comment',
+  postId: string,
+  targetId: string,
+  authorId: string,
+): Promise<void> => {
+  try {
+    await addDoc(collection(db, 'crisisFlags'), {
+      targetType,
+      postId,
+      targetId,
+      authorId,
+      createdAt: serverTimestamp(),
+      acknowledged: false,
+    });
+  } catch {
+    // Best-effort safety signal only. Never affect posting/commenting flow.
+  }
+};
+
 export const createPost = async (body: string): Promise<WriteResult> => {
   const check = containsBlockedContent(body);
   if (check.blocked) return { ok: false, reason: check.reason };
@@ -187,17 +209,24 @@ export const createPost = async (body: string): Promise<WriteResult> => {
   if (!body.trim()) return { ok: false, reason: 'Write something first.' };
   if (body.length > 2000) return { ok: false, reason: 'Posts must be under 2 000 characters.' };
 
-  await addDoc(collection(db, 'communityPosts'), {
+  const trimmedBody = body.trim();
+  const postRef = await addDoc(collection(db, 'communityPosts'), {
     authorId: profile.uid,
     displayName: profile.displayName,
     avatarEmoji: profile.avatarEmoji,
-    body: body.trim(),
+    body: trimmedBody,
     createdAt: serverTimestamp(),
     reactionCount: 0,
     commentCount: 0,
     reportCount: 0,
     status: 'active',
   });
+
+  if (detectsCrisisLanguage(trimmedBody)) {
+    void writeCrisisFlag('post', postRef.id, postRef.id, profile.uid);
+    return { ok: true, crisisFlagged: true };
+  }
+
   return { ok: true };
 };
 
@@ -217,6 +246,8 @@ export const addComment = async (
   const postRef = doc(db, 'communityPosts', postId);
   const newCommentRef = doc(collection(db, 'communityPosts', postId, 'comments'));
 
+  const trimmedBody = body.trim();
+
   await runTransaction(db, async (tx) => {
     const postSnap = await tx.get(postRef);
     if (!postSnap.exists()) throw new Error('Post not found.');
@@ -224,13 +255,18 @@ export const addComment = async (
       authorId: profile.uid,
       displayName: profile.displayName,
       avatarEmoji: profile.avatarEmoji,
-      body: body.trim(),
+      body: trimmedBody,
       createdAt: serverTimestamp(),
       reportCount: 0,
       status: 'active',
     });
     tx.update(postRef, { commentCount: increment(1) });
   });
+
+  if (detectsCrisisLanguage(trimmedBody)) {
+    void writeCrisisFlag('comment', postId, newCommentRef.id, profile.uid);
+    return { ok: true, crisisFlagged: true };
+  }
 
   return { ok: true };
 };

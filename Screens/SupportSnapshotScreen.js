@@ -7,8 +7,18 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
+import { getAuth } from "firebase/auth";
+import { doc, setDoc, getDoc, deleteDoc } from "firebase/firestore";
+import { db } from "../src/lib/firebase";
 import { useTheme } from "../src/ThemeContext";
 import { usePremium } from "../src/lib/premium";
+import { syncToFirestore } from "../src/lib/syncService";
+
+const EXPIRY_OPTIONS = [
+  { label: "24 hours", days: 1 },
+  { label: "7 days", days: 7 },
+  { label: "30 days", days: 30 },
+];
 
 const STORAGE_KEY = "bitzaChildProfile";
 const EXTRA_STORAGE_KEY = "bitzaChildProfiles";
@@ -49,6 +59,9 @@ export default function SupportSnapshotScreen({ navigation, route }) {
   const theme = useTheme();
   const childIndex = route?.params?.childIndex || 0;
   const [profile, setProfile] = useState(null);
+  const [shareCode, setShareCode] = useState(null);
+  const [expiryDays, setExpiryDays] = useState(7);
+  const [generatingCode, setGeneratingCode] = useState(false);
   const { requirePremium } = usePremium();
 
   useFocusEffect(useCallback(() => {
@@ -65,6 +78,28 @@ export default function SupportSnapshotScreen({ navigation, route }) {
       } catch (e) { console.log("Error loading snapshot:", e); }
     };
     load();
+
+    const uid = getAuth().currentUser?.uid;
+
+    const syncInBackground = async () => {
+      try {
+        if (!uid) return;
+        await syncToFirestore(uid, "bitzaChildProfile");
+        await syncToFirestore(uid, "bitzaRoutineItems");
+      } catch (e) { console.log("Background sync error:", e); }
+    };
+    syncInBackground();
+
+    const loadShareCode = async () => {
+      try {
+        if (!uid) { setShareCode(null); return; }
+        const snap = await getDoc(doc(db, "shareCodes", uid));
+        const data = snap.exists() ? snap.data() : null;
+        const isValid = data?.active && data?.expires && new Date(data.expires) > new Date();
+        setShareCode(isValid ? data : null);
+      } catch (e) { console.log("Error loading share code:", e); }
+    };
+    loadShareCode();
   }, [childIndex]));
 
   const handleShare = async () => {
@@ -90,6 +125,58 @@ export default function SupportSnapshotScreen({ navigation, route }) {
     } catch (e) { console.log("Share error:", e); }
   };
 
+  const generateShareCode = async () => {
+    const uid = getAuth().currentUser?.uid;
+    if (!uid) {
+      Alert.alert("Sign in required", "Please sign in to generate a share code.");
+      return;
+    }
+    setGeneratingCode(true);
+    try {
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
+      const now = new Date();
+      const expires = new Date(now.getTime() + expiryDays * 24 * 60 * 60 * 1000).toISOString();
+      const newCode = { code, expires, uid, active: true, createdAt: now.toISOString() };
+      await setDoc(doc(db, "shareCodes", uid), newCode);
+      setShareCode(newCode);
+    } catch (e) {
+      console.log("Error generating share code:", e);
+      Alert.alert("Oops", "Couldn't generate a share code. Please try again.");
+    } finally {
+      setGeneratingCode(false);
+    }
+  };
+
+  const copyShareCode = () => {
+    if (!shareCode?.code) return;
+    try {
+      require("react-native").Clipboard.setString(shareCode.code);
+      Alert.alert("Copied", "Share code copied to clipboard.");
+    } catch (e) { console.log("Copy error:", e); }
+  };
+
+  const revokeShareCode = () => {
+    Alert.alert(
+      "Revoke share code?",
+      "The teacher, therapist, or aide using this code will lose access immediately.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Revoke",
+          style: "destructive",
+          onPress: async () => {
+            const uid = getAuth().currentUser?.uid;
+            if (!uid) return;
+            try {
+              await deleteDoc(doc(db, "shareCodes", uid));
+              setShareCode(null);
+            } catch (e) { console.log("Error revoking share code:", e); }
+          },
+        },
+      ]
+    );
+  };
+
   const handlePDFExport = () => {
     if (requirePremium({ feature: "pdf_exports" })) {
       Alert.alert("PDF Export", "PDF export is coming in the next update! 💜");
@@ -101,6 +188,9 @@ export default function SupportSnapshotScreen({ navigation, route }) {
   const avatarSource = AVATARS.find((a) => a.id === profile?.avatar)?.source || AVATARS[0].source;
   const updatedDate = profile?.updatedAt
     ? new Date(profile.updatedAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
+    : null;
+  const shareCodeExpiresLabel = shareCode?.expires
+    ? new Date(shareCode.expires).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
     : null;
 
   if (!profile) {
@@ -282,6 +372,65 @@ export default function SupportSnapshotScreen({ navigation, route }) {
           </View>
         </View>
 
+        {/* Share with Support Team */}
+        <View style={s.shareCodeCard}>
+          <View style={s.shareCodeHeader}>
+            <View style={s.shareCodeIcon}>
+              <Feather name="users" size={16} color={theme.accent} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={s.shareCodeTitle}>Share with Support Team</Text>
+              <Text style={s.shareCodeSubtitle}>Generate a secure code for teachers, therapists, or aides</Text>
+            </View>
+          </View>
+
+          {shareCode ? (
+            <View style={s.activeCodeWrap}>
+              <Text style={s.activeCodeLabel}>Active share code</Text>
+              <Text style={s.activeCodeValue}>{shareCode.code}</Text>
+              {shareCodeExpiresLabel && (
+                <Text style={s.activeCodeExpiry}>Expires {shareCodeExpiresLabel}</Text>
+              )}
+              <View style={s.activeCodeActions}>
+                <TouchableOpacity style={s.codeActionBtn} onPress={copyShareCode} activeOpacity={0.85}>
+                  <Feather name="copy" size={14} color={theme.accent} />
+                  <Text style={s.codeActionBtnText}>Copy Code</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[s.codeActionBtn, s.revokeBtn]} onPress={revokeShareCode} activeOpacity={0.85}>
+                  <Feather name="x-circle" size={14} color="#EF8F7D" />
+                  <Text style={[s.codeActionBtnText, { color: "#EF8F7D" }]}>Revoke</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ) : (
+            <>
+              <View style={s.expiryRow}>
+                {EXPIRY_OPTIONS.map((opt) => (
+                  <TouchableOpacity
+                    key={opt.days}
+                    style={[s.expiryChip, expiryDays === opt.days && s.expiryChipSelected]}
+                    onPress={() => setExpiryDays(opt.days)}
+                    activeOpacity={0.85}
+                  >
+                    <Text style={[s.expiryChipText, expiryDays === opt.days && s.expiryChipTextSelected]}>{opt.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              <TouchableOpacity
+                style={[s.generateBtn, generatingCode && { opacity: 0.7 }]}
+                onPress={generateShareCode}
+                activeOpacity={0.88}
+                disabled={generatingCode}
+              >
+                <Feather name="key" size={16} color="#FFFFFF" />
+                <Text style={s.generateBtnText}>{generatingCode ? "Generating..." : "Generate Share Code"}</Text>
+              </TouchableOpacity>
+            </>
+          )}
+
+          <Text style={s.shareCodeNote}>The code gives read-only access to this snapshot. You can revoke it anytime.</Text>
+        </View>
+
         {/* Action Buttons */}
         <TouchableOpacity style={s.shareBtn} onPress={handleShare} activeOpacity={0.88}>
           <Feather name="share-2" size={18} color="#FFFFFF" />
@@ -366,6 +515,33 @@ function makeStyles(theme) {
     footerRow: { flexDirection: "row", flexWrap: "wrap", gap: 10, justifyContent: "center", marginBottom: 16, paddingHorizontal: 8 },
     footerItem: { flexDirection: "row", alignItems: "center", gap: 5 },
     footerItemText: { color: theme.textMuted, fontSize: 10, fontWeight: "600" },
+
+    // Share with Support Team
+    shareCodeCard: { backgroundColor: theme.card, borderRadius: 18, borderWidth: 1, borderColor: theme.border, padding: 16, marginBottom: 12, shadowColor: theme.cardShadowColor, shadowOpacity: theme.cardShadowOpacity, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
+    shareCodeHeader: { flexDirection: "row", alignItems: "flex-start", gap: 10, marginBottom: 14 },
+    shareCodeIcon: { width: 30, height: 30, borderRadius: 9, backgroundColor: theme.accentLight, alignItems: "center", justifyContent: "center" },
+    shareCodeTitle: { color: theme.textPrimary, fontSize: 14, fontWeight: "900", marginBottom: 2 },
+    shareCodeSubtitle: { color: theme.textMuted, fontSize: 11, fontWeight: "600", lineHeight: 15 },
+
+    expiryRow: { flexDirection: "row", gap: 8, marginBottom: 12 },
+    expiryChip: { flex: 1, borderRadius: 12, borderWidth: 1.5, borderColor: theme.accentBorder, paddingVertical: 9, alignItems: "center", backgroundColor: theme.accentLight },
+    expiryChipSelected: { backgroundColor: "#6F42D8", borderColor: "#6F42D8" },
+    expiryChipText: { color: theme.accent, fontSize: 12, fontWeight: "800" },
+    expiryChipTextSelected: { color: "#FFFFFF" },
+
+    generateBtn: { backgroundColor: "#6F42D8", borderRadius: 14, height: 48, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 10 },
+    generateBtnText: { color: "#FFFFFF", fontSize: 14, fontWeight: "800" },
+
+    activeCodeWrap: { backgroundColor: theme.accentLight, borderRadius: 14, borderWidth: 1, borderColor: theme.accentBorder, padding: 14, alignItems: "center", marginBottom: 10 },
+    activeCodeLabel: { color: theme.accent, fontSize: 11, fontWeight: "800", marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.5 },
+    activeCodeValue: { color: theme.textPrimary, fontSize: 30, fontWeight: "900", letterSpacing: 6, marginBottom: 4 },
+    activeCodeExpiry: { color: theme.textMuted, fontSize: 11, fontWeight: "600", marginBottom: 10 },
+    activeCodeActions: { flexDirection: "row", gap: 10 },
+    codeActionBtn: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 14, paddingVertical: 9, borderRadius: 10, backgroundColor: theme.card, borderWidth: 1, borderColor: theme.accentBorder },
+    codeActionBtnText: { color: theme.accent, fontSize: 12, fontWeight: "800" },
+    revokeBtn: { borderColor: "#EF8F7D" },
+
+    shareCodeNote: { color: theme.textMuted, fontSize: 10.5, fontWeight: "600", lineHeight: 15, textAlign: "center" },
 
     // Buttons
     shareBtn: { backgroundColor: "#6F42D8", borderRadius: 16, height: 52, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 10, shadowColor: "#6F42D8", shadowOpacity: 0.3, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 4 },

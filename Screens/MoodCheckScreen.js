@@ -169,7 +169,7 @@ export default function MoodCheckScreen({ navigation, route }) {
             <Feather name="chevron-left" size={27} color="#2B2463" />
           </TouchableOpacity>
 
-          <Text style={styles.topTitle}>Emotional Check-In</Text>
+          <Text style={styles.topTitle}>Caregiver Check-In</Text>
 
           <TouchableOpacity style={styles.circleButton} activeOpacity={0.85}>
             <Feather name="info" size={21} color="#2B2463" />

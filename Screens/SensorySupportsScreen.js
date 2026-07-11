@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
 
 const SENSORY_SUPPORTS_KEY = "bitzaSensorySupports";
 
@@ -95,6 +96,52 @@ const sensoryOptions = [
 
 export default function SensorySupportScreen({ navigation }) {
   const [selectedSupports, setSelectedSupports] = useState([]);
+  const [savedSupports, setSavedSupports] = useState([]);
+
+  const toSavedSupport = (item) => ({
+    id: item.id,
+    title: item.title,
+    description: item.subtitle,
+  });
+
+  const normalizeSupports = (supports) => {
+    return supports
+      .map((support) => {
+        const option = sensoryOptions.find((item) => item.id === support.id);
+        if (option) return toSavedSupport(option);
+        if (support.id && support.title) {
+          return {
+            id: support.id,
+            title: support.title,
+            description: support.description || support.subtitle || "",
+          };
+        }
+        return null;
+      })
+      .filter(Boolean);
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      const loadSupports = async () => {
+        try {
+          const raw = await AsyncStorage.getItem(SENSORY_SUPPORTS_KEY);
+          const parsed = raw ? JSON.parse(raw) : [];
+          const existingSupports = Array.isArray(parsed)
+            ? normalizeSupports(parsed)
+            : [];
+          setSelectedSupports(existingSupports);
+          setSavedSupports(existingSupports);
+        } catch (error) {
+          console.log("Error loading sensory supports:", error);
+          setSelectedSupports([]);
+          setSavedSupports([]);
+        }
+      };
+
+      loadSupports();
+    }, [])
+  );
 
   const toggleSupport = (item) => {
     setSelectedSupports((prev) => {
@@ -106,36 +153,29 @@ export default function SensorySupportScreen({ navigation }) {
 
       return [
         ...prev,
-        {
-          id: item.id,
-          title: item.title,
-        },
+        toSavedSupport(item),
       ];
     });
   };
 
-  const handleContinue = async () => {
+  const handleSave = async () => {
     try {
       await AsyncStorage.setItem(
         SENSORY_SUPPORTS_KEY,
         JSON.stringify(selectedSupports)
       );
 
-      navigation.navigate("CaregiverSupport");
+      setSavedSupports(selectedSupports);
+      navigation.goBack();
     } catch (error) {
       console.log("Error saving sensory supports:", error);
       Alert.alert("Oops", "Something went wrong. Please try again.");
     }
   };
 
-  const handleSkip = async () => {
-    try {
-      await AsyncStorage.setItem(SENSORY_SUPPORTS_KEY, JSON.stringify([]));
-      navigation.navigate("CaregiverSupport");
-    } catch (error) {
-      console.log("Error skipping sensory supports:", error);
-      navigation.navigate("CaregiverSupport");
-    }
+  const handleCancel = () => {
+    setSelectedSupports(savedSupports);
+    navigation.goBack();
   };
 
   return (
@@ -168,16 +208,6 @@ export default function SensorySupportScreen({ navigation }) {
 
           <View style={styles.topSpacer} />
         </View>
-
-        {/* Progress */}
-        <View style={styles.progressRow}>
-          <View style={styles.progressDot} />
-          <View style={[styles.progressDot, styles.progressActive]} />
-          <View style={styles.progressDot} />
-          <View style={styles.progressDot} />
-        </View>
-
-        <Text style={styles.stepLabel}>Step 2 of 4</Text>
 
         {/* Hero */}
         <View style={styles.heroCard}>
@@ -255,29 +285,27 @@ export default function SensorySupportScreen({ navigation }) {
           </Text>
         </View>
 
-        {/* Continue */}
+        {/* Save */}
         <TouchableOpacity
           style={styles.button}
           activeOpacity={0.86}
-          onPress={handleContinue}
+          onPress={handleSave}
           accessibilityRole="button"
-          accessibilityLabel="Continue"
+          accessibilityLabel="Save sensory supports"
         >
-          <Text style={styles.buttonText}>
-            {selectedSupports.length > 0 ? "Save & Continue" : "Continue"}
-          </Text>
-          <Ionicons name="arrow-forward" size={22} color="#FFFFFF" />
+          <Text style={styles.buttonText}>Save</Text>
+          <Ionicons name="checkmark" size={22} color="#FFFFFF" />
         </TouchableOpacity>
 
-        {/* Skip */}
+        {/* Cancel */}
         <TouchableOpacity
           style={styles.skipButton}
           activeOpacity={0.75}
-          onPress={handleSkip}
+          onPress={handleCancel}
           accessibilityRole="button"
-          accessibilityLabel="Skip for now"
+          accessibilityLabel="Cancel"
         >
-          <Text style={styles.skipText}>Skip for now</Text>
+          <Text style={styles.skipText}>Cancel</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -334,33 +362,6 @@ const styles = StyleSheet.create({
 
   topSpacer: {
     width: 44,
-  },
-
-  progressRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 8,
-    marginBottom: 4,
-  },
-
-  progressDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: "#D9D4D0",
-  },
-
-  progressActive: {
-    backgroundColor: "#8C55F6",
-    width: 24,
-  },
-
-  stepLabel: {
-    textAlign: "center",
-    color: "#837E96",
-    fontSize: 11,
-    fontWeight: "700",
-    marginBottom: 12,
   },
 
   heroCard: {

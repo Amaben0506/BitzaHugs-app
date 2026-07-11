@@ -25,6 +25,7 @@ import {
 import { Colors } from '../theme/colors';
 import { Fonts, Type, Spacing, Radius } from '../theme/theme';
 import ScreenHeader from '../components/ui/ScreenHeader';
+import CrisisResourceCard from '../components/community/CrisisResourceCard';
 
 type RouteParams = { profile: CommunityProfile };
 
@@ -39,6 +40,7 @@ export default function CommunityComposerScreen() {
 
   const [body, setBody] = useState('');
   const [saving, setSaving] = useState(false);
+  const [showCrisisResources, setShowCrisisResources] = useState(false);
   const inputRef = useRef<TextInput>(null);
 
   const canPost = body.trim().length > 0 && !saving;
@@ -57,7 +59,11 @@ export default function CommunityComposerScreen() {
       const result = await createPost(body);
       if (result.ok) {
         if (!isPremium) await recordCommunityPostCreated();
-        navigation.goBack();
+        if (result.crisisFlagged) {
+          setShowCrisisResources(true);
+        } else {
+          navigation.goBack();
+        }
       } else {
         Alert.alert(
           'Please revise',
@@ -160,6 +166,13 @@ export default function CommunityComposerScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+      <CrisisResourceCard
+        visible={showCrisisResources}
+        onClose={() => {
+          setShowCrisisResources(false);
+          navigation.goBack();
+        }}
+      />
     </SafeAreaView>
   );
 }

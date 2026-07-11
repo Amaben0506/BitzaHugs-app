@@ -17,8 +17,8 @@ import '../lib/firebase';
 interface MoodEntry {
   mood: string;
   note?: string;
-  time: string;
-  date: string;
+  time?: string | Date | { toDate?: () => Date; seconds?: number };
+  date?: string;
 }
 
 // ─── Config ───────────────────────────────────────────────────────────────────
@@ -45,14 +45,17 @@ const loadMoodHistory = async (): Promise<MoodEntry[]> => {
       const snap = await getDocs(
         collection(getFirestore(), 'users', uid, 'moods', 'caregiver', 'entries')
       );
-      snap.forEach(d => entries.push(d.data() as MoodEntry));
+      snap.forEach(d => {
+        const data = d.data() as MoodEntry;
+        entries.push({ ...data, date: data.date ?? d.id });
+      });
     }
   } catch (e) {}
   if (entries.length === 0) {
     const raw = await AsyncStorage.getItem('bitzaCaregiverMood');
     if (raw) entries.push(JSON.parse(raw));
   }
-  return entries.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+  return entries.sort((a, b) => getEntryTimestamp(b) - getEntryTimestamp(a));
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -82,6 +85,7 @@ const weekStart = () => {
 };
 
 const formatDateHeader = (dateKey: string): string => {
+  if (dateKey === 'unknown') return 'Date unavailable';
   const today = todayKey();
   const yesterday = yesterdayKey();
   if (dateKey === today) return 'Today';
@@ -91,9 +95,35 @@ const formatDateHeader = (dateKey: string): string => {
   });
 };
 
-const formatTime = (isoString: string): string => {
+const getEntryDate = (entry: MoodEntry): Date | null => {
+  const raw = entry.time;
+  if (raw instanceof Date) return raw;
+  if (typeof raw === 'string') {
+    const parsed = new Date(raw);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+  if (raw?.toDate) return raw.toDate();
+  if (typeof raw?.seconds === 'number') return new Date(raw.seconds * 1000);
+  if (entry.date) {
+    const parsed = new Date(entry.date + 'T12:00:00');
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+  return null;
+};
+
+const getEntryTimestamp = (entry: MoodEntry): number => getEntryDate(entry)?.getTime() ?? 0;
+
+const getEntryDateKey = (entry: MoodEntry, fallback = 'unknown'): string => {
+  if (typeof entry.date === 'string' && entry.date.trim()) return entry.date;
+  const date = getEntryDate(entry);
+  return date ? date.toISOString().split('T')[0] : fallback;
+};
+
+const formatTime = (entry: MoodEntry): string => {
   try {
-    return new Date(isoString).toLocaleTimeString('en-US', {
+    const date = getEntryDate(entry);
+    if (!date) return '';
+    return date.toLocaleTimeString('en-US', {
       hour: 'numeric', minute: '2-digit', hour12: true,
     });
   } catch {
@@ -121,12 +151,12 @@ export default function CaregiverMoodHistoryScreen() {
 
   const moodByDate: Record<string, string> = {};
   entries.forEach(e => {
-    const key = e.date ?? (e.time ? e.time.split('T')[0] : null);
+    const key = getEntryDateKey(e, '');
     if (key && e.mood && !moodByDate[key]) moodByDate[key] = e.mood;
   });
 
   const weekEntries = entries.filter(e => {
-    const key = e.date ?? (e.time ? e.time.split('T')[0] : '');
+    const key = getEntryDateKey(e, '');
     return new Date(key + 'T12:00:00') >= wkStart;
   });
 
@@ -141,7 +171,7 @@ export default function CaregiverMoodHistoryScreen() {
 
   const groups: { dateKey: string; items: MoodEntry[] }[] = [];
   filtered.forEach(e => {
-    const key = e.date ?? (e.time ? e.time.split('T')[0] : 'unknown');
+    const key = getEntryDateKey(e);
     const g = groups.find(g => g.dateKey === key);
     if (g) { g.items.push(e); }
     else { groups.push({ dateKey: key, items: [e] }); }
@@ -261,7 +291,7 @@ export default function CaregiverMoodHistoryScreen() {
                     </View>
                     <View style={s.entryMid}>
                       <Text style={s.entryMoodLabel}>{entry.mood}</Text>
-                      <Text style={s.entryTime}>{formatTime(entry.time)}</Text>
+                      <Text style={s.entryTime}>{formatTime(entry)}</Text>
                       {!!entry.note && (
                         <Text style={s.entryNote}>{entry.note}</Text>
                       )}

@@ -145,6 +145,9 @@ export default function GroundingStepsScreen({ navigation }) {
         <Text style={styles.footerText}>
           Grounding is not about forcing calm. It is about finding one steady point.
         </Text>
+        <Text style={styles.footerText}>
+          Based on trauma-informed and occupational therapy caregiving practices.
+        </Text>
       </ScrollView>
     </SafeAreaView>
   );

@@ -137,5 +137,22 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    match /crisisFlags/{flagId} {
+      allow create: if request.auth != null
+        && request.resource.data.authorId == request.auth.uid;
+      allow read, update: if isModerator();
+      allow delete: if false;
+    }
+
+    // ── Share codes ───────────────────────────────────────────────────────────
+    // Owner-only for now: signed-in parents generate/read/revoke their own
+    // code from the web portal or the app. Anonymous redemption by a
+    // teacher/therapist entering a code is NOT covered here on purpose — that
+    // will go through a Cloud Function (Admin SDK) in a later stage, so no
+    // public read is granted on this collection.
+    match /shareCodes/{uid} {
+      allow read, write: if isSelf(uid);
+    }
+
   }
 }
