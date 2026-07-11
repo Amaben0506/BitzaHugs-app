@@ -2,21 +2,21 @@
   "expo": {
     "name": "BitzaHugs",
     "slug": "bitzahugs-app",
-    "version": "1.2.2",
+    "version": "1.2.3",
     "orientation": "portrait",
     "icon": "./assets/icons/Bitzahugs-App-Icon.png",
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.bitzahugs.app",
-      "buildNumber": "21",
+      "buildNumber": "22",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
       "package": "com.bitzahugs.app",
-      "versionCode": 34,
+      "versionCode": 35,
       "adaptiveIcon": {
         "foregroundImage": "./assets/icons/Bitzahugs-App-Icon.png",
         "backgroundColor": "#FFF9F2"
@@ -26,7 +26,7 @@
         "android.permission.FOREGROUND_SERVICE",
         "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
       ],
-      "kotlinVersion": "2.1.21"
+      "kotlinVersion": "2.1.22"
     },
     "web": {
       "favicon": "./assets/icons/Bitzahugs-App-Icon.png"
